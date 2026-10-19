@@ -306,6 +306,21 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
                     _save(REFS_FILE, refs)
         except Exception:
             pass
+        try:   # Arabic translations made in the cloud (no daily limit)
+            tp = cloud_tr_path()
+            if force or time.time() - _mtime(tp) > 12 * 3600:
+                raw = sources.http_get(base + 'tr_ar.json.gz', timeout=90)
+                tr = json.loads(raw.decode('utf-8'))
+                if isinstance(tr, dict) and tr:
+                    d = os.path.dirname(tp)
+                    if not os.path.isdir(d):
+                        os.makedirs(d)
+                    with gzip.open(tp + '.tmp', 'wb') as f:
+                        f.write(json.dumps(tr, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+                    os.rename(tp + '.tmp', tp)
+                    log(u'السحابة: قاموس ترجمة جاهز (%d عنوان)' % len(tr))
+        except Exception:
+            pass
         try:
             if force or time.time() - _mtime(LINKED_REFS_FILE) > 24 * 3600:
                 lr = json.loads(sources.http_get(base + 'linked_refs.json', timeout=30).decode('utf-8'))
@@ -315,6 +330,10 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
             pass
     refresh_local(set((cloud.get('files') or {}) if use_cloud else ()), stop, force)
     return load_index()
+
+
+def cloud_tr_path():
+    return os.path.join(cache_dir(), 'tr_cloud.json.gz')
 
 
 def _sat_ok(f, sats):
@@ -398,6 +417,15 @@ def learn(name, key, ref=None):
     _save(LEARN_FILE, d)
 
 
+def unlearn_ref(ref, key):
+    """forget an automatic confirmation of this service (the satellite guide proved it wrong)."""
+    d = load_learned()
+    rk = ref_key(ref)
+    if rk and d['refs'].get(rk) == key:
+        del d['refs'][rk]
+        _save(LEARN_FILE, d)
+
+
 def reject(name, key):
     """the user replaced this automatic link: never suggest it again for that name."""
     d = load_learned()
@@ -479,6 +507,7 @@ def smart_link(services, enabled, force=False, min_score=0.86):
                 xml_ids.setdefault(cid, u'xml:%s/%s' % (fname, cid))
     rejected = set(tuple(r) for r in learned['reject'])
     confirmed_refs = linked_refs()
+    manual_keys = set(learned['alias'].values()) | set(v for v in load_mapping().values() if v != '-')
     out, changed = {}, False
     allow_cache = {}
     for ref, name in services:
@@ -516,6 +545,8 @@ def smart_link(services, enabled, force=False, min_score=0.86):
         if lk and ok(lk):
             cands = [(lk, 1.0)] + [c for c in cands if c[0] != lk]
         rk = confirmed_refs.get(ref_key(ref) or '')
+        if rk and rk not in manual_keys and not name_close(name, rk):
+            rk = None       # an old automatic confirmation that does not even look like this channel
         if rk and ok(rk):   # this exact service was confirmed before (by you, by the satellite guide, or the cloud)
             cands = [(rk, 1.0)] + [c for c in cands if c[0] != rk]
         cands = cands[:4]
@@ -936,10 +967,157 @@ _COPY_BAD = re.compile(u'(\\+\\s*\\d|plus\\s*\\d|\\bfeed\\b|\\btest\\b|time\\s*s
                        re.I)
 
 
+def placeholder_name(name):
+    """'<n/a>', 'N/A', '', '...' : services whose name the receiver does not know."""
+    n = u(name or u'').strip().lower()
+    return not n or bool(re.match(u'^[<\\[(]?\\s*n\\s*/?\\s*a\\s*[>\\])]?$', n)) or \
+        not re.search(u'[a-z\u0621-\u064a]', n)
+
+
+def name_close(name, key):
+    """does the channel name look like one of the names of the online channel? (guards automatic links)"""
+    from difflib import SequenceMatcher
+    from .matcher import latin, distinct
+    c = catalog_entry(key)
+    names = (c or {}).get('names') or [key.split(':', 1)[-1].split('/')[-1]]
+    a = latin(name)
+    da = distinct(a)
+    for n in names:
+        b = latin(n)
+        if not a or not b:
+            continue
+        if a == b or (len(a) > 3 and a in b) or (len(b) > 3 and b in a):
+            return True
+        db = distinct(b)
+        if da and db:     # the distinctive word must match (Polsat Sport is not Palestine Sport)
+            if SequenceMatcher(None, da, db).ratio() >= 0.8:
+                return True
+        elif SequenceMatcher(None, a, b).ratio() >= 0.8:
+            return True
+    return False
+
+
+# --------------------------------------------------------------------- language-independent checks
+AR_FILES = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia')
+EU_FILES = ('it', 'pl', 'gr', 'fr', 'ro', 'ua', 'rs', 'hr', 'ba', 'al', 'bg', 'hu', 'il', 'oe_poland')
+_EU_CHARS = re.compile(u'[Ѐ-ӿͰ-Ͽ֐-׿ąćęłńśźżăâîșțşţőűčšžđřůěýáíéóúöüäß]', re.I)
+_AR_CHARS = re.compile(u'[ء-ي]')
+
+
+def native_events(epgcache, ref, hours=15, ours=None, name=None):
+    """what the satellite itself says: [(begin, duration, title)] without the plugin's own events
+    (ours = set of (begin, duration) imported by the plugin) and without dummy events."""
+    now = int(time.time())
+    try:
+        res = epgcache.lookupEvent(['BDT', (_enc(ref), 0, now - 3 * 3600, hours * 60 + 180)])
+    except Exception:
+        return []
+    out, nn = [], norm(name) if name else None
+    for x in res or []:
+        try:
+            b, d, t = int(x[0]), int(x[1]), u(x[2] or u'')
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not t or d <= 0 or d >= 12 * 3600 or (ours and (b, d) in ours):
+            continue
+        if nn and norm(t) == nn:
+            continue
+        out.append((b, d, t))
+    return out
+
+
+def text_lang(titles):
+    """'ar' (Arabic guide), 'eu' (a European language that is not English) or None"""
+    titles = [t for t in titles if t]
+    if len(titles) < 2:
+        return None
+    ar = len([t for t in titles if _AR_CHARS.search(t)])
+    eu = len([t for t in titles if _EU_CHARS.search(t)])
+    if ar * 2 >= len(titles):
+        return 'ar'
+    if eu * 5 >= len(titles) and not ar:
+        return 'eu'
+    return None
+
+
+def key_region(key):
+    src, _, rest = u(key or u'').partition(':')
+    if src in ARABIC_SOURCES:
+        return 'ar'
+    if src == 'xml':
+        f = rest.split('/', 1)[0]
+        if f in AR_FILES or [1 for p in AR_FILES if f.startswith(p + '_') or (p.startswith('oe_') and f.startswith(p))]:
+            return 'ar'
+        if f in EU_FILES or f.startswith('oe_poland'):
+            return 'eu'
+    return None
+
+
+def _distinct(b):
+    """a programme start that is not on a round :00/:30 (round times match between any two channels)"""
+    m = (b // 60) % 30
+    return 3 <= m <= 27
+
+
+def align(native, events, shift=0, tol=300, only_distinct=False):
+    """share of the satellite's programme starts that the online guide also has (+-5 min).
+    -> (ratio, number of starts compared). Works whatever the language of the titles."""
+    now = time.time()
+    starts = sorted(set(b for b, _d, _t in native if now - 3 * 3600 <= b <= now + 15 * 3600 and
+                        (not only_distinct or _distinct(b))))
+    if not starts or not events:
+        return 0.0, 0
+    src = sorted(e[0] + shift for e in events)
+    import bisect
+    hit = 0
+    for b in starts:
+        i = bisect.bisect_left(src, b - tol)
+        if i < len(src) and src[i] <= b + tol:
+            hit += 1
+    return float(hit) / len(starts), len(starts)
+
+
+def _titles_at(native, events, shift):
+    """how many satellite programmes start at the same (shifted) time with the same title online"""
+    starts = {}
+    for e in events:
+        starts.setdefault((e[0] + shift) // 300, []).append(e[2])
+    n = 0
+    for b, _d, t in native:
+        for k in (b // 300 - 1, b // 300, b // 300 + 1):
+            if [1 for x in starts.get(k, ()) if (_title_sim(t, x) or 0) >= 0.7]:
+                n += 1
+                break
+    return n
+
+
+def check_link(native, events):
+    """compare one online guide with the satellite guide.
+    -> ('ok'|'wrong'|'unknown', shift_seconds, details)"""
+    if not native or not events:
+        return 'unknown', 0, u''
+    now = time.time()
+    cur = [t for b, d, t in native if b <= now < b + d]
+    tsim = _title_sim(cur[0], _event_at(events, now)) if cur else None
+    al, nb = align(native, events)
+    ald, nd = align(native, events, only_distinct=True)
+    if (tsim is not None and tsim >= 0.5) or (nd >= 2 and ald >= 0.8) or _titles_at(native, events, 0) >= 2:
+        return 'ok', 0, u'%d/%d' % (int(al * nb + 0.5), nb)
+    contradiction = (nb >= 4 and al <= 0.34) or (nd >= 3 and ald == 0)
+    if contradiction:
+        for sh in (3600, -3600, 7200, -7200, 10800, -10800):
+            a2, n2 = align(native, events, sh, only_distinct=True)
+            if (n2 >= 2 and a2 >= 0.8) or _titles_at(native, events, sh) >= 2:
+                return 'ok', sh, u'فرق توقيت %+d ساعة' % (sh // 3600)
+        if tsim is None or tsim < 0.3:
+            return 'wrong', 0, u'المواعيد %d/%d' % (int(al * nb + 0.5), nb)
+    return 'unknown', 0, u''
+
+
 def copy_key(name):
     """identity of a channel for copying (None when the name is not safe to compare)."""
     n = u(name)
-    if not n or _COPY_BAD.search(n):
+    if placeholder_name(n) or _COPY_BAD.search(n):
         return None
     k = norm(n)
     return k if len(k) >= 2 else None
@@ -1097,7 +1275,7 @@ class Updater(object):
         from .translate import Translator
         cfg = self.cfg
         tr = Translator(os.path.join(cache_dir(), 'translations.json.gz'), cfg.get('tr_provider', 'mymemory'),
-                        cfg.get('tr_email', ''), cfg.get('tr_url', ''), cfg.get('tr_key', ''))
+                        cfg.get('tr_email', ''), cfg.get('tr_url', ''), cfg.get('tr_key', ''), cloud_tr_path())
         keys = list(set(j['key'] for j in tjobs if j['key']))
         now = time.time()
         texts = []
@@ -1117,7 +1295,29 @@ class Updater(object):
         tr.save()
         st.done, st.state = 1, 'ok'
         st.info = u'%d عنوان' % done
-        log(u'الترجمة: %d ترجمة جديدة، %d برنامج أصبح بالعربي (الذاكرة: %d)' % (added, done, len(tr.cache)))
+        log(u'الترجمة: %d ترجمة جديدة، %d برنامج أصبح بالعربي (الذاكرة: %d، السحابة: %d)' % (
+            added, done, len(tr.cache), len(tr.cloud)))
+
+    def _repair(self):
+        """once after updating from 4.0/4.1: remove guides copied between unnamed services and re-import
+        everything, so titles like "INVALID EMAIL PROVIDED" are replaced."""
+        st = load_state()
+        if st.get('repair', 0) >= 42:
+            return
+        bad = [r for r, f in st['filled'].items()
+               if u(f.get('key', '')).startswith('copy:') and placeholder_name(f.get('from_name'))]
+        if bad:
+            try:
+                clear_plugin_epg(self.epgcache, bad)
+            except Exception as e:
+                log(u'إصلاح: %s' % e)
+            for r in bad:
+                del st['filled'][r]
+            log(u'إصلاح: تم مسح دليل %d قناة بدون اسم نُسخ لها دليل خطأ' % len(bad))
+        st['repair'] = 42
+        save_state(st)
+        self.cfg = dict(self.cfg, smart=False)   # re-import every guide once
+        log(u'إصلاح: إعادة تحميل كل الأدلة مرة واحدة لتصحيح العناوين')
 
     # ---- start (main thread: enigma2 objects only)
     def start(self):
@@ -1132,6 +1332,8 @@ class Updater(object):
         try:
             from enigma import eEPGCache
             self.epgcache = eEPGCache.getInstance()
+            if self.only_refs is None:
+                self._repair()
             self.bouquets = get_bouquets()
             self.services = get_services(self.bouquets)
             known = set(r for r, _n in self.services)
@@ -1140,13 +1342,24 @@ class Updater(object):
                     self.services.append((r, n))
             if self.only_refs is not None:
                 self.services = [s for s in self.services if s[0] in self.only_refs]
-            # what the satellite itself says is on now: used to verify the automatic links
+            # what the satellite itself says (without what the plugin imported): used to verify the links
             self.native = {}
             if self.cfg.get('verify', True):
+                filled = load_state()['filled']
+                bk = Backup()
                 for ref, name in self.services:
-                    nw, _nx = now_next(self.epgcache, ref)
-                    if nw and nw[0] and norm(nw[0]) != norm(name):
-                        self.native[ref] = nw
+                    f = filled.get(ref)
+                    ours = None
+                    if f:
+                        k = u(f.get('key', ''))
+                        if k.startswith('copy:'):
+                            continue
+                        sh = int(f.get('shift', 0))
+                        ours = set((int(e[0]) + sh, int(e[1])) for e in bk.get(k))
+                    ev = native_events(self.epgcache, ref, 15, ours, name)
+                    if ev:
+                        self.native[ref] = ev
+                bk = None
             self.present = {}
             if self.cfg.get('smart'):
                 for r in load_state()['filled']:
@@ -1205,19 +1418,32 @@ class Updater(object):
                     continue
                 if not manual and self.rich.get(ref):
                     continue
-                if cfg.get('smart') and self.present.get(ref) and state['filled'].get(ref, {}).get('until', 0) > \
-                        now + max(0.5, cfg['days'] - 1.5) * 86400:
+                if cfg.get('smart') and self.present.get(ref) and not self.native.get(ref) and \
+                        state['filled'].get(ref, {}).get('until', 0) > now + max(0.5, cfg['days'] - 1.5) * 86400:
                     self.stats['skipped'] += 1
                     continue
+                # never give a Polish/Greek/... channel an Arabic guide, or an Arabic channel a European one
+                nl = text_lang([t for _b, _d, t in self.native.get(ref, ())])
+                if nl and not manual:
+                    kept = [c for c in cands if not ({nl, key_region(c[0])} == {'ar', 'eu'})]
+                    if len(kept) < len(cands):
+                        self.stats['region'] = self.stats.get('region', 0) + len(cands) - len(kept)
+                    cands = kept
+                    if not cands:
+                        continue
                 keys = [c[0] for c in cands]
+                scores = dict(cands)
                 arabic = arabic_mode and _is_arabic_channel(ref, name, keys)
                 if arabic:   # official Arabic sites first, mixed-language files last
                     keys = [k for k in keys if not k.startswith('xml:')] + [k for k in keys if k.startswith('xml:')]
-                jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None})
+                jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None,
+                             'scores': scores, 'manual': manual})
             s.state = 'ok'
             s.info = u'%d قناة' % len(jobs)
             log(u'قنوات الباقات: %d | سيتم تحديث: %d | تم تخطي (دليلها حديث): %d' % (
                 len(self.services), len(jobs), self.stats['skipped']))
+            if self.stats.get('region'):
+                log(u'منع الربط بمصدر بلغة/منطقة مختلفة عن دليل القمر: %d اقتراح' % self.stats['region'])
 
             # 3. fetch: up to 3 rounds (first choice, then alternatives)
             results = {}
@@ -1272,6 +1498,9 @@ class Updater(object):
                     st.state = 'ok' if ok else 'fail'
                     st.info = u'%d/%d' % (ok, len(ids))
                     log(u'%s: %d/%d قناة بها بيانات' % (label, ok, len(ids)))
+                    empty = [display_key(src + ':' + c).split(': ', 1)[-1] for c in ids if not got.get(c)]
+                    if empty and src != 'xml':
+                        log(u'%s بدون بيانات: %s' % (label, u'، '.join(empty[:12])))
 
                 # independent sources run side by side (at most 4 at a time)
                 pending = list(order)
@@ -1320,39 +1549,75 @@ class Updater(object):
                 if cfg.get('lang_mode') == 'translate' and not self.cancel:
                     self._translate([j for j in jobs if j.get('translate')], results)
 
-            # 4. verify the links against what the satellite says is on now
-            verified_pairs, fixed_pairs = [], []
-            if self.native:
-                checked = fixed = 0
+            # 4. verify every link against the satellite's own guide (titles AND programme start times)
+            verified_pairs, fixed_pairs, rejected = [], [], []
+            checked = fixed = shifted = 0
+            for j in jobs:
+                nat = self.native.get(j['ref'])
+                if not nat or not j['key']:
+                    continue
+                verdict, sh, info = check_link(nat, results.get(j['key']))
+                if verdict == 'unknown':
+                    continue
+                checked += 1
+                if verdict == 'ok':
+                    j['verified'] = True
+                    verified_pairs.append((j['ref'], j['key']))
+                    if sh:
+                        j['shift'] = sh
+                        shifted += 1
+                        log(u'تصحيح فرق التوقيت: %s (%s) %s' % (j['name'], display_key(j['key']), info))
+                    continue
+                if j.get('manual'):     # your own choice is kept, but you are told
+                    log(u'تنبيه: الربط اليدوي لا يطابق دليل القمر (%s): %s ← %s' % (info, j['name'], display_key(j['key'])))
+                    continue
+                # wrong: look for an alternative that fits, otherwise import nothing for this channel
+                alt = None
+                for k in j['cands']:
+                    if k != j['key'] and results.get(k) and name_close(j['name'], k):
+                        v2, sh2, _i = check_link(nat, results.get(k))
+                        if v2 == 'ok':
+                            alt, j['shift'] = k, sh2
+                            break
+                if alt:
+                    log(u'تصحيح الربط بمقارنة دليل القمر: %s: %s ← %s' % (j['name'], display_key(j['key']), display_key(alt)))
+                    j['key'], j['verified'] = alt, True
+                    fixed_pairs.append((j['ref'], alt))
+                    fixed += 1
+                else:
+                    log(u'رُفض الربط (لا يطابق دليل القمر - %s): %s ← %s' % (info, j['name'], display_key(j['key'])))
+                    rejected.append((j['ref'], j['name'], j['key']))
+                    j['key'], j['rejected'] = None, True
+            if checked:
+                log(u'التحقق بدليل القمر (العناوين ومواعيد البرامج): %d قناة، متطابقة %d، تصحيح %d، رفض %d%s' % (
+                    checked, len([1 for j in jobs if j.get('verified')]), fixed, len(rejected),
+                    (u'، فرق توقيت %d' % shifted) if shifted else u''))
+            for ref, name, key in rejected:
+                reject(name, key)
+                unlearn_ref(ref, key)
+            self.stats['rejected'] = len(rejected)
+
+            # 4b. confidence: a link that could not be checked must be strong enough on its own
+            mode = cfg.get('link_mode', 'normal')
+            held = []
+            if mode != 'all':
+                need = 1.0 if mode == 'safe' else 0.92
                 for j in jobs:
-                    nat = self.native.get(j['ref'])
-                    if not nat or not j['key']:
-                        continue
-                    sim = _title_sim(nat[0], _event_at(results.get(j['key']), nat[1]))
-                    if sim is None:
-                        continue
-                    checked += 1
-                    j['verified'] = sim >= 0.5
-                    if j['verified']:
-                        verified_pairs.append((j['ref'], j['key']))
-                    if sim < 0.2:
-                        for k in j['cands']:
-                            if k != j['key'] and (_title_sim(nat[0], _event_at(results.get(k), nat[1])) or 0) >= 0.6:
-                                log(u'تصحيح الربط بمقارنة دليل القمر: %s ← %s' % (j['name'], display_key(k)))
-                                j['key'] = k
-                                fixed_pairs.append((j['ref'], k))
-                                fixed += 1
-                                break
-                if checked:
-                    log(u'التحقق بدليل القمر: %d قناة، متطابقة %d، تم تصحيح %d' % (
-                        checked, len([1 for j in jobs if j.get('verified')]), fixed))
+                    if j['key'] and not j.get('verified') and not j.get('manual') and \
+                            j['scores'].get(j['key'], 0.0) < need:
+                        held.append(j)
+                for j in held:
+                    j['key'], j['held'] = None, True
+                if held:
+                    log(u'ربط غير مؤكد لم يُستورد (راجعه في: القنوات ← تحتاج مراجعة): %d قناة' % len(held))
+            state['review'] = dict((j['ref'], j['cands'][0]) for j in held if j['cands'])
 
             # 5. backup for the rest
             backup = Backup()
             for k, evs in results.items():
                 if evs:
                     backup.put(k, evs)
-            missing = [j for j in jobs if j['key'] is None]
+            missing = [j for j in jobs if j['key'] is None and not j.get('rejected') and not j.get('held')]
             if missing:
                 s = self.stage('backup', u'النسخة الاحتياطية للقنوات المتعثرة', len(missing), 1)
                 for j in missing:
@@ -1375,15 +1640,27 @@ class Updater(object):
             groups = {}
             for j in jobs:
                 if j['key']:
-                    groups.setdefault(j['key'], []).append(j['ref'])
-                else:
+                    groups.setdefault((j['key'], j.get('shift', 0)), []).append(j['ref'])
+                elif not j.get('rejected') and not j.get('held'):
                     self.stats['failed'] += 1
+            # a wrong guide imported earlier must not stay on the channel
+            wrong = [r for r, _n, _k in rejected if r in state['filled']]
+            if wrong:
+                try:
+                    clear_plugin_epg(self.epgcache, wrong)
+                except Exception as e:
+                    log(u'مسح الدليل الخطأ: %s' % e)
+                for r in wrong:
+                    del state['filled'][r]
+                log(u'تم مسح دليل خطأ سابق من %d قناة' % len(wrong))
             s = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
             now = int(time.time())
-            for key, refs in groups.items():
+            for (key, shift), refs in groups.items():
                 if self.cancel:
                     break
                 evs = results.get(key) or []
+                if shift:
+                    evs = [(e[0] + shift,) + tuple(e[1:]) for e in evs]
                 try:
                     n = import_events(self.epgcache, refs, evs)
                     self.stats['channels'] += len(refs)
@@ -1391,6 +1668,8 @@ class Updater(object):
                     until = max(e[0] + e[1] for e in evs)
                     for r in refs:
                         state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
+                        if shift:
+                            state['filled'][r]['shift'] = shift
                 except Exception as e:
                     self.stats['failed'] += len(refs)
                     log(u'فشل الاستيراد %s: %s' % (key, e))
@@ -1406,7 +1685,8 @@ class Updater(object):
                 for t, c in copies:
                     try:
                         n = import_events(self.epgcache, [t], c['events'])
-                        state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'], 't': now,
+                        state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'],
+                                              'name': c['name'], 't': now,
                                               'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
                         self.stats['channels'] += 1
                         self.stats['events'] += n
@@ -1435,12 +1715,16 @@ class Updater(object):
             if n_learn:
                 log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
             save_state(state)
-            failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied')]
+            failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied') and not j.get('rejected')
+                            and not j.get('held')]
             self.summary = [
                 u'تم تحديث %d قناة (%d برنامج) خلال %d ثانية' % (
                     self.stats['channels'], self.stats['events'], time.time() - self.started),
                 u'من النسخة الاحتياطية: %d | لم تُحدَّث: %d | تخطي (حديثة): %d' % (
                     self.stats['backup'], self.stats['failed'], self.stats['skipped'])]
+            if rejected or held:
+                self.summary.append(u'للأمان: رُفض %d ربط لا يطابق دليل القمر، و %d ربط غير مؤكد ينتظر مراجعتك' % (
+                    len(rejected), len(held)))
             if n_copied:
                 self.summary.append(u'نُسخ الدليل من نسخة أخرى لنفس القناة (نفس الباقة): %d قناة' % n_copied)
             bq = sorted([b for b in bouquet_stats(self.bouquets, state) if b['events']],

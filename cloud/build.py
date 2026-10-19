@@ -80,13 +80,15 @@ def our_ids(site):
     return out, names
 
 
-def repack(src, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
-    """stream-parse an XMLTV file, keep [now-6h, now+days], write compact gz. -> {id: [names]}"""
+def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
+    """stream-parse XMLTV file(s), keep [now-6h, now+days], write compact gz. -> {id: [names]}"""
     now = time.time()
     lo, hi = now - 6 * 3600, now + days * 86400
     chans, progs = {}, {}
     rename = {}
-    for _ev, el in ET.iterparse(src, events=('end',)):
+    if not isinstance(srcs, list):
+        srcs = [srcs]
+    for _ev, el in (x for src in srcs for x in ET.iterparse(src, events=('end',))):
         if el.tag == 'channel':
             cid = el.get('id') or ''
             names = [d.text.strip() for d in el.findall('display-name') if d.text and d.text.strip()]
@@ -125,12 +127,14 @@ def repack(src, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
             kept[cid] = names
             f.write('<channel id="%s">%s</channel>\n' % (html.escape(cid), ''.join(
                 '<display-name>%s</display-name>' % html.escape(n) for n in names[:4])))
+        written = 0
         for cid, plist in progs.items():
             seen = set()
             for p in sorted(plist, key=lambda x: x['start']):
                 if p['start'] in seen:
                     continue
                 seen.add(p['start'])
+                written += 1
                 f.write('<programme start="%s" stop="%s" channel="%s">' % (fmt(p['start']), fmt(p['stop']), html.escape(cid)))
                 f.write('<title>%s</title>' % html.escape(p['title']))
                 if p.get('sub-title'):
@@ -144,7 +148,7 @@ def repack(src, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
                         html.escape(p['episode-num'][0]), html.escape(p['episode-num'][1])))
                 f.write('</programme>\n')
         f.write('</tv>\n')
-    return kept, sum(len(v) for v in progs.values())
+    return kept, written
 
 
 def main():
@@ -166,21 +170,20 @@ def main():
         t0 = time.time()
         out_path = os.path.join(gdir, name + '.xml.gz')
         try:
+            fdays = d.get('days', days)
             if kind == 'grab':
-                src = None
-                for ext in ('.xml', '.xml.gz'):
-                    p = os.path.join(a.work, d['site'] + ext)
-                    if os.path.exists(p) and os.path.getsize(p) > 200:
-                        src = p
-                        break
-                if not src:
+                import glob
+                srcs = [p for p in sorted(glob.glob(os.path.join(a.work, 'out_%s.*xml' % d['site'])) +
+                                          glob.glob(os.path.join(a.work, d['site'] + '.xml*')))
+                        if os.path.getsize(p) > 200]
+                if not srcs:
                     raise RuntimeError('no grab output')
                 idmap, cnames = our_ids(d['site'])
-                chans, n = repack(open_any(src), out_path, days, idmap, cnames)
+                chans, n = repack([open_any(p) for p in srcs], out_path, fdays, idmap, cnames)
             else:
                 if a.skip_download:
                     continue
-                chans, n = repack(open_any(download(d['url'])), out_path, days)
+                chans, n = repack(open_any(download(d['url'])), out_path, fdays)
             if not chans:
                 raise RuntimeError('empty guide')
             index['files'][name] = {

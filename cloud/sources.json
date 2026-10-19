@@ -1,6 +1,6 @@
 {
- "_comment": "grab = channels grabbed by iptv-org/epg from cloud/channels/<site>.channels.xml ; xmltv = ready XMLTV files repacked for the receiver. 'sat' = satellites the channels are found on (the receiver only downloads files for satellites in its bouquets). open-epg.com files are credited to open-epg.com; the service reference database comes from EPGGrabber (ziko-ZR1, GPL-3.0).",
- "days": 3,
+ "_comment": "grab = channels grabbed by iptv-org/epg from cloud/channels/<site>.channels.xml ; xmltv = ready XMLTV files repacked for the receiver. 'sat' = satellites the channels are found on (the receiver only downloads files for satellites in its bouquets). open-epg.com files are credited to open-epg.com; the service reference database comes from EPGGrabber (ziko-ZR1, GPL-3.0). Per grab entry: days (default the global days), parts (split the channel list over parallel jobs), delay (ms between requests), conns (parallel connections).",
+ "days": 5,
  "grab": {
   "ar_shahid": {
    "site": "shahid.mbc.net",
@@ -24,7 +24,11 @@
     "nilesat",
     "arabsat",
     "hotbird"
-   ]
+   ],
+   "days": 4,
+   "parts": 4,
+   "delay": 1500,
+   "conns": 2
   },
   "ar_bein": {
    "site": "bein.com",
@@ -40,7 +44,8 @@
     "nilesat",
     "arabsat",
     "hotbird"
-   ]
+   ],
+   "days": 4
   },
   "ar_aljazeera": {
    "site": "aljazeera.com",
@@ -48,7 +53,8 @@
     "nilesat",
     "arabsat",
     "hotbird"
-   ]
+   ],
+   "days": 3
   },
   "ar_beinsports": {
    "site": "beinsports.com",

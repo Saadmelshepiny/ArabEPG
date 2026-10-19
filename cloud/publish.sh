@@ -1,0 +1,28 @@
+#!/bin/bash
+# build the receiver files from the grabbed guides and publish them to the "epg" branch.
+# needs: work/ (grab outputs), iptv-epg/sites (channel lists), ziko/configs (service references)
+set -e
+python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/ArabEPG/channels.json --cloud cloud/channels
+python3 cloud/build.py --work work --out public --catalog plugin/ArabEPG/channels.json
+cp version.json public/ 2>/dev/null || true
+cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
+python3 tools/make_refs.py --src ziko/configs --out public/refs.json && gzip -9 -f public/refs.json || true
+
+# English titles of Arabic-region guides -> Arabic (offline translator, no daily limit). Never blocks publishing.
+if [ "${TRANSLATE:-1}" = "1" ]; then
+  pip install -q argostranslate || echo "argostranslate not installed"
+  curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/epg/tr_ar.json.gz" -o prev_tr.json.gz || true
+  timeout 40m python3 cloud/translate_cloud.py --guides public/guides --prev prev_tr.json.gz \
+      --out public/tr_ar.json.gz --budget 1800 || echo "translation skipped"
+  [ -f public/tr_ar.json.gz ] || cp prev_tr.json.gz public/tr_ar.json.gz 2>/dev/null || true
+fi
+
+cd public
+git init -q
+git checkout -q -b epg
+git config user.name "ArabEPG bot"
+git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+git add -A
+git commit -q -m "EPG $(date -u '+%Y-%m-%d %H:%M')"
+git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" epg
+cat status.json

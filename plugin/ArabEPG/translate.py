@@ -25,10 +25,18 @@ except ImportError:  # Python 2
     from urllib import quote
 
 
+_SERVICE_MSG = re.compile(u'(INVALID EMAIL|MYMEMORY|QUERY LENGTH LIMIT|PLEASE SELECT|NO QUERY SPECIFIED|'
+                          u'TOO MANY REQUESTS|INVALID LANGUAGE PAIR|AUTHENTICATION|USAGE LIMITS)', re.I)
+
+
 class Translator(object):
-    def __init__(self, cache_path, provider='mymemory', email='', libre_url='', libre_key=''):
+    def __init__(self, cache_path, provider='mymemory', email='', libre_url='', libre_key='', cloud_path=None):
         self.path = cache_path
         self.provider = provider
+        email = re.sub(u'[\\s\u200b-\u200f\u202a-\u202e]+', u'', u(email or u'')).lower()
+        if email and not re.match(u'^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$', email):
+            log(u'الترجمة: الإيميل في الإعدادات غير صالح (%d حرف) - لن يُرسل' % len(email))
+            email = u''
         self.email = email
         self.libre_url = libre_url.rstrip('/')
         self.libre_key = libre_key
@@ -41,6 +49,26 @@ class Translator(object):
                 self.cache = json.loads(f.read().decode('utf-8'))
         except Exception:
             self.cache = {}
+        self.cloud = {}
+        if cloud_path:     # ready translations from the cloud (made by GitHub Actions, no daily limit)
+            try:
+                with gzip.open(cloud_path, 'rb') as f:
+                    self.cloud = json.loads(f.read().decode('utf-8'))
+            except Exception:
+                self.cloud = {}
+        # drop anything that is not a real Arabic translation (e.g. "INVALID EMAIL PROVIDED" from 4.0/4.1)
+        bad = [k for k, v in self.cache.items() if not self.good(v)]
+        for k in bad:
+            del self.cache[k]
+        if bad:
+            self.dirty = True
+            log(u'الترجمة: تم حذف %d ترجمة غير صحيحة من الذاكرة' % len(bad))
+
+    @staticmethod
+    def good(text):
+        """a usable translation contains Arabic and no service message."""
+        t = u(text or u'')
+        return bool(re.search(u'[\u0621-\u064a]', t)) and not _SERVICE_MSG.search(t)
 
     def save(self):
         if not self.dirty:
@@ -62,7 +90,8 @@ class Translator(object):
         return bool(re.search(u'[A-Za-z]{3}', t)) and not re.search(u'[؀-ۿ]', t)
 
     def get(self, text):
-        return self.cache.get(u(text).strip())
+        t = u(text).strip()
+        return self.cache.get(t) or self.cloud.get(t)
 
     # ---- providers
     def _mymemory(self, text):
@@ -71,10 +100,17 @@ class Translator(object):
             url += '&de=' + quote(self.email)
         data = json.loads(sources.http_get(url, timeout=20).decode('utf-8'))
         res = u((data.get('responseData') or {}).get('translatedText') or u'')
-        if data.get('quotaFinished') or u'MYMEMORY WARNING' in res or data.get('responseStatus') in (429, '429'):
+        if u'INVALID EMAIL' in res.upper() and self.email:
+            with self.lock:
+                if self.email:
+                    log(u'الترجمة: MyMemory رفض الإيميل المكتوب في الإعدادات - سيُكمل بدون إيميل (الحد اليومي الأصغر)')
+                    self.email = ''
+            return self._mymemory(text)
+        if data.get('quotaFinished') or u'MYMEMORY WARNING' in res.upper() or \
+                data.get('responseStatus') in (429, '429'):
             self.exhausted = True
             return None
-        return res
+        return res if self.good(res) else None
 
     def _libre(self, texts):
         body = json.dumps({'q': texts, 'source': 'en', 'target': 'ar', 'format': 'text',
@@ -90,11 +126,11 @@ class Translator(object):
         seen = set()
         for t in texts:
             t = u(t).strip()
-            if t and t not in seen and t not in self.cache and self.needs(t):
+            if t and t not in seen and t not in self.cache and t not in self.cloud and self.needs(t):
                 seen.add(t)
                 todo.append(t)
         todo = todo[:limit]
-        if not todo:
+        if not todo or self.provider == 'cloud':
             return 0
         added = [0]
         if self.provider == 'libre' and self.libre_url:
@@ -108,7 +144,7 @@ class Translator(object):
                     log(u'الترجمة (LibreTranslate): %s' % e)
                     break
                 for src, dst in zip(part, res):
-                    if dst and dst != src:
+                    if dst and dst != src and self.good(dst):
                         self.cache[src] = u(dst)
                         added[0] += 1
             self.dirty = self.dirty or bool(added[0])
@@ -151,11 +187,11 @@ class Translator(object):
         for e in events:
             title, short, desc = e[2], e[3], e[4]
             ar = self.get(title) if self.needs(title) else None
-            if ar:
+            if ar and self.good(ar):
                 desc = (u'%s\n(%s)' % (desc, title)) if desc else u'(%s)' % title
                 title = ar
                 n += 1
-            if with_short and short and self.needs(short) and self.get(short):
+            if with_short and short and self.needs(short) and self.good(self.get(short)):
                 short = self.get(short)
             out.append((e[0], e[1], title, short, desc, e[5]))
         return out, n

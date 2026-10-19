@@ -1,6 +1,6 @@
 {
- "version": "4.1",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-arabepg_4.1_all.ipk",
+ "version": "5.0",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-arabepg_5.0_all.ipk",
  "date": "2026-10-19",
- "notes": "4.1: نسخ الدليل بين نسخ نفس القناة في نفس الباقة، مصدر SNRT المغربي الرسمي"
+ "notes": "5.0: تحقق بمواعيد البرامج، رفض الربط الخطأ، فرق التوقيت، مستوى الأمان، ترجمة سحابية، 5 أيام"
 }

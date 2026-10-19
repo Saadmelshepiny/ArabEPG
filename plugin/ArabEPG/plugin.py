@@ -26,7 +26,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources
 from .sources import log, u, PY3
 
-VERSION = '4.1'
+VERSION = '5.0'
 
 # --------------------------------------------------------------------- config
 config.plugins.arabepg = ConfigSubsection()
@@ -59,11 +59,14 @@ C.boot_update = ConfigYesNo(default=True)
 C.check_updates = ConfigYesNo(default=True)
 C.match_level2 = ConfigSelection(default='90', choices=[('95', 'دقيق جدا'), ('90', 'متوازن'), ('85', 'مرن')])
 C.verify = ConfigYesNo(default=True)
+C.link_mode = ConfigSelection(default='normal', choices=[
+    ('safe', 'أمان عالٍ: المؤكد فقط'), ('normal', 'متوازن (موصى به)'), ('all', 'كل الربط (بدون تحفظ)')])
 C.lang_mode = ConfigSelection(default='ar_only', choices=[
     ('ar_only', 'عربي فقط (من مصادر عربية موثوقة)'), ('translate', 'عربي + ترجمة الإنجليزي إلى العربية'),
     ('ar_first', 'عربي أولا ثم إنجليزي'), ('any', 'أي لغة')])
-C.tr_provider = ConfigSelection(default='mymemory', choices=[('mymemory', 'MyMemory (مجاني)'),
-                                                             ('libre', 'LibreTranslate (سيرفر خاص)')])
+C.tr_provider = ConfigSelection(default='mymemory', choices=[('cloud', 'السحابة فقط (بلا حدود)'),
+                                                            ('mymemory', 'السحابة ثم MyMemory'),
+                                                            ('libre', 'السحابة ثم LibreTranslate (سيرفر خاص)')])
 C.tr_email = ConfigText(default='', fixed_size=False)
 C.tr_url = ConfigText(default='', fixed_size=False)
 C.tr_key = ConfigText(default='', fixed_size=False)
@@ -103,7 +106,7 @@ def current_cfg(**over):
         'xmltv_urls': [x.strip() for x in C.xmltv_urls.value.split(',') if x.strip()], 'smart': False,
         'min_score': int(C.match_level2.value) / 100.0, 'verify': C.verify.value, 'lang_mode': C.lang_mode.value,
         'tr_provider': C.tr_provider.value, 'tr_email': C.tr_email.value.strip(), 'tr_url': C.tr_url.value.strip(),
-        'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value,
+        'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
     }
     cfg.update(over)
     return cfg
@@ -404,7 +407,16 @@ MANUAL_HELP = u'''الربط التلقائي يكفي لمعظم القنوات
   ولو استبدلت ربطا خاطئا لن يقترحه مرة أخرى.
 - الأحمر يعطّل/يفعّل البلوجين للقناة.
 - لإعادة كل شيء من البداية: "مسح دليل البلوجين وإعادة تحميله".
-- لاختيار لغة الدليل: الإعدادات ← لغة الدليل للقنوات العربية.'''
+- لاختيار لغة الدليل: الإعدادات ← لغة الدليل للقنوات العربية.
+
+الحماية من الدليل الخطأ (تلقائية):
+- كل ربط يُقارن بدليل القمر نفسه: عنوان البرنامج الحالي، ومواعيد بداية البرامج (تعمل مهما كانت اللغة).
+  لو المواعيد لا تطابق، يُرفض الربط ولا يُستورد، ويُمسح أي دليل خطأ سابق.
+- لو المواعيد متطابقة لكن بفرق ساعة أو ساعتين، يُصحَّح فرق التوقيت تلقائيا.
+- القناة التي دليلها على القمر بلغة أوروبية لا تُربط بمصدر عربي، والعكس.
+- الربط الذي لا يمكن التحقق منه ونسبة تطابق اسمه أقل من 92% لا يُستورد، ويظهر بعلامة [?]
+  في "تحتاج مراجعة". اضغط عليه OK ثم "تأكيد الربط الحالي" لو المعاينة صحيحة.
+- الإعدادات ← مستوى الأمان: "أمان عالٍ" يستورد المؤكد فقط، "كل الربط" يلغي هذا التحفظ.'''
 
 
 def non_arabic_text():
@@ -626,7 +638,7 @@ class ChannelsScreen(BaseScreen):
             'up': self.up, 'down': self.down, 'left': self.pgup, 'right': self.pgdown}, -1)
         self.relink = relink
         self.filter = 0
-        self.services, self.auto, self.epg = [], {}, {}
+        self.services, self.auto, self.epg, self.held = [], {}, {}, {}
         self.job = None
         self.onLayoutFinish.append(self.load)
         self.onClose.append(lambda: self.job and self.job.cancel())
@@ -668,11 +680,14 @@ class ChannelsScreen(BaseScreen):
             self['info'].setText(T(u'خطأ في الربط: %s' % res))
             return
         self.auto = res
-        filled = engine.load_state()['filled']
+        st = engine.load_state()
+        filled = st['filled']
+        self.held = st.get('review') or {}
         epg = eEPGCache.getInstance()
         self.epg = {}
         for ref, _n in self.services:
-            self.epg[ref] = 'A' if ref in filled else ('+' if engine.epg_count(epg, ref) >= 4 else ' ')
+            self.epg[ref] = 'A' if ref in filled else ('?' if ref in self.held else
+                                                     ('+' if engine.epg_count(epg, ref) >= 4 else ' '))
         self.build()
 
     def build(self, keep=None):
@@ -686,7 +701,7 @@ class ChannelsScreen(BaseScreen):
             n_linked += linked
             if (mode == 'linked' and not linked) or (mode == 'unlinked' and linked):
                 continue
-            if mode == 'review' and not (linked and not manual and cands[0][1] < 0.97):
+            if mode == 'review' and not (linked and not manual and (cands[0][1] < 0.97 or ref in self.held)):
                 continue
             if linked:
                 how = u'يدوي' if manual else u'%d%%' % int(cands[0][1] * 100)
@@ -703,7 +718,7 @@ class ChannelsScreen(BaseScreen):
                     break
         self['key_yellow'].setText(T(u'عرض: ' + self.FILTERS[(self.filter + 1) % len(self.FILTERS)][1]))
         self['info'].setText(T(u'كل القنوات: %d | مربوطة: %d | المعروض: %d     '
-                               u'[+] EPG من القمر  [A] من البلوجين  [ ] لا يوجد' % (len(self.services), n_linked, len(rows))))
+                               u'[+] القمر  [A] البلوجين  [?] ينتظر تأكيدك  [ ] لا يوجد' % (len(self.services), n_linked, len(rows))))
         self.side()
 
     def side(self):
@@ -1027,6 +1042,7 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'إظهار رسالة عند تجهيز دليل القناة'), C.zap_notify),
             getConfigListEntry(T(u'دقة الربط الذكي'), C.match_level2),
             getConfigListEntry(T(u'التحقق من الربط بمقارنة دليل القمر'), C.verify),
+            getConfigListEntry(T(u'مستوى الأمان في استيراد الربط التلقائي'), C.link_mode),
             getConfigListEntry(T(u'مصدر شاهد (MBC والعربية...)'), C.src_shahid),
             getConfigListEntry(T(u'مصدر OSN'), C.src_osn),
             getConfigListEntry(T(u'مصدر beIN والكأس'), C.src_bein),
