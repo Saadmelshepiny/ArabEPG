@@ -1,0 +1,114 @@
+name: Build EPG
+
+on:
+  schedule:
+    - cron: '17 1 * * *'
+    - cron: '17 13 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-epg
+  cancel-in-progress: false
+
+jobs:
+  grab:
+    name: grab ${{ matrix.site }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        site: [elcinema.com, shahid.mbc.net, bein.com, beinsports.com, rotana.net, aljazeera.com, roya-tv.com, artonline.tv, ayn.om, snrt.ma, osn.com]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout iptv-org/epg
+        uses: actions/checkout@v4
+        with:
+          repository: iptv-org/epg
+          path: iptv-epg
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: iptv-epg/package-lock.json
+
+      - name: Install grabber
+        working-directory: iptv-epg
+        run: npm ci --no-audit --no-fund
+
+      - name: Refresh channel lists
+        run: python3 tools/make_catalog.py --iptv iptv-epg --cloud cloud/channels
+
+      - name: Grab
+        working-directory: iptv-epg
+        continue-on-error: true
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/work"
+          npx tsx scripts/commands/epg/grab.ts \
+            --channels="$GITHUB_WORKSPACE/cloud/channels/${{ matrix.site }}.channels.xml" \
+            --output="$GITHUB_WORKSPACE/work/${{ matrix.site }}.xml" \
+            --days=3 --maxConnections=5 --timeout=30000
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grab-${{ matrix.site }}
+          path: work/
+          if-no-files-found: ignore
+          retention-days: 2
+
+  publish:
+    needs: grab
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout iptv-org/epg channel lists
+        uses: actions/checkout@v4
+        with:
+          repository: iptv-org/epg
+          path: iptv-epg
+          sparse-checkout: sites
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: grab-*
+          path: work
+          merge-multiple: true
+
+      - name: Checkout EPGGrabber channel assignments
+        uses: actions/checkout@v4
+        with:
+          repository: ziko-ZR1/Epg-plugin
+          path: ziko
+          sparse-checkout: configs
+
+      - name: Build guides
+        run: |
+          python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/ArabEPG/channels.json --cloud cloud/channels
+          python3 cloud/build.py --work work --out public --catalog plugin/ArabEPG/channels.json
+          cp version.json public/ 2>/dev/null || true
+          cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
+          python3 tools/make_refs.py --src ziko/configs --out public/refs.json && gzip -9 -f public/refs.json || true
+
+      - name: Publish to epg branch
+        run: |
+          cd public
+          git init -q
+          git checkout -q -b epg
+          git config user.name "ArabEPG bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "EPG $(date -u '+%Y-%m-%d %H:%M')"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" epg
+          cat status.json
