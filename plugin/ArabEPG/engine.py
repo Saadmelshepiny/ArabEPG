@@ -1,0 +1,1559 @@
+# -*- coding: utf-8 -*-
+# ArabEPG engine: satellites, cloud guides, smart linking, fallback, backup cache, update job.
+from __future__ import absolute_import, print_function
+
+import gzip
+import json
+import os
+import re
+import threading
+import time
+
+from . import sources
+from .matcher import Matcher, norm, source_of
+from .sources import log, u, PY3
+
+PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = '/etc/enigma2/ArabEPG'
+MAP_FILE = os.path.join(DATA_DIR, 'mapping.json')     # manual choices (always win)
+AUTO_FILE = os.path.join(DATA_DIR, 'automap.json')    # cached automatic links
+STATE_FILE = os.path.join(DATA_DIR, 'state.json')
+INDEX_FILE = os.path.join(DATA_DIR, 'cloud_index.json')
+CATALOG_FILE = os.path.join(DATA_DIR, 'catalog.json')  # online catalog (newer than the built-in one)
+REPO_RAW = 'https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG'
+CLOUD_URL = REPO_RAW + '/epg/'
+VERSION_URL = REPO_RAW + '/main/version.json'
+
+SOURCE_ORDER = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt',
+                'elcinema', 'xml', 'xmltv')
+SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 'Rotana', 'aljazeera': 'Al Jazeera',
+                'elcinema': 'elCinema', 'beinsports': 'beIN SPORTS', 'roya': 'Roya', 'art': 'ART',
+                'ayn': 'Oman TV', 'snrt': 'SNRT', 'xml': 'XMLTV', 'xmltv': 'XMLTV'}
+SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
+             'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt',
+             'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
+MATCHER_VERSION = 3
+BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
+
+# orbital positions (tenths of a degree; west = 3600 - x)
+SATELLITES = (
+    ('nilesat', u'نايل سات 7W / 8W', ((3515, 3540),)),
+    ('arabsat', u'عرب سات / بدر / سهيل', ((195, 210), (250, 265), (300, 310))),
+    ('hotbird', u'هوت بيرد 13E', ((128, 132),)),
+    ('eutelsat16', u'يوتلسات 16E', ((158, 162),)),
+    ('bulgariasat', u'البلغاري 1.9E', ((18, 20),)),
+    ('amos', u'آموس 4W', ((3555, 3565),)),
+)
+SAT_TITLES = dict((k, t) for k, t, _r in SATELLITES)
+
+
+# --------------------------------------------------------------------- storage
+def _load(path, default):
+    try:
+        with open(path, 'rb') as f:
+            data = f.read()
+        if data[:2] == b'\x1f\x8b':
+            data = gzip.GzipFile(fileobj=__import__('io').BytesIO(data)).read()
+        return json.loads(data.decode('utf-8'))
+    except Exception:
+        return default
+
+
+def _save(path, obj):
+    try:
+        d = os.path.dirname(path)
+        if not os.path.isdir(d):
+            os.makedirs(d)
+        tmp = path + '.tmp'
+        with open(tmp, 'wb') as f:
+            f.write(json.dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        os.rename(tmp, path)
+    except Exception as e:
+        log('save %s: %s' % (path, e))
+
+
+def load_mapping():
+    return _load(MAP_FILE, {})
+
+
+def save_mapping(m):
+    _save(MAP_FILE, m)
+
+
+def load_state():
+    st = _load(STATE_FILE, {})
+    st.setdefault('filled', {})
+    return st
+
+
+def save_state(st):
+    _save(STATE_FILE, st)
+
+
+def cache_dir():
+    for d in ('/media/hdd', '/media/usb', '/media/mmc'):
+        if os.path.ismount(d) and os.access(d, os.W_OK):
+            return os.path.join(d, 'ArabEPG')
+    return os.path.join(DATA_DIR, 'cache')
+
+
+# --------------------------------------------------------------------- satellites
+def sat_of_ref(ref):
+    p = u(ref).split(':')
+    try:
+        if p[0] != '1' or len(p) < 10:
+            return 'iptv'
+        ns = int(p[6], 16)
+    except (ValueError, IndexError):
+        return 'other'
+    pos = ns >> 16
+    if pos in (0xEEEE, 0xFFFF) or pos == 0:
+        return 'terrestrial'
+    for key, _t, ranges in SATELLITES:
+        for a, b in ranges:
+            if a <= pos <= b:
+                return key
+    return 'other'
+
+
+def user_satellites(services):
+    out = {}
+    for ref, _n in services:
+        s = sat_of_ref(ref)
+        out[s] = out.get(s, 0) + 1
+    return out
+
+
+# --------------------------------------------------------------------- catalog
+_CATALOG = None
+_ENTRY = {}
+
+
+def catalog():
+    global _CATALOG
+    if _CATALOG is None:
+        built_in = _load(os.path.join(PLUGIN_DIR, 'channels.json'), [])
+        online = _load(CATALOG_FILE, [])
+        _CATALOG = online if len(online) > len(built_in) // 2 else built_in
+        _CATALOG = list(_CATALOG) + _load(os.path.join(DATA_DIR, 'channels_extra.json'), [])
+    return _CATALOG
+
+
+def reset_catalog():
+    global _CATALOG, _MATCHER
+    _CATALOG, _MATCHER = None, None
+    _ENTRY.clear()
+
+
+def catalog_entry(key):
+    if not _ENTRY:
+        for c in catalog():
+            _ENTRY['%s:%s' % (c['src'], c['id'])] = c
+        for e in cloud_xml_entries(None):
+            _ENTRY['xml:%s' % e['id']] = e
+    return _ENTRY.get(key)
+
+
+def display_key(key):
+    if not key:
+        return u''
+    if key == '-':
+        return u'(معطل)'
+    if key.startswith('copy:'):
+        return u'منسوخ من نسخة أخرى للقناة'
+    c = catalog_entry(key)
+    src = source_of(key)
+    if src.startswith('xml:'):
+        f = (load_index().get('files') or {}).get(src[4:], {})
+        label = u'Cloud %s' % f.get('title', src[4:])
+    else:
+        label = SOURCE_NAMES.get(src, src)
+    name = c['names'][0] if c and c.get('names') else key.split(':', 1)[-1].split('|')[-1].split('/')[-1]
+    return u'%s: %s' % (label, name)
+
+
+# --------------------------------------------------------------------- cloud
+# small Arabic XMLTV files that the receiver can also take straight from epgshare01 (no cloud needed)
+EPGSHARE = 'https://epgshare01.online/epgshare01/epg_ripper_%s.xml.gz'
+OPENEPG = 'https://www.open-epg.com/files/%s.xml'
+DIRECT_XML = (
+    ('ae', EPGSHARE % 'AE1', ('nilesat', 'arabsat', 'hotbird'), u'الإمارات: دبي، أبوظبي، الشارقة...'),
+    ('bein', EPGSHARE % 'BEIN1', ('nilesat', 'arabsat', 'hotbird'), u'beIN'),
+    ('eg', EPGSHARE % 'EG1', ('nilesat', 'arabsat'), u'مصر'),
+    ('sa', EPGSHARE % 'SA2', ('nilesat', 'arabsat'), u'السعودية'),
+    ('oe_qatar6', OPENEPG % 'qatar6', ('nilesat', 'arabsat'), u'open-epg: الكأس'),
+    ('oe_qatar3', OPENEPG % 'qatar3', ('nilesat', 'arabsat'), u'open-epg: beIN Sports'),
+)
+IMPORT_DIRS = ('/media/hdd/ArabEPG/import', '/media/usb/ArabEPG/import', '/media/mmc/ArabEPG/import',
+               os.path.join(DATA_DIR, 'import'))
+LOCAL_INDEX = os.path.join(DATA_DIR, 'local_index.json')
+LEARN_FILE = os.path.join(DATA_DIR, 'learned.json')
+_IDX = {'sig': None, 'idx': {}}
+
+
+def _mtime(p):
+    try:
+        return os.path.getmtime(p)
+    except OSError:
+        return 0
+
+
+def load_index():
+    """cloud index + directly downloaded / imported XMLTV files (the cloud copy wins)."""
+    sig = (_mtime(INDEX_FILE), _mtime(LOCAL_INDEX))
+    if _IDX['sig'] != sig:
+        idx = dict(_load(INDEX_FILE, {}))
+        files = dict(idx.get('files') or {})
+        for k, f in (_load(LOCAL_INDEX, {}).get('files') or {}).items():
+            if k not in files:
+                files[k] = f
+        idx['files'] = files
+        _IDX['sig'], _IDX['idx'] = sig, idx
+    return _IDX['idx']
+
+
+def _names_of(path):
+    _ev, names = sources.parse_xmltv_file(path, set(), 1, names_only=True)
+    return [[cid, nl or [cid]] for cid, nl in sorted(names.items())]
+
+
+def refresh_local(cloud_files, stop=None, force=False):
+    """index the direct epgshare01 files that the cloud does not provide, and files the user
+    dropped into an import folder (…/ArabEPG/import/*.xml[.gz])."""
+    loc = _load(LOCAL_INDEX, {})
+    files = dict(loc.get('files') or {})
+    changed = False
+    for name, url, sats, title in DIRECT_XML:
+        if name in cloud_files:
+            files.pop(name, None)
+            continue
+        f = files.get(name)
+        if f and not force and time.time() - f.get('_t', 0) < 24 * 3600:
+            continue
+        if stop and stop():
+            break
+        path = '/tmp/ArabEPG_direct_%s.xml.gz' % name
+        try:
+            sources.http_download(url, path, timeout=120, stop=stop)
+            files[name] = {'url': url, 'sat': list(sats), 'title': title, 'kind': 'xmltv',
+                           'direct': True, '_t': int(time.time()), 'channels': _names_of(path)}
+            changed = True
+            log(u'مصدر مباشر %s: %d قناة' % (title, len(files[name]['channels'])))
+        except Exception as e:
+            log(u'تعذر تحميل %s (%s)' % (title, e))
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+    seen = set()
+    for d in IMPORT_DIRS:
+        if not os.path.isdir(d):
+            continue
+        for fn in sorted(os.listdir(d)):
+            if not fn.lower().endswith(('.xml', '.xml.gz', '.xmltv', '.gz')):
+                continue
+            p = os.path.join(d, fn)
+            key = 'imp_' + re.sub(r'[^A-Za-z0-9_]', '_', fn.split('.')[0])[:30]
+            seen.add(key)
+            f = files.get(key)
+            if f and f.get('_m') == _mtime(p) and not force:
+                continue
+            try:
+                files[key] = {'url': 'file://' + p, 'sat': ['*'], 'title': u'ملف مستورد ' + u(fn), 'kind': 'xmltv',
+                              'direct': True, '_m': _mtime(p), 'channels': _names_of(p)}
+                changed = True
+                log(u'ملف EPG مستورد %s: %d قناة' % (u(fn), len(files[key]['channels'])))
+            except Exception as e:
+                log(u'تعذر قراءة الملف المستورد %s (%s)' % (u(fn), e))
+    for key in [k for k in files if k.startswith('imp_') and k not in seen]:
+        del files[key]
+        changed = True
+    if changed:
+        _save(LOCAL_INDEX, {'files': files})
+    return files
+
+
+def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True, stop=None):
+    """cloud index + online catalog (when older than max_age), then the direct / imported files."""
+    cloud = _load(INDEX_FILE, {})
+    if use_cloud and (force or not cloud or time.time() - cloud.get('_fetched', 0) >= max_age):
+        try:
+            new = json.loads(sources.http_get(base + 'index.json.gz', timeout=60).decode('utf-8'))
+            new['_fetched'] = int(time.time())
+            _save(INDEX_FILE, new)
+            cloud = new
+            log(u'السحابة: %d ملف (آخر بناء %s)' % (
+                len(new.get('files', {})), time.strftime('%d/%m %H:%M', time.localtime(new.get('generated', 0)))))
+        except Exception as e:
+            if '404' in str(e):
+                log(u'السحابة غير جاهزة بعد (المستودع لم يُرفع أو لم يعمل Actions) - سيتم استخدام المصادر المباشرة')
+            else:
+                log(u'السحابة: تعذر تحميل الفهرس (%s)' % e)
+        try:
+            if force or time.time() - _mtime(CATALOG_FILE) > 24 * 3600:
+                cat = json.loads(sources.http_get(base + 'catalog.json.gz', timeout=60).decode('utf-8'))
+                if isinstance(cat, list) and len(cat) > 100:
+                    _save(CATALOG_FILE, cat)
+                    reset_catalog()
+                    log(u'تم تحديث قائمة القنوات أونلاين: %d قناة' % len(cat))
+        except Exception:
+            pass
+        try:
+            if force or time.time() - _mtime(REFS_FILE) > 24 * 3600:
+                refs = json.loads(sources.http_get(base + 'refs.json.gz', timeout=60).decode('utf-8'))
+                if isinstance(refs, dict) and len(refs) > 100:
+                    _save(REFS_FILE, refs)
+        except Exception:
+            pass
+        try:
+            if force or time.time() - _mtime(LINKED_REFS_FILE) > 24 * 3600:
+                lr = json.loads(sources.http_get(base + 'linked_refs.json', timeout=30).decode('utf-8'))
+                if isinstance(lr, dict):
+                    _save(LINKED_REFS_FILE, lr)
+        except Exception:
+            pass
+    refresh_local(set((cloud.get('files') or {}) if use_cloud else ()), stop, force)
+    return load_index()
+
+
+def _sat_ok(f, sats):
+    fs = set(f.get('sat') or [])
+    return '*' in fs or sats is None or bool(fs & set(sats))
+
+
+def cloud_xml_entries(user_sats):
+    """extra XMLTV channels (cloud / direct / imported) limited to the user's satellites."""
+    out = []
+    for fname, f in (load_index().get('files') or {}).items():
+        if f.get('kind') != 'xmltv' or not _sat_ok(f, user_sats):
+            continue
+        for cid, names in f.get('channels') or []:
+            out.append({'src': 'xml', 'id': u'%s/%s' % (fname, cid), 'names': names or [cid]})
+    return out
+
+
+def xml_files_for_sat(sat):
+    return set('xml:' + fn for fn, f in (load_index().get('files') or {}).items()
+               if f.get('kind') == 'xmltv' and _sat_ok(f, [sat]))
+
+
+_MATCHER = None
+_MATCHER_SIG = None
+
+
+def matcher(user_sats=None):
+    global _MATCHER, _MATCHER_SIG
+    xml = cloud_xml_entries(user_sats)
+    sig = (len(catalog()), len(xml), tuple(sorted(user_sats or [])))
+    if _MATCHER is None or _MATCHER_SIG != sig:
+        _MATCHER = Matcher(list(catalog()) + xml, SOURCE_ORDER)
+        _MATCHER_SIG = sig
+    return _MATCHER
+
+
+# --------------------------------------------------------------------- learning from the user
+def load_learned():
+    d = _load(LEARN_FILE, {})
+    d.setdefault('alias', {})
+    d.setdefault('reject', [])
+    d.setdefault('refs', {})        # '<orbital>:<SID>:<TSID>:<ONID>' -> key  (manual or verified links)
+    return d
+
+
+LINKED_REFS_FILE = os.path.join(DATA_DIR, 'linked_refs.json')   # shared list from the cloud
+
+
+def linked_refs():
+    """confirmed service-reference links: cloud list + what this receiver learned (local wins)."""
+    out = dict(_load(LINKED_REFS_FILE, {}))
+    out.update(load_learned()['refs'])
+    return out
+
+
+def learn_refs(pairs):
+    """remember confirmed links by service reference: [(ref, key), ...]"""
+    d = load_learned()
+    n = 0
+    for ref, key in pairs:
+        rk = ref_key(ref)
+        if rk and key and key != '-' and d['refs'].get(rk) != key:
+            d['refs'][rk] = key
+            n += 1
+    if n:
+        _save(LEARN_FILE, d)
+    return n
+
+
+def learn(name, key, ref=None):
+    """the user linked this channel name to key: use it for every channel with that name."""
+    d = load_learned()
+    n = norm(name)
+    if not n or not key or key in ('-', 'auto'):
+        return
+    if ref and ref_key(ref):
+        d['refs'][ref_key(ref)] = key
+    d['alias'][n] = key
+    d['reject'] = [r for r in d['reject'] if r != [n, key]]
+    _save(LEARN_FILE, d)
+
+
+def reject(name, key):
+    """the user replaced this automatic link: never suggest it again for that name."""
+    d = load_learned()
+    n = norm(name)
+    if n and key and [n, key] not in d['reject']:
+        d['reject'].append([n, key])
+        if d['alias'].get(n) == key:
+            del d['alias'][n]
+        _save(LEARN_FILE, d)
+
+
+# --------------------------------------------------------------------- service reference database
+REFS_FILE = os.path.join(DATA_DIR, 'refs.json')
+_REFS = {'sig': None, 'data': {}}
+
+
+def load_refs():
+    """{'<orbital>:<SID>:<TSID>:<ONID>': [epg ids]} - built-in snapshot, or the newer online copy."""
+    sig = _mtime(REFS_FILE)
+    if _REFS['sig'] != sig:
+        built_in = _load(os.path.join(PLUGIN_DIR, 'refs.json'), {})
+        online = _load(REFS_FILE, {})
+        _REFS['data'] = online if len(online) >= len(built_in) // 2 and online else built_in
+        _REFS['sig'] = sig
+    return _REFS['data']
+
+
+def ref_key(ref):
+    p = u(ref).rstrip(':').split(':')
+    try:
+        if p[0] != '1' or len(p) < 7:
+            return None
+        return u'%X:%X:%X:%X' % (int(p[6], 16) >> 16, int(p[3], 16), int(p[4], 16), int(p[5], 16))
+    except (ValueError, IndexError):
+        return None
+
+
+def clean_epg_id(x):
+    x = re.sub(r'\.[a-z]{2}$', '', u(x).strip())
+    x = re.sub(r'^(logos-_|20\d\d[ _])', '', x)
+    x = re.sub(r'[_.\-]+', ' ', x)
+    return re.sub(r'\s+', ' ', x).strip()
+
+
+# --------------------------------------------------------------------- smart linking
+def _allow_for(enabled, sat):
+    enabled = set(enabled)
+    xml_ok = xml_files_for_sat(sat) if 'xml' in enabled else set()
+    if 'xml' in enabled and sat in ('iptv', 'other', 'terrestrial'):
+        xml_ok = set('xml:' + f for f in (load_index().get('files') or {}))
+
+    def ok(key):
+        src = source_of(key)
+        if src.startswith('xml:'):
+            return src in xml_ok
+        return src in enabled
+    return ok
+
+
+def smart_link(services, enabled, force=False, min_score=0.86):
+    """automatic candidates for every service -> {ref: [(key, score), ...]} (cached)."""
+    sats = list(user_satellites(services))
+    cache = {} if force else _load(AUTO_FILE, {})
+    idx = load_index()
+    learned = load_learned()
+    stamp = u'%d|%s|%d|%d|%s|%s|%d|%d' % (
+        MATCHER_VERSION, u','.join(sorted(enabled)), len(catalog()), len(idx.get('files') or {}),
+        idx.get('generated', 0) // 86400, u','.join(sorted(sats)), int(_mtime(LEARN_FILE)), int(min_score * 100))
+    stamp += u'|%d' % int(_mtime(LINKED_REFS_FILE))
+    stamp += u'|%d' % len(load_refs())
+    if cache.get('_stamp') != stamp:
+        cache = {}
+    m = matcher(sats)
+    refs = load_refs()
+    xml_ids = {}
+    for fname, f in (idx.get('files') or {}).items():
+        if f.get('kind') == 'xmltv':
+            for cid, _n in f.get('channels') or []:
+                xml_ids.setdefault(cid, u'xml:%s/%s' % (fname, cid))
+    rejected = set(tuple(r) for r in learned['reject'])
+    confirmed_refs = linked_refs()
+    out, changed = {}, False
+    allow_cache = {}
+    for ref, name in services:
+        hit = cache.get(ref)
+        if hit and hit[0] == name:
+            out[ref] = [tuple(x) for x in hit[1]]
+            continue
+        sat = sat_of_ref(ref)
+        if sat not in allow_cache:
+            allow_cache[sat] = _allow_for(enabled, sat)
+        ok = allow_cache[sat]
+        n = norm(name)
+        cands = m.match_all(name, ok, min_score=min_score, limit=5)
+        # exact help from the service reference database (same SID/TSID/ONID on the same satellite)
+        ids = refs.get(ref_key(ref) or '', ())
+        if ids:
+            by_ref = {}
+            for i in ids:
+                k = xml_ids.get(i)
+                if k and ok(k):
+                    by_ref[k] = 1.0
+            for cn in set(clean_epg_id(i) for i in ids):
+                for k, sc in m.match_all(cn, ok, min_score=0.99, limit=4):
+                    if sc >= 1.0 and k not in by_ref:
+                        by_ref[k] = 0.99
+            if by_ref:
+                confirmed = [(k, 1.0) for k, _s in cands if k in by_ref]
+                rest = [c for c in cands if c[0] not in by_ref]
+                extra = sorted(((k, sc) for k, sc in by_ref.items() if k not in dict(cands)),
+                               key=lambda kv: (-kv[1], SOURCE_ORDER.index(kv[0].split(':')[0])
+                                               if kv[0].split(':')[0] in SOURCE_ORDER else 99))
+                cands = confirmed + extra + rest   # the service id beats a name that only looks alike
+        cands = [c for c in cands if (n, c[0]) not in rejected]
+        lk = learned['alias'].get(n)
+        if lk and ok(lk):
+            cands = [(lk, 1.0)] + [c for c in cands if c[0] != lk]
+        rk = confirmed_refs.get(ref_key(ref) or '')
+        if rk and ok(rk):   # this exact service was confirmed before (by you, by the satellite guide, or the cloud)
+            cands = [(rk, 1.0)] + [c for c in cands if c[0] != rk]
+        cands = cands[:4]
+        cache[ref] = [name, [list(x) for x in cands]]
+        out[ref] = cands
+        changed = True
+    if changed:
+        cache['_stamp'] = stamp
+        _save(AUTO_FILE, cache)
+    return out
+
+
+def resolve(ref, mapping, auto):
+    """-> (candidates [(key, score)], manual)"""
+    k = mapping.get(ref)
+    if k and (k == '-' or source_of(k).split(':')[0] in SOURCE_ORDER):
+        return ([(k, 1.0)] if k != '-' else [('-', 0)]), True
+    return [c for c in (auto.get(ref) or []) if c[0].split(':')[0] in SOURCE_ORDER], False
+
+
+# --------------------------------------------------------------------- enigma2 side
+def clean_ref(ref):
+    parts = u(ref).split(':')
+    if len(parts) < 10:
+        return None
+    return u':'.join(parts[:10]) + u':'
+
+
+def get_bouquets():
+    """[(bouquet name, [(ref, name), ...]), ...] for all TV bouquets. Main thread only."""
+    from enigma import eServiceCenter, eServiceReference
+    sc = eServiceCenter.getInstance()
+    out = []
+    root = eServiceReference('1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "bouquets.tv" ORDER BY bouquet')
+    lst = sc.list(root)
+    for bref, bname in (lst and lst.getContent('SN', True) or []):
+        items, seen = [], set()
+        sl = sc.list(eServiceReference(bref))
+        for sref, sname in (sl and sl.getContent('SN', True) or []):
+            p = u(sref).split(':')
+            try:
+                if len(p) < 10 or int(p[1] or 0) & 0x40 or p[1] == '7' or p[3] in ('0', ''):
+                    continue
+            except ValueError:
+                continue
+            r = clean_ref(sref)
+            if r and r not in seen:
+                seen.add(r)
+                items.append((r, u(sname).replace(u'\x86', u'').replace(u'\x87', u'').strip()))
+        out.append((u(bname).replace(u'\x86', u'').replace(u'\x87', u'').strip(), items))
+    return out
+
+
+def get_services(bouquets=None):
+    """All TV services from the user's bouquets: [(ref, name)] (deduplicated). Main thread only."""
+    out, seen = [], set()
+    for _b, items in (bouquets if bouquets is not None else get_bouquets()):
+        for r, n in items:
+            if r not in seen:
+                seen.add(r)
+                out.append((r, n))
+    return out
+
+
+def bouquet_stats(bouquets, state, auto=None, mapping=None, rich=None):
+    """per bouquet: channels, linked, updated by the plugin, programmes imported."""
+    filled = state.get('filled', {})
+    rows = []
+    for bname, items in bouquets:
+        n = len(items)
+        upd = [filled[r] for r, _n in items if r in filled]
+        ev = sum(x.get('n', 0) for x in upd)
+        linked = None
+        if auto is not None:
+            linked = 0
+            for r, _n in items:
+                c, _m = resolve(r, mapping or {}, auto)
+                linked += 1 if c and c[0][0] != '-' else 0
+        sat = len([1 for r, _n in items if rich and rich.get(r)]) if rich is not None else None
+        rows.append({'name': bname, 'channels': n, 'updated': len(upd), 'events': ev,
+                     'linked': linked, 'native': sat})
+    return rows
+
+
+def _enc(s):
+    if PY3:
+        return s
+    return s.encode('utf-8') if isinstance(s, unicode) else s  # noqa: F821
+
+
+def epg_count(epgcache, ref, hours=12):
+    try:
+        res = epgcache.lookupEvent(['B', (_enc(ref), 0, int(time.time()), hours * 60)])
+        return len([x for x in (res or []) if x and x[0]])
+    except Exception:
+        return 0
+
+
+def now_next(epgcache, ref):
+    """-> ((title, begin, duration), (title, begin, duration)) or None parts"""
+    try:
+        res = epgcache.lookupEvent(['TBD', (_enc(ref), 0, -1, -1), (_enc(ref), 1, -1, -1)])
+    except Exception:
+        return None, None
+    out = []
+    for x in (res or [])[:2]:
+        out.append((u(x[0]), x[1], x[2]) if x and x[0] else None)
+    while len(out) < 2:
+        out.append(None)
+    return out[0], out[1]
+
+
+def import_events(epgcache, refs, events):
+    if not events:
+        return 0
+    evs = [(int(e[0]), int(e[1]), _enc(e[2]), _enc(e[3]), _enc(e[4]), int(e[5])) for e in events]
+    refs = [_enc(r) for r in refs]
+    if hasattr(epgcache, 'importEvents'):
+        epgcache.importEvents(refs, evs)
+    else:
+        for r in refs:
+            epgcache.importEvent(r, evs)
+    return len(evs)
+
+
+# --------------------------------------------------------------------- backup cache
+class Backup(object):
+    """last good schedule per online channel, used when every source fails."""
+
+    def __init__(self):
+        self.path = os.path.join(cache_dir(), 'events.json.gz')
+        self.data = _load(self.path, {})
+        self.dirty = False
+
+    def get(self, key):
+        now = time.time()
+        return [tuple(e) for e in self.data.get(key, []) if e[0] + e[1] > now]
+
+    def put(self, key, events):
+        now = time.time()
+        old = [e for e in self.data.get(key, []) if e[0] + e[1] > now and e[0] < events[0][0]] if events else []
+        self.data[key] = old + [[e[0], e[1], e[2], e[3], e[4][:300], e[5]] for e in events]
+        self.dirty = True
+
+    def save(self):
+        if not self.dirty:
+            return
+        now = time.time()
+        for k in list(self.data):
+            self.data[k] = [e for e in self.data[k] if e[0] + e[1] > now]
+            if not self.data[k]:
+                del self.data[k]
+        try:
+            d = os.path.dirname(self.path)
+            if not os.path.isdir(d):
+                os.makedirs(d)
+            raw = json.dumps(self.data, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+            with gzip.open(self.path + '.tmp', 'wb') as f:
+                f.write(raw)
+            os.rename(self.path + '.tmp', self.path)
+        except Exception as e:
+            log(u'تعذر حفظ النسخة الاحتياطية: %s' % e)
+
+
+# --------------------------------------------------------------------- fetching (cloud first, then direct)
+class Fetcher(object):
+    def __init__(self, cfg, stop=None, step=None):
+        self.cfg = cfg
+        self.stop = stop
+        self._tl = threading.local()
+        self._default_step = step or (lambda n=1: None)
+        self._locks = {}
+        self._lock = threading.Lock()
+        self.cloud_files = {}   # fname -> local path
+        self.index = load_index()
+        self.cloud_ids = {}
+        for fname, f in (self.index.get('files') or {}).items():
+            self.cloud_ids[fname] = set(c[0] for c in f.get('channels') or [])
+
+    @property
+    def step(self):
+        return getattr(self._tl, 'step', None) or self._default_step
+
+    @step.setter
+    def step(self, fn):
+        self._tl.step = fn
+
+    def _cloud_file(self, fname):
+        with self._lock:
+            lk = self._locks.setdefault(fname, threading.Lock())
+        with lk:
+            return self._cloud_file_locked(fname)
+
+    def _cloud_file_locked(self, fname):
+        if fname in self.cloud_files:
+            return self.cloud_files[fname]
+        f = (self.index.get('files') or {}).get(fname)
+        path = None
+        if f:
+            url = f['url']
+            if url.startswith('file://'):
+                self.cloud_files[fname] = url[7:]
+                return url[7:]
+            if not url.startswith('http'):
+                url = self.cfg['cloud_url'] + url
+            d = os.path.join(cache_dir(), 'files')
+            path = os.path.join(d, fname + '.xml.gz')
+            fresh = os.path.exists(path) and time.time() - _mtime(path) < 6 * 3600 and os.path.getsize(path) > 100
+            if not fresh:   # downloaded files are kept 6 hours: zap updates and re-runs are instant
+                try:
+                    if not os.path.isdir(d):
+                        os.makedirs(d)
+                    sources.http_download(url, path + '.part', timeout=180, stop=self.stop)
+                    os.rename(path + '.part', path)
+                except Exception as e:
+                    log(u'تعذر تحميل ملف %s (%s)' % (fname, e))
+                    path = path if os.path.exists(path) else None   # an older copy is better than none
+        self.cloud_files[fname] = path
+        return path
+
+    def from_cloud(self, fname, ids):
+        path = self._cloud_file(fname)
+        if not path:
+            return {}
+        try:
+            res, _n = sources.parse_xmltv_file(path, set(ids), self.cfg['days'], self.stop)
+            return res
+        except Exception as e:
+            log(u'السحابة: خطأ في قراءة %s (%s)' % (fname, e))
+            return {}
+
+    def cleanup(self):
+        pass   # files stay in the cache folder for 6 hours
+
+    def fetch(self, src, ids):
+        """-> {id: events} for one source; cloud first, missing ones from the site itself."""
+        cfg, days, res = self.cfg, self.cfg['days'], {}
+        ids = list(ids)
+        if src == 'xml':
+            byfile = {}
+            for i in ids:
+                fname, _, cid = i.partition('/')
+                byfile.setdefault(fname, []).append(cid)
+            for fname, cids in byfile.items():
+                for cid, evs in self.from_cloud(fname, cids).items():
+                    res[fname + '/' + cid] = evs
+                self.step(len(cids))
+            return res
+        if src == 'xmltv':
+            for url in cfg['xmltv_urls']:
+                try:
+                    got, _n = sources.grab_xmltv(url, set(ids), days, self.stop)
+                    res.update(got)
+                except Exception as e:
+                    log(u'XMLTV خطأ (%s): %s' % (url, e))
+            self.step(len(ids))
+            return res
+        # Arabic sites: cloud copy first
+        fname = SITE_FILE.get(src)
+        if cfg.get('cloud') and fname in self.cloud_ids:
+            want = [i for i in ids if '%s.%s' % (src, i) in self.cloud_ids[fname]]
+            if want:
+                for cid, evs in self.from_cloud(fname, ['%s.%s' % (src, i) for i in want]).items():
+                    if evs:
+                        res[cid.split('.', 1)[1]] = evs
+                self.step(len([i for i in ids if i in res]))
+        missing = [i for i in ids if not res.get(i)]
+        if missing and src in cfg['sources']:
+            res.update(self.direct(src, missing))
+        return res
+
+    def direct(self, src, ids):
+        cfg, days, stop, res = self.cfg, self.cfg['days'], self.stop, {}
+
+        def chunks(lst, n):
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+
+        if src == 'shahid':
+            for part in chunks(ids, 10):
+                res.update(sources.grab_shahid(part, days, cfg['lang'], cfg['country'], stop))
+                self.step(len(part))
+        elif src == 'osn':
+            for part in chunks(ids, 5):
+                res.update(sources.grab_osn(part, days, cfg['lang'], stop))
+                self.step(len(part))
+        elif src == 'elcinema':
+            for part in chunks(ids, 8):
+                res.update(sources.grab_elcinema(part, days, cfg['elcinema_offset'], stop, workers=4))
+                self.step(len(part))
+        elif src == 'beinsports':
+            res.update(sources.grab_beinsports(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'roya':
+            res.update(sources.grab_roya(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'art':
+            res.update(sources.grab_art(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'ayn':
+            res.update(sources.grab_ayn(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'snrt':
+            res.update(sources.grab_snrt(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'bein':
+            res.update(sources.grab_bein(ids, days, cfg['lang'], stop))
+            self.step(len(ids))
+        elif src == 'rotana':
+            for part in chunks(ids, 3):
+                res.update(sources.grab_rotana(part, days, cfg['lang'], stop))
+                self.step(len(part))
+        elif src == 'aljazeera':
+            res.update(sources.grab_aljazeera(ids, days, stop))
+            self.step(len(ids))
+        return res
+
+
+ARABIC_SOURCES = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt',
+                  'elcinema')
+
+
+def _is_arabic_channel(ref, name, keys):
+    """channels whose guide should be in Arabic (not the English / French feeds)."""
+    low = u(name).lower()
+    if re.search(u'(english|french|\\ben\\b|\\bfr\\b|anglais|إنجليزي|انجليزي)', low) or \
+            any(k == 'aljazeera:aje#' for k in keys[:1]):
+        return False
+    if re.search(u'[\u0600-\u06ff]', name):
+        return True
+    if sat_of_ref(ref) in ('nilesat', 'arabsat'):
+        return True
+    if not keys:
+        return False
+    return keys[0].split(':')[0] in ARABIC_SOURCES
+
+
+def clear_plugin_epg(epgcache, refs, everything=False):
+    """remove the guide of the given services (or the whole EPG cache). -> (cleared, method)"""
+    if everything:
+        epgcache.flushEPG()
+        return len(refs), 'all'
+    done = 0
+    from enigma import eServiceReference
+    for r in refs:
+        p = r.split(':')
+        try:
+            sid, tsid, onid = int(p[3], 16), int(p[4], 16), int(p[5], 16)
+        except (ValueError, IndexError):
+            continue
+        try:
+            epgcache.flushEPG(sid, onid, tsid)
+        except Exception:
+            try:
+                epgcache.flushEPG(eServiceReference(_enc(r)))
+            except Exception:
+                return done, None   # this image cannot clear a single service
+        done += 1
+    return done, 'service'
+
+
+def export_linked_refs(path='/tmp/linked_refs.json'):
+    """all confirmed links by service reference (manual + verified), ready to upload to the cloud repo."""
+    out = dict(load_learned()['refs'])
+    for ref, key in load_mapping().items():
+        rk = ref_key(ref)
+        if rk and key and key != '-':
+            out[rk] = key
+    with open(path, 'wb') as f:
+        f.write(json.dumps(out, ensure_ascii=False, indent=0, sort_keys=True).encode('utf-8'))
+    return path, len(out)
+
+
+def reset_plugin_data():
+    """forget what was imported, the backup copy and the automatic links (manual links stay)."""
+    st = load_state()
+    st['filled'] = {}
+    st.pop('last_stats', None)
+    save_state(st)
+    for p in (AUTO_FILE, os.path.join(cache_dir(), 'events.json.gz')):
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+
+def _event_at(events, t):
+    for e in events or ():
+        if e[0] <= t + 60 < e[0] + e[1]:
+            return e[2]
+    return None
+
+
+def _title_sim(a, b):
+    """similarity of two programme titles (None when one is missing)."""
+    if not a or not b:
+        return None
+    from difflib import SequenceMatcher
+    from .matcher import latin
+    x, y = latin(a), latin(b)
+    if not x or not y:
+        return None
+    if x in y or y in x:
+        return 1.0
+    return SequenceMatcher(None, x, y).ratio()
+
+
+# --------------------------------------------------------------------- copy between copies of one channel
+# Many channels exist several times in one bouquet (SD/HD, Nilesat/Arabsat, backup feeds). Often only
+# one copy carries a guide from the satellite. The guide is copied to the empty copy only when:
+#   * both are in the SAME bouquet (a name can mean a different feed in another bouquet)
+#   * the names are identical after removing HD/SD/FHD/4K/backup... and the numbers agree
+#   * the reference database does not say they are different channels
+#   * if the empty copy shows a "now" title, it matches the donor's "now" title
+#   * if several copies carry a guide, they agree with each other (or the "now" title picks one)
+_COPY_BAD = re.compile(u'(\\+\\s*\\d|plus\\s*\\d|\\bfeed\\b|\\btest\\b|time\\s*shift|\\bpip\\b|'
+                       u'\\b(east|west|europe|usa|us|canada|australia|asia|africa)\\b|اوروبا|أوروبا|امريكا|أمريكا)',
+                       re.I)
+
+
+def copy_key(name):
+    """identity of a channel for copying (None when the name is not safe to compare)."""
+    n = u(name)
+    if not n or _COPY_BAD.search(n):
+        return None
+    k = norm(n)
+    return k if len(k) >= 2 else None
+
+
+def read_events(epgcache, ref, days=3):
+    """the receiver's own guide of a service -> [(begin, duration, title, short, long, 0)]"""
+    now = int(time.time())
+    try:
+        res = epgcache.lookupEvent(['BDTSE', (_enc(ref), 0, now - 3 * 3600, int(days * 1440) + 180)])
+    except Exception:
+        return []
+    out = []
+    for x in res or []:
+        try:
+            if x and x[0] and x[1] and x[2] and int(x[0]) + int(x[1]) > now:
+                out.append((int(x[0]), int(x[1]), u(x[2]), u(x[3] or u''), u(x[4] or u''), 0))
+        except (TypeError, ValueError, IndexError):
+            continue
+    return out
+
+
+def find_copies(epgcache, bouquets, targets=None, days=3, mapping=None):
+    """-> {target ref: {'from': donor ref, 'from_name', 'name', 'bouquet', 'events'}}  (main thread)"""
+    counts, nows, plan = {}, {}, {}
+    refdb = load_refs()
+    mapping = mapping or {}
+
+    def cnt(r):
+        if r not in counts:
+            counts[r] = epg_count(epgcache, r, 24)
+        return counts[r]
+
+    def now_title(r):
+        if r not in nows:
+            nw, _nx = now_next(epgcache, r)
+            nows[r] = nw[0] if nw and nw[0] else None
+        return nows[r]
+
+    def ids(r):
+        return set(clean_epg_id(x).lower() for x in (refdb.get(ref_key(r) or '') or []))
+
+    for bname, items in bouquets:
+        groups = {}
+        for r, n in items:
+            k = copy_key(n)
+            if k:
+                groups.setdefault(k, []).append((r, n))
+        for _k, members in groups.items():
+            if len(members) < 2:
+                continue
+            if targets is not None and not [1 for r, _n in members if r in targets]:
+                continue
+            empty = [m for m in members if (targets is None or m[0] in targets) and m[0] not in plan and
+                     mapping.get(m[0]) != '-' and cnt(m[0]) < 3]
+            if not empty:
+                continue
+            donors = [m for m in members if cnt(m[0]) >= 6]
+            if not donors:
+                continue
+            for tref, tname in empty:
+                cands = list(donors)
+                tid = ids(tref)
+                if tid:   # the reference database knows this service: never copy from a different channel
+                    cands = [d for d in cands if not ids(d[0]) or ids(d[0]) & tid]
+                tnow = now_title(tref)
+                if tnow and norm(tnow) != norm(tname):
+                    cands = [d for d in cands if (_title_sim(tnow, now_title(d[0])) or 0) >= 0.5]
+                    why = u'البرنامج الحالي مختلف'
+                else:
+                    # nothing to compare with: the copies that carry a guide must agree with each other
+                    titles = [now_title(d[0]) for d in cands if now_title(d[0])]
+                    if any((_title_sim(a, b) or 0) < 0.5 for a in titles for b in titles):
+                        cands = []
+                        why = u'النسخ الأخرى تعرض برامج مختلفة'
+                    else:
+                        why = u''
+                if not cands:
+                    if why:
+                        log(u'لم يُنسخ دليل %s (%s): %s' % (tname, bname, why))
+                    continue
+                same_sat = [d for d in cands if sat_of_ref(d[0]) == sat_of_ref(tref)]
+                donor = max(same_sat or cands, key=lambda d: cnt(d[0]))
+                evs = read_events(epgcache, donor[0], days)
+                if len(evs) >= 3:
+                    plan[tref] = {'from': donor[0], 'from_name': donor[1], 'name': tname, 'bouquet': bname,
+                                  'events': evs}
+    return plan
+
+
+# --------------------------------------------------------------------- update job
+class Stage(object):
+    def __init__(self, sid, label, total=1, weight=1.0):
+        self.id, self.label, self.total, self.done = sid, label, max(1, total), 0
+        self.weight, self.state, self.info = weight, 'wait', u''
+
+    def frac(self):
+        return 1.0 if self.state in ('ok', 'fail', 'skip') else min(1.0, float(self.done) / self.total)
+
+
+class Updater(object):
+    running = None
+
+    def __init__(self, cfg, refs=None, extra=None, quiet=False):
+        self.cfg = cfg
+        self.only_refs = refs
+        self.extra = extra or []
+        self.quiet = quiet
+        self.done = False
+        self.cancel = False
+        self.stages = []
+        self.started = time.time()
+        self._pct = 0.0
+        self.stats = {'channels': 0, 'events': 0, 'failed': 0, 'backup': 0, 'skipped': 0}
+        self.summary = []
+
+    # ---- progress API (read by the screen)
+    @property
+    def progress(self):
+        st = [s for s in self.stages if s.state == 'run']
+        return st[-1].label if st else (u'تم' if self.done else u'...')
+
+    def percent(self):
+        tw = sum(s.weight for s in self.stages) or 1.0
+        p = sum(s.weight * s.frac() for s in self.stages) / tw * 100.0
+        self._pct = max(self._pct, min(p, 100.0 if self.done else 99.0))
+        return int(self._pct)
+
+    def eta(self):
+        p = self.percent()
+        if self.done or p < 3:
+            return None
+        el = time.time() - self.started
+        return int(el * (100 - p) / p)
+
+    def stage(self, sid, label, total=1, weight=1.0, wait=False):
+        for s in self.stages:
+            if s.id == sid:
+                if s.state != 'wait':
+                    s.total += max(0, total)
+                s.state = 'wait' if wait else 'run'
+                return s
+        s = Stage(sid, label, total, weight)
+        s.state = 'wait' if wait else 'run'
+        self.stages.append(s)
+        return s
+
+    def stop(self):
+        return self.cancel
+
+    def _translate(self, tjobs, results):
+        """English guides of Arabic channels -> Arabic titles (cached, limited per day by the provider)."""
+        if not tjobs:
+            return
+        from .translate import Translator
+        cfg = self.cfg
+        tr = Translator(os.path.join(cache_dir(), 'translations.json.gz'), cfg.get('tr_provider', 'mymemory'),
+                        cfg.get('tr_email', ''), cfg.get('tr_url', ''), cfg.get('tr_key', ''))
+        keys = list(set(j['key'] for j in tjobs if j['key']))
+        now = time.time()
+        texts = []
+        for k in keys:   # nearest programmes first, so today's guide is translated first
+            for e in sorted(results.get(k) or [], key=lambda e: e[0]):
+                if e[0] + e[1] > now:
+                    texts.append((e[0], e[2]))
+                    if e[3] and len(e[3]) < 80:
+                        texts.append((e[0], e[3]))
+        texts = [t for _s, t in sorted(texts)]
+        st = self.stage('translate', u'ترجمة الدليل الإنجليزي إلى العربية', 1, 3)
+        added = tr.translate_many(texts, cfg.get('tr_limit', 1500), self.stop)
+        done = 0
+        for k in keys:
+            results[k], n = tr.apply(results.get(k) or [])
+            done += n
+        tr.save()
+        st.done, st.state = 1, 'ok'
+        st.info = u'%d عنوان' % done
+        log(u'الترجمة: %d ترجمة جديدة، %d برنامج أصبح بالعربي (الذاكرة: %d)' % (added, done, len(tr.cache)))
+
+    # ---- start (main thread: enigma2 objects only)
+    def start(self):
+        if Updater.running and not Updater.running.done:
+            log(u'تحديث آخر قيد التشغيل بالفعل')
+            return False
+        try:
+            if os.path.getsize('/tmp/ArabEPG.log') > 300000:
+                os.remove('/tmp/ArabEPG.log')
+        except Exception:
+            pass
+        try:
+            from enigma import eEPGCache
+            self.epgcache = eEPGCache.getInstance()
+            self.bouquets = get_bouquets()
+            self.services = get_services(self.bouquets)
+            known = set(r for r, _n in self.services)
+            for r, n in self.extra:            # e.g. a channel being watched that is in no bouquet
+                if r not in known:
+                    self.services.append((r, n))
+            if self.only_refs is not None:
+                self.services = [s for s in self.services if s[0] in self.only_refs]
+            # what the satellite itself says is on now: used to verify the automatic links
+            self.native = {}
+            if self.cfg.get('verify', True):
+                for ref, name in self.services:
+                    nw, _nx = now_next(self.epgcache, ref)
+                    if nw and nw[0] and norm(nw[0]) != norm(name):
+                        self.native[ref] = nw
+            self.present = {}
+            if self.cfg.get('smart'):
+                for r in load_state()['filled']:
+                    self.present[r] = epg_count(self.epgcache, r, 24) > 0
+            self.copies = {}
+            if self.cfg.get('copy_epg', True):
+                try:
+                    self.copies = find_copies(self.epgcache, self.bouquets,
+                                              set(r for r, _n in self.services) if self.only_refs is not None
+                                              else None, self.cfg.get('days', 3), load_mapping())
+                except Exception as e:
+                    log(u'نسخ الدليل بين نسخ القناة: %s' % e)
+            self.rich = {}
+            if self.cfg['target'] == 'missing':
+                filled = load_state()['filled']
+                for ref, _n in self.services:
+                    if ref not in filled:
+                        self.rich[ref] = epg_count(self.epgcache, ref) >= 4
+        except Exception as e:
+            log(u'خطأ في قراءة القنوات: %s' % e)
+            return False
+        Updater.running = self
+        t = threading.Thread(target=self._run, name='ArabEPG')
+        t.daemon = True
+        t.start()
+        return True
+
+    def _run(self):
+        backup = None
+        fetcher = None
+        try:
+            cfg = self.cfg
+            # 1. preparation
+            s = self.stage('prep', u'تجهيز: السحابة وقائمة القنوات', 1, 2)
+            sats = user_satellites(self.services)
+            log(u'الأقمار في باقاتك: ' + u'، '.join(u'%s (%d)' % (SAT_TITLES.get(k, k), n)
+                                                       for k, n in sorted(sats.items(), key=lambda x: -x[1])))
+            refresh_cloud(cfg['cloud_url'], use_cloud=cfg.get('cloud'), stop=self.stop)
+            s.done, s.state = 1, 'ok'
+
+            # 2. linking
+            s = self.stage('link', u'الربط الذكي للقنوات', len(self.services), 3)
+            enabled = list(cfg['sources']) + ['xml']
+            auto = smart_link(self.services, enabled, min_score=cfg.get('min_score', 0.86))
+            mapping = load_mapping()
+            state = load_state()
+            now = time.time()
+            jobs = []
+            arabic_mode = cfg.get('lang_mode', 'ar_only') != 'any'
+            for ref, name in self.services:
+                cands, manual = resolve(ref, mapping, auto)
+                s.done += 1
+                if cands and cands[0][0] == '-':
+                    continue
+                if not cands:
+                    continue
+                if not manual and self.rich.get(ref):
+                    continue
+                if cfg.get('smart') and self.present.get(ref) and state['filled'].get(ref, {}).get('until', 0) > \
+                        now + max(0.5, cfg['days'] - 1.5) * 86400:
+                    self.stats['skipped'] += 1
+                    continue
+                keys = [c[0] for c in cands]
+                arabic = arabic_mode and _is_arabic_channel(ref, name, keys)
+                if arabic:   # official Arabic sites first, mixed-language files last
+                    keys = [k for k in keys if not k.startswith('xml:')] + [k for k in keys if k.startswith('xml:')]
+                jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None})
+            s.state = 'ok'
+            s.info = u'%d قناة' % len(jobs)
+            log(u'قنوات الباقات: %d | سيتم تحديث: %d | تم تخطي (دليلها حديث): %d' % (
+                len(self.services), len(jobs), self.stats['skipped']))
+
+            # 3. fetch: up to 3 rounds (first choice, then alternatives)
+            results = {}
+            fetcher = Fetcher(cfg, self.stop)
+            rounds = max([len(j['cands']) for j in jobs] or [1])
+            self.offline = False
+            for rnd in range(min(rounds, 4)):
+                if self.cancel or self.offline:
+                    break
+                need = {}
+                for j in jobs:
+                    if j['key'] is None and len(j['cands']) > rnd:
+                        k = j['cands'][rnd]
+                        if k not in results:
+                            src, _, cid = k.partition(':')
+                            need.setdefault(src, set()).add(cid)
+                # bulk sources return many channels per request: take the later alternatives along now
+                for j in jobs:
+                    if j['key'] is None:
+                        for k in j['cands'][rnd + 1:]:
+                            src, _, cid = k.partition(':')
+                            if src in BULK_SOURCES and src in need and k not in results:
+                                need[src].add(cid)
+                if rnd and need:
+                    log(u'مصادر بديلة: محاولة %d لـ %d قناة' % (rnd + 1, sum(len(v) for v in need.values())))
+                order = sorted(need, key=lambda x: SOURCE_ORDER.index(x) if x in SOURCE_ORDER else 99)
+                for src in order:  # show every source of this round in the list right away
+                    self.stage('src_%s_%d' % (src, rnd), SOURCE_NAMES.get(src, src) + (u' (بديل)' if rnd else u''),
+                               len(need[src]), 1 + len(need[src]) / 10.0, wait=True)
+                lock = threading.Lock()
+
+                def run_source(src, rnd=rnd):
+                    ids = sorted(need[src])
+                    label = SOURCE_NAMES.get(src, src) + (u' (بديل)' if rnd else u'')
+                    st = self.stage('src_%s_%d' % (src, rnd), label, len(ids), 1 + len(ids) / 10.0)
+
+                    def step(n=1, st=st):
+                        st.done += n
+                    fetcher.step = step
+                    try:
+                        got = fetcher.fetch(src, ids)
+                    except Exception as e:
+                        log(u'%s: %s' % (label, e))
+                        got = {}
+                    ok = 0
+                    with lock:
+                        for cid in ids:
+                            evs = got.get(cid) or []
+                            results[src + ':' + cid] = evs
+                            ok += 1 if evs else 0
+                    st.done = st.total
+                    st.state = 'ok' if ok else 'fail'
+                    st.info = u'%d/%d' % (ok, len(ids))
+                    log(u'%s: %d/%d قناة بها بيانات' % (label, ok, len(ids)))
+
+                # independent sources run side by side (at most 4 at a time)
+                pending = list(order)
+                while pending and not self.cancel:
+                    if sources.NET['dns_fail'] >= 3:
+                        log(u'انقطاع في الإنترنت/DNS - انتظار عودة الاتصال...')
+                        if not sources.wait_network(self.stop):
+                            log(u'لا يوجد اتصال بالإنترنت - تم إيقاف الجلب، وستُستخدم النسخة الاحتياطية')
+                            self.offline = True
+                            break
+                        sources.NET['dns_fail'] = 0
+                    batch, pending = pending[:4], pending[4:]
+                    threads = [threading.Thread(target=run_source, args=(x,)) for x in batch]
+                    for t in threads:
+                        t.daemon = True
+                        t.start()
+                    for t in threads:
+                        t.join()
+                for j in jobs:
+                    if j['key'] is None:
+                        for k in j['cands'][:rnd + 1]:
+                            evs = results.get(k)
+                            if not evs:
+                                continue
+                            # official channel sites are trusted as they are; other files must be Arabic
+                            if j['arabic'] and k.split(':')[0] not in ARABIC_SOURCES and \
+                                    sources.arabic_ratio(evs) < 0.6:
+                                j['alt'] = j['alt'] or k     # data exists, but not in Arabic
+                                continue
+                            j['key'] = k
+                            break
+            if arabic_mode:
+                not_ar = [j for j in jobs if j['key'] is None and j['alt']]
+                if cfg.get('lang_mode') in ('ar_first', 'translate'):
+                    for j in not_ar:
+                        j['key'] = j['alt']
+                        j['translate'] = cfg.get('lang_mode') == 'translate'
+                if not_ar:
+                    log(u'قنوات لم يُعثر لها على دليل عربي: %d%s' % (
+                        len(not_ar), {'ar_first': u' (استُخدم الدليل الإنجليزي)',
+                                      'translate': u' (سيُترجم الدليل الإنجليزي إلى العربية)'}.get(
+                            cfg.get('lang_mode'), u' (لم تُحدَّث - الوضع: عربي فقط)')))
+                    self.stats['non_arabic'] = len(not_ar)
+                    for j in not_ar:
+                        j['non_arabic'] = True
+                if cfg.get('lang_mode') == 'translate' and not self.cancel:
+                    self._translate([j for j in jobs if j.get('translate')], results)
+
+            # 4. verify the links against what the satellite says is on now
+            verified_pairs, fixed_pairs = [], []
+            if self.native:
+                checked = fixed = 0
+                for j in jobs:
+                    nat = self.native.get(j['ref'])
+                    if not nat or not j['key']:
+                        continue
+                    sim = _title_sim(nat[0], _event_at(results.get(j['key']), nat[1]))
+                    if sim is None:
+                        continue
+                    checked += 1
+                    j['verified'] = sim >= 0.5
+                    if j['verified']:
+                        verified_pairs.append((j['ref'], j['key']))
+                    if sim < 0.2:
+                        for k in j['cands']:
+                            if k != j['key'] and (_title_sim(nat[0], _event_at(results.get(k), nat[1])) or 0) >= 0.6:
+                                log(u'تصحيح الربط بمقارنة دليل القمر: %s ← %s' % (j['name'], display_key(k)))
+                                j['key'] = k
+                                fixed_pairs.append((j['ref'], k))
+                                fixed += 1
+                                break
+                if checked:
+                    log(u'التحقق بدليل القمر: %d قناة، متطابقة %d، تم تصحيح %d' % (
+                        checked, len([1 for j in jobs if j.get('verified')]), fixed))
+
+            # 5. backup for the rest
+            backup = Backup()
+            for k, evs in results.items():
+                if evs:
+                    backup.put(k, evs)
+            missing = [j for j in jobs if j['key'] is None]
+            if missing:
+                s = self.stage('backup', u'النسخة الاحتياطية للقنوات المتعثرة', len(missing), 1)
+                for j in missing:
+                    for k in j['cands']:
+                        evs = backup.get(k)
+                        if evs and j['arabic'] and k.split(':')[0] not in ARABIC_SOURCES and \
+                                sources.arabic_ratio(evs) < 0.6:
+                            continue
+                        if evs:
+                            j['key'], j['backup'] = k, True
+                            results[k] = evs
+                            self.stats['backup'] += 1
+                            break
+                    s.done += 1
+                s.state = 'ok'
+                if self.stats['backup']:
+                    log(u'تم استخدام النسخة الاحتياطية لـ %d قناة' % self.stats['backup'])
+
+            # 6. import
+            groups = {}
+            for j in jobs:
+                if j['key']:
+                    groups.setdefault(j['key'], []).append(j['ref'])
+                else:
+                    self.stats['failed'] += 1
+            s = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
+            now = int(time.time())
+            for key, refs in groups.items():
+                if self.cancel:
+                    break
+                evs = results.get(key) or []
+                try:
+                    n = import_events(self.epgcache, refs, evs)
+                    self.stats['channels'] += len(refs)
+                    self.stats['events'] += n
+                    until = max(e[0] + e[1] for e in evs)
+                    for r in refs:
+                        state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
+                except Exception as e:
+                    self.stats['failed'] += len(refs)
+                    log(u'فشل الاستيراد %s: %s' % (key, e))
+                s.done += 1
+            s.state = 'ok'
+
+            # 7. copies of the same channel in the same bouquet that are still empty
+            got_guide = set(r for refs in groups.values() for r in refs)
+            copies = [(t, c) for t, c in self.copies.items() if t not in got_guide]
+            n_copied = 0
+            if copies and not self.cancel:
+                s = self.stage('copy', u'نسخ الدليل من نسخة أخرى لنفس القناة', len(copies), 1)
+                for t, c in copies:
+                    try:
+                        n = import_events(self.epgcache, [t], c['events'])
+                        state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'], 't': now,
+                                              'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
+                        self.stats['channels'] += 1
+                        self.stats['events'] += n
+                        n_copied += 1
+                        log(u'نسخ الدليل: %s ← %s (%s، %d برنامج)' % (c['name'], c['from_name'], c['bouquet'], n))
+                    except Exception as e:
+                        log(u'فشل نسخ دليل %s: %s' % (c['name'], e))
+                    s.done += 1
+                s.state = 'ok'
+                s.info = u'%d قناة' % n_copied
+            self.stats['copied'] = n_copied
+            copied_refs = set(t for t, _c in copies if t in state['filled'] and
+                              u(state['filled'][t].get('key', '')).startswith('copy:'))
+            for j in jobs:
+                if not j['key'] and j['ref'] in copied_refs:
+                    self.stats['failed'] -= 1
+                    j['copied'] = True
+            try:
+                self.epgcache.save()
+            except Exception:
+                pass
+            state['last'] = now
+            state['last_stats'] = self.stats
+            state['non_arabic'] = [j['name'] for j in jobs if j.get('non_arabic')][:300]
+            n_learn = learn_refs(verified_pairs + [(r, k) for r, k in fixed_pairs])
+            if n_learn:
+                log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
+            save_state(state)
+            failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied')]
+            self.summary = [
+                u'تم تحديث %d قناة (%d برنامج) خلال %d ثانية' % (
+                    self.stats['channels'], self.stats['events'], time.time() - self.started),
+                u'من النسخة الاحتياطية: %d | لم تُحدَّث: %d | تخطي (حديثة): %d' % (
+                    self.stats['backup'], self.stats['failed'], self.stats['skipped'])]
+            if n_copied:
+                self.summary.append(u'نُسخ الدليل من نسخة أخرى لنفس القناة (نفس الباقة): %d قناة' % n_copied)
+            bq = sorted([b for b in bouquet_stats(self.bouquets, state) if b['events']],
+                        key=lambda b: -b['events'])
+            if bq:
+                self.summary.append(u'البرامج لكل باقة: ' + u'، '.join(
+                    u'%s %d' % (b['name'], b['events']) for b in bq[:8]) + (u' ...' if len(bq) > 8 else u''))
+            if failed_names:
+                self.summary.append(u'بدون بيانات: ' + u'، '.join(failed_names[:15]) +
+                                    (u' ...' if len(failed_names) > 15 else u''))
+            for line in self.summary:
+                log(line)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            log(u'خطأ عام: %s' % e)
+            self.summary = [u'خطأ: %s' % e]
+        finally:
+            try:
+                if backup:
+                    backup.save()
+            except Exception:
+                pass
+            if fetcher:
+                fetcher.cleanup()
+            for s in self.stages:
+                if s.state == 'run':
+                    s.state = 'ok' if not self.cancel else 'skip'
+            self.done = True
+
+
+# --------------------------------------------------------------------- helpers for screens
+def fetch_preview(key, cfg):
+    src, _, cid = key.partition(':')
+    refresh_cloud(cfg['cloud_url'], use_cloud=cfg.get('cloud'))
+    f = Fetcher(cfg)
+    try:
+        return f.fetch(src, [cid]).get(cid, [])
+    finally:
+        f.cleanup()
+
+
+def test_sources(cfg):
+    out = []
+    t = time.time()
+    idx = refresh_cloud(cfg['cloud_url'], force=True, use_cloud=cfg.get('cloud'))
+    files = idx.get('files') or {}
+    cloud = [k for k, f in files.items() if not f.get('direct')]
+    if cfg.get('cloud'):
+        if cloud:
+            out.append(u'السحابة: تعمل - %d ملف، آخر بناء %s' % (
+                len(cloud), time.strftime('%d/%m %H:%M', time.localtime(idx.get('generated', 0)))))
+        else:
+            out.append(u'السحابة: غير جاهزة بعد - ارفع المستودع على GitHub وشغّل Build EPG')
+    for k, f in sorted(files.items()):
+        if f.get('direct'):
+            out.append(u'%s: %d قناة' % (f.get('title', k), len(f.get('channels') or [])))
+    out.append(u'(%.1f ث)' % (time.time() - t))
+    checks = [
+        ('Shahid/MBC (MBC Masr)', lambda: sources.grab_shahid(['387290'], 1, cfg['lang'], cfg['country']).get('387290')),
+        ('OSN (OSN Kids)', lambda: sources.grab_osn(['4506'], 1, cfg['lang']).get('4506')),
+        ('elCinema (CBC)', lambda: sources.grab_elcinema(['1198'], 2, cfg['elcinema_offset']).get('1198')),
+        ('beIN SPORTS (beIN SPORTS 1)', lambda: sources.grab_beinsports(
+            ['7836FEA9-6B39-4A1A-8352-DC5FCB97A16C'], 1).get('7836FEA9-6B39-4A1A-8352-DC5FCB97A16C')),
+        ('Roya (Roya TV)', lambda: sources.grab_roya(['1'], 1).get('1')),
+        ('ART (Aflam 1)', lambda: sources.grab_art(['#'], 1).get('#')),
+        ('Oman TV', lambda: sources.grab_ayn([u'158/قناة-عمان-العامة'], 2).get(u'158/قناة-عمان-العامة')),
+        ('SNRT (Al Aoula)', lambda: sources.grab_snrt(['1208'], 2).get('1208')),
+        ('beIN (Alkass One)', lambda: sources.grab_bein(['sports#33'], 1, cfg['lang']).get('sports#33')),
+        ('Rotana (Rotana Drama)', lambda: sources.grab_rotana(['436'], 2, cfg['lang']).get('436')),
+        ('Al Jazeera', lambda: sources.grab_aljazeera(['aja#'], 2).get('aja#')),
+    ]
+    for name, fn in checks:
+        t = time.time()
+        try:
+            evs = fn() or []
+            out.append(u'%s: %s (%d برنامج، %.1f ث)' % (name, u'يعمل' if evs else u'لا توجد بيانات', len(evs),
+                                                         time.time() - t))
+            if evs:
+                e = [x for x in evs if x[0] + x[1] > time.time()][:1] or evs[:1]
+                out.append(u'    مثال: %s %s' % (time.strftime('%d/%m %H:%M', time.localtime(e[0][0])), e[0][2]))
+        except Exception as e:
+            out.append(u'%s: فشل - %s' % (name, e))
+    for line in out:
+        log(line)
+    return out
+
+
+def check_plugin_update(current):
+    """-> version info dict when a newer package is published, else None"""
+    try:
+        info = json.loads(sources.http_get(VERSION_URL, timeout=20).decode('utf-8'))
+    except Exception as e:
+        log(u'تعذر التحقق من تحديث البلوجين: %s' % e)
+        return None
+
+    def v(x):
+        return tuple(int(p) for p in str(x).split('.') if p.isdigit())
+    return info if v(info.get('version', '0')) > v(current) else None
+
+
+def install_plugin_update(info):
+    """download the ipk and install it with opkg. -> (ok, message)"""
+    import subprocess
+    path = '/tmp/arabepg_update.ipk'
+    try:
+        sources.http_download(info['ipk'], path, timeout=60)
+        p = subprocess.Popen(['opkg', 'install', '--force-reinstall', '--force-overwrite', path],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        out, _ = p.communicate()
+        return p.returncode == 0, u(out)[-600:]
+    except Exception as e:
+        return False, u(e)
+
+
+__all__ = ['norm']

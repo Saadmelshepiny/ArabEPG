@@ -1,0 +1,794 @@
+{
+ "shahid:387238": [
+  "MBC",
+  "MBC 1",
+  "MBC One",
+  "MBC1 KSA",
+  "ام بي سي 1"
+ ],
+ "shahid:400917": [
+  "MBC 2",
+  "ام بي سي 2"
+ ],
+ "shahid:409385": [
+  "MBC 3",
+  "MBC3 Kids"
+ ],
+ "shahid:400919": [
+  "MBC 4",
+  "ام بي سي 4"
+ ],
+ "shahid:387937": [
+  "MBC 5",
+  "MBC5 Maghreb"
+ ],
+ "shahid:400921": [
+  "MBC Action",
+  "ام بي سي اكشن"
+ ],
+ "shahid:400924": [
+  "MBC Max",
+  "ام بي سي ماكس"
+ ],
+ "shahid:387251": [
+  "MBC Drama",
+  "ام بي سي دراما"
+ ],
+ "shahid:387296": [
+  "MBC Drama+",
+  "MBC Drama Plus",
+  "MBC+ Drama",
+  "MBC Plus Drama",
+  "MBC+ دراما"
+ ],
+ "shahid:387290": [
+  "MBC Masr",
+  "MBC Misr",
+  "MBC Egypt",
+  "ام بي سي مصر"
+ ],
+ "shahid:387293": [
+  "MBC Masr 2",
+  "MBC Misr 2",
+  "MBC Egypt 2",
+  "ام بي سي مصر 2"
+ ],
+ "shahid:49923122575716": [
+  "MBC Masr Drama",
+  "MBC Misr Drama",
+  "ام بي سي مصر دراما"
+ ],
+ "shahid:387294": [
+  "MBC Iraq",
+  "ام بي سي العراق"
+ ],
+ "shahid:409387": [
+  "MBC Bollywood",
+  "ام بي سي بوليوود"
+ ],
+ "shahid:387286": [
+  "Al Arabiya",
+  "Alarabiya",
+  "العربية"
+ ],
+ "shahid:387288": [
+  "Al Hadath",
+  "Alhadath",
+  "Al Arabiya Al Hadath",
+  "العربية الحدث"
+ ],
+ "shahid:946938": [
+  "Saudi TV",
+  "Saudi 1",
+  "KSA 1",
+  "Al Saudiya",
+  "السعودية الاولى"
+ ],
+ "shahid:946948": [
+  "Al Ekhbariya",
+  "Saudi News",
+  "الاخبارية"
+ ],
+ "shahid:946946": [
+  "Saudi Quran",
+  "KSA Quran",
+  "Al Quran Al Kareem KSA",
+  "قناة القران الكريم السعودية"
+ ],
+ "shahid:946942": [
+  "Saudi Sunnah",
+  "KSA Sunnah",
+  "Al Sunnah",
+  "قناة السنة النبوية"
+ ],
+ "shahid:409390": [
+  "Spacetoon",
+  "Spacetoon Arabic",
+  "سبيستون"
+ ],
+ "shahid:946940": [
+  "SBC",
+  "SBC KSA",
+  "اس بي سي"
+ ],
+ "shahid:414449": [
+  "Wanasah",
+  "Wanasa",
+  "وناسة"
+ ],
+ "shahid:862837": [
+  "Asharq News",
+  "Asharq",
+  "الشرق للاخبار"
+ ],
+ "shahid:49923697660442": [
+  "Iqraa",
+  "Iqraa TV",
+  "اقرأ"
+ ],
+ "shahid:995495": [
+  "Saudi Thaqafiya",
+  "Al Thaqafiya KSA",
+  "الثقافية"
+ ],
+ "shahid:988045": [
+  "Maraya"
+ ],
+ "shahid:49923518527492": [
+  "MTV Lebanon",
+  "MTV Lebanon HD"
+ ],
+ "shahid:49923775805582": [
+  "Syria TV",
+  "Al Souriya",
+  "Syrian TV",
+  "السورية"
+ ],
+ "elcinema:1101": [
+  "Al Oula",
+  "Egypt 1",
+  "ERTU 1",
+  "Channel 1",
+  "Al Ula",
+  "القناة الاولى",
+  "الاولى المصرية",
+  "مصر الاولى"
+ ],
+ "elcinema:1119": [
+  "Al Masriya",
+  "Egyptian Satellite",
+  "ESC",
+  "ESC 1",
+  "Egypt Sat",
+  "Al Fadaiya Al Masriya",
+  "الفضائية المصرية",
+  "المصرية"
+ ],
+ "elcinema:1137": [
+  "Al Hayah",
+  "Al Hayat",
+  "Alhayah",
+  "Al Hayah 1",
+  "Al Hayat 1",
+  "Alhayat",
+  "الحياة"
+ ],
+ "elcinema:1145": [
+  "Al Mehwar",
+  "Mehwar",
+  "Al Mihwar",
+  "El Mehwar",
+  "المحور"
+ ],
+ "elcinema:1174": [
+  "Al Kahera Wal Nas",
+  "Alkahera Walnas",
+  "Cairo and People",
+  "القاهرة والناس"
+ ],
+ "elcinema:1252": [
+  "Al Kahera Wal Nas 2",
+  "القاهرة والناس 2"
+ ],
+ "elcinema:1193": [
+  "Al Nahar",
+  "Alnahar",
+  "Al Nahar TV",
+  "Al Nahar Egypt",
+  "النهار"
+ ],
+ "elcinema:1223": [
+  "Al Nahar Drama",
+  "النهار دراما"
+ ],
+ "elcinema:1198": [
+  "CBC",
+  "CBC Egypt",
+  "سي بي سي"
+ ],
+ "elcinema:1199": [
+  "CBC Drama",
+  "سي بي سي دراما"
+ ],
+ "elcinema:1260": [
+  "CBC Sofra",
+  "سي بي سي سفرة"
+ ],
+ "elcinema:1203": [
+  "ON",
+  "ON E",
+  "ON TV",
+  "ON Ent",
+  "أون",
+  "اون"
+ ],
+ "elcinema:1134": [
+  "ON Drama",
+  "اون دراما"
+ ],
+ "elcinema:1226": [
+  "Sada El Balad",
+  "Sada Elbalad",
+  "Sada Al Balad",
+  "Sada Albalad",
+  "صدى البلد"
+ ],
+ "elcinema:1279": [
+  "Sada El Balad 2",
+  "Sada Elbalad 2",
+  "صدى البلد 2"
+ ],
+ "elcinema:1227": [
+  "Sada El Balad Drama",
+  "Sada Elbalad Drama",
+  "صدى البلد دراما"
+ ],
+ "elcinema:1290": [
+  "DMC",
+  "DMC Egypt",
+  "دي ام سي"
+ ],
+ "elcinema:1292": [
+  "DMC Drama",
+  "دي ام سي دراما"
+ ],
+ "elcinema:1280": [
+  "TEN",
+  "Ten TV",
+  "Al Tahrir",
+  "تن"
+ ],
+ "elcinema:1156": [
+  "Nile Drama",
+  "نايل دراما"
+ ],
+ "elcinema:1159": [
+  "Nile Life",
+  "نايل لايف"
+ ],
+ "elcinema:1336": [
+  "Maspero Zaman",
+  "ماسبيرو زمان"
+ ],
+ "elcinema:1176": [
+  "Cima",
+  "Cima TV",
+  "سيما"
+ ],
+ "elcinema:1147": [
+  "Rotana Drama",
+  "روتانا دراما"
+ ],
+ "elcinema:1148": [
+  "Rotana Cinema Egypt",
+  "Rotana Cinema Masr",
+  "روتانا سينما مصر"
+ ],
+ "elcinema:1289": [
+  "Rotana Cinema",
+  "Rotana Cinema KSA",
+  "روتانا سينما"
+ ],
+ "elcinema:1217": [
+  "Rotana Classic",
+  "روتانا كلاسيك"
+ ],
+ "elcinema:1358": [
+  "Rotana Comedy",
+  "روتانا كوميدي"
+ ],
+ "elcinema:1149": [
+  "Rotana Khalijia",
+  "Rotana Khaleejia",
+  "Rotana Khalejia",
+  "روتانا خليجية"
+ ],
+ "elcinema:1135": [
+  "Al Emarat",
+  "Emarat TV",
+  "Emirates TV",
+  "قناة الامارات"
+ ],
+ "elcinema:1136": [
+  "Abu Dhabi",
+  "Abu Dhabi TV",
+  "AD TV",
+  "ابوظبي",
+  "أبوظبي"
+ ],
+ "elcinema:1169": [
+  "Dubai",
+  "Dubai TV",
+  "دبي"
+ ],
+ "elcinema:1173": [
+  "Dubai One",
+  "دبي ون"
+ ],
+ "elcinema:1177": [
+  "Sama Dubai",
+  "سما دبي"
+ ],
+ "elcinema:1283": [
+  "Dubai Zaman",
+  "دبي زمان"
+ ],
+ "elcinema:1188": [
+  "Sharjah",
+  "Sharjah TV",
+  "الشارقة"
+ ],
+ "elcinema:1264": [
+  "Al Dafrah",
+  "Al Dhafra",
+  "الظفرة"
+ ],
+ "elcinema:1302": [
+  "Fujairah",
+  "الفجيرة"
+ ],
+ "elcinema:1168": [
+  "LBCI",
+  "LBC International"
+ ],
+ "elcinema:1341": [
+  "LBC",
+  "LBC Sat",
+  "LBC Europe"
+ ],
+ "elcinema:1216": [
+  "Al Jadeed",
+  "New TV",
+  "الجديد"
+ ],
+ "elcinema:1321": [
+  "Al Manar",
+  "المنار"
+ ],
+ "elcinema:1298": [
+  "Amman TV",
+  "عمان تي في"
+ ],
+ "elcinema:1299": [
+  "Roya",
+  "Roya TV",
+  "رؤيا"
+ ],
+ "elcinema:1314": [
+  "Jordan TV",
+  "Jordan",
+  "الاردنية"
+ ],
+ "elcinema:1310": [
+  "Kuwait",
+  "KTV",
+  "KTV 1",
+  "Kuwait TV",
+  "الكويت"
+ ],
+ "elcinema:1319": [
+  "Qatar",
+  "Qatar TV",
+  "قطر"
+ ],
+ "elcinema:1317": [
+  "Oman",
+  "Oman TV",
+  "عمان"
+ ],
+ "elcinema:1368": [
+  "Bahrain",
+  "Bahrain TV",
+  "البحرين"
+ ],
+ "elcinema:1349": [
+  "Al Iraqia",
+  "Iraqiya",
+  "العراقية"
+ ],
+ "elcinema:1301": [
+  "Al Sumaria",
+  "Alsumaria",
+  "السومرية"
+ ],
+ "elcinema:1269": [
+  "Al Sharqiya",
+  "الشرقية"
+ ],
+ "elcinema:1385": [
+  "Dijlah",
+  "Dijlah TV",
+  "دجلة"
+ ],
+ "elcinema:1306": [
+  "Al Rasheed",
+  "الرشيد"
+ ],
+ "elcinema:1312": [
+  "Al Aoula",
+  "Al Aoula Maroc",
+  "الاولى المغربية"
+ ],
+ "elcinema:1353": [
+  "2M",
+  "2M Maroc",
+  "2M Monde"
+ ],
+ "elcinema:1304": [
+  "Nessma",
+  "نسمة"
+ ],
+ "elcinema:1315": [
+  "Echorouk",
+  "Echorouk TV",
+  "الشروق"
+ ],
+ "elcinema:1308": [
+  "Watania 1",
+  "El Wataniya 1",
+  "الوطنية 1"
+ ],
+ "elcinema:1334": [
+  "Watania 2",
+  "الوطنية 2"
+ ],
+ "elcinema:1309": [
+  "beIN Drama",
+  "بي ان دراما"
+ ],
+ "elcinema:1366": [
+  "Thikrayat",
+  "ذكريات"
+ ],
+ "elcinema:1371": [
+  "Mix Bel Araby",
+  "Mix Bil Arabi"
+ ],
+ "elcinema:1382": [
+  "Al Araby 2",
+  "Alaraby 2",
+  "العربي 2"
+ ],
+ "elcinema:1388": [
+  "Al Shams",
+  "الشمس"
+ ],
+ "elcinema:1374": [
+  "Hadramout",
+  "Hadhramaut"
+ ],
+ "elcinema:1339": [
+  "Al Saeedah",
+  "السعيدة"
+ ],
+ "elcinema:1360": [
+  "Salam TV"
+ ],
+ "elcinema:1204": [
+  "iFilm",
+  "iFilm Arabic",
+  "اي فيلم"
+ ],
+ "elcinema:1261": [
+  "Zee Alwan",
+  "زي الوان"
+ ],
+ "elcinema:1242": [
+  "Cartoon Network Arabic",
+  "CN Arabia",
+  "كرتون نتورك"
+ ],
+ "elcinema:1266": [
+  "Nat Geo Abu Dhabi",
+  "National Geographic Abu Dhabi",
+  "ناشيونال جيوغرافيك ابوظبي"
+ ],
+ "elcinema:1398": [
+  "Al Thania",
+  "الثانية"
+ ],
+ "elcinema:1401": [
+  "Masah",
+  "ماسة"
+ ],
+ "elcinema:1296": [
+  "MTV"
+ ],
+ "osn:9970": [
+  "Al Arabiya OSN"
+ ],
+ "osn:2015": [
+  "Sky News Arabia",
+  "Sky News Arabiya",
+  "سكاي نيوز عربية"
+ ],
+ "osn:9099": [
+  "BBC World News",
+  "BBC World"
+ ],
+ "osn:4504": [
+  "CNN",
+  "CNN International"
+ ],
+ "osn:9396": [
+  "RT Arabic",
+  "Russia Today",
+  "روسيا اليوم"
+ ],
+ "osn:3800": [
+  "Al Araby",
+  "Alaraby TV",
+  "العربي"
+ ],
+ "osn:9069": [
+  "AD Sports 1",
+  "Abu Dhabi Sports 1",
+  "ابوظبي الرياضية 1"
+ ],
+ "osn:9961": [
+  "KSA Sports 1",
+  "SSC 1"
+ ],
+ "osn:9393": [
+  "Roya HD"
+ ],
+ "osn:4510": [
+  "Fatafeat",
+  "فتافيت"
+ ],
+ "osn:9013": [
+  "Bahrain TV OSN"
+ ],
+ "bein:sports#33": [
+  "Alkass 1",
+  "Al Kass 1",
+  "Alkass One",
+  "الكاس 1",
+  "الكأس 1"
+ ],
+ "bein:sports#34": [
+  "Alkass 2",
+  "Al Kass 2",
+  "Alkass Two",
+  "الكاس 2",
+  "الكأس 2"
+ ],
+ "bein:sports#35": [
+  "Alkass 3",
+  "Al Kass 3",
+  "Alkass Three",
+  "الكاس 3",
+  "الكأس 3"
+ ],
+ "bein:sports#36": [
+  "Alkass 4",
+  "Al Kass 4",
+  "Alkass Four",
+  "الكاس 4",
+  "الكأس 4"
+ ],
+ "bein:sports#37": [
+  "Alkass 5",
+  "Al Kass 5",
+  "Alkass Five",
+  "الكاس 5",
+  "الكأس 5"
+ ],
+ "bein:sports#38": [
+  "Alkass 6",
+  "Al Kass 6",
+  "Alkass Six",
+  "الكاس 6",
+  "الكأس 6"
+ ],
+ "bein:sports#39": [
+  "Alkass 7",
+  "Al Kass 7",
+  "Alkass Seven",
+  "الكاس 7",
+  "الكأس 7"
+ ],
+ "bein:sports#40": [
+  "Alkass 8",
+  "Al Kass 8",
+  "Alkass Eight",
+  "الكاس 8",
+  "الكأس 8"
+ ],
+ "bein:sports#1": [
+  "beIN Sports 1",
+  "beIN Sports",
+  "بي ان سبورت 1"
+ ],
+ "bein:sports#10": [
+  "beIN Sports News",
+  "بي ان سبورت الاخبارية"
+ ],
+ "bein:sports#11": [
+  "beIN Sports HD",
+  "beIN Sports Open",
+  "beIN Sports FTA"
+ ],
+ "bein:sports#2": [
+  "beIN Sports 2",
+  "بي ان سبورت 2"
+ ],
+ "bein:sports#3": [
+  "beIN Sports 3",
+  "بي ان سبورت 3"
+ ],
+ "bein:sports#4": [
+  "beIN Sports 4",
+  "بي ان سبورت 4"
+ ],
+ "bein:sports#5": [
+  "beIN Sports 5",
+  "بي ان سبورت 5"
+ ],
+ "bein:sports#6": [
+  "beIN Sports 6",
+  "بي ان سبورت 6"
+ ],
+ "bein:sports#7": [
+  "beIN Sports 7",
+  "بي ان سبورت 7"
+ ],
+ "bein:sports#8": [
+  "beIN Sports 8",
+  "بي ان سبورت 8"
+ ],
+ "bein:sports#9": [
+  "beIN Sports 9",
+  "بي ان سبورت 9"
+ ],
+ "aljazeera:aja#": [
+  "Al Jazeera",
+  "Aljazeera",
+  "Al Jazeera Arabic",
+  "الجزيرة",
+  "Al Jazeera HD"
+ ],
+ "aljazeera:aja#aj2": [
+  "Al Jazeera 2",
+  "الجزيرة 2"
+ ],
+ "aljazeera:aje#": [
+  "Al Jazeera English",
+  "Aljazeera English",
+  "الجزيرة الانجليزية"
+ ],
+ "rotana:443": [
+  "Rotana Clip",
+  "روتانا كليب"
+ ],
+ "rotana:446": [
+  "Al Resalah",
+  "Alresalah",
+  "الرسالة"
+ ],
+ "art:#": [
+  "ART Aflam 1",
+  "ART Aflam",
+  "Aflam 1",
+  "ART افلام 1"
+ ],
+ "art:#Aflam2": [
+  "ART Aflam 2",
+  "Aflam 2",
+  "ART افلام 2"
+ ],
+ "art:#Cinema": [
+  "ART Cinema",
+  "ART سينما"
+ ],
+ "art:#Hekayat": [
+  "ART Hekayat",
+  "Hekayat",
+  "ART حكايات"
+ ],
+ "art:#Hekayat2": [
+  "ART Hekayat 2",
+  "Hekayat 2",
+  "ART حكايات 2"
+ ],
+ "ayn:158/قناة-عمان-العامة": [
+  "Oman TV",
+  "Oman TV General",
+  "عمان العامة",
+  "تلفزيون سلطنة عمان"
+ ],
+ "ayn:159/قناة-عمان-الرياضية": [
+  "Oman Sports",
+  "Oman TV Sport",
+  "Oman Sport TV",
+  "عمان الرياضية"
+ ],
+ "ayn:160/قناة-عمان-الثقافية": [
+  "Oman Cultural",
+  "Oman TV Culture",
+  "Oman TV Cultural",
+  "عمان الثقافية"
+ ],
+ "ayn:161/قناة-عمان-مباشر": [
+  "Oman Mubashir",
+  "Oman TV Live",
+  "Oman TV Mubasher",
+  "عمان مباشر"
+ ],
+ "roya:1": [
+  "Roya",
+  "Roya TV",
+  "رؤيا"
+ ],
+ "roya:21": [
+  "Roya News",
+  "رؤيا الاخبارية"
+ ],
+ "snrt:1208": [
+  "Al Aoula",
+  "Al Aoula HD",
+  "Al Aoula Inter",
+  "Alaoula",
+  "الأولى المغربية",
+  "الاولى المغربية",
+  "Maroc TV",
+  "TVM"
+ ],
+ "snrt:4069": [
+  "Laayoune TV",
+  "Al Aoula Laayoune",
+  "العيون",
+  "قناة العيون"
+ ],
+ "snrt:4070": [
+  "Arryadia",
+  "Arriadia",
+  "Arryadia HD",
+  "Al Riyadia Morocco",
+  "الرياضية المغربية"
+ ],
+ "snrt:4071": [
+  "Athaqafia",
+  "Arrabiaa",
+  "Arrabia",
+  "الثقافية المغربية",
+  "الرابعة"
+ ],
+ "snrt:4072": [
+  "Almaghribia",
+  "Al Maghribia",
+  "Al Magharibia",
+  "المغربية"
+ ],
+ "snrt:4073": [
+  "Assadissa",
+  "Assadissa TV",
+  "السادسة"
+ ],
+ "snrt:4075": [
+  "Tamazight",
+  "Tamazight TV",
+  "الأمازيغية",
+  "تمازيغت"
+ ]
+}

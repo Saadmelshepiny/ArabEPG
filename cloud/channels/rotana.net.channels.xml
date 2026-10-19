@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channels>
+  <channel site="rotana.net" site_id="446" lang="ar" xmltv_id="rotana.446">الرساله</channel>
+  <channel site="rotana.net" site_id="434" lang="ar" xmltv_id="rotana.434">إل بي سي</channel>
+  <channel site="rotana.net" site_id="439" lang="ar" xmltv_id="rotana.439">روتانا سينما مصر</channel>
+  <channel site="rotana.net" site_id="431" lang="ar" xmltv_id="rotana.431">روتانا سينما السعودية</channel>
+  <channel site="rotana.net" site_id="438" lang="ar" xmltv_id="rotana.438">روتانا كلاسيك</channel>
+  <channel site="rotana.net" site_id="443" lang="ar" xmltv_id="rotana.443">روتانا كليب</channel>
+  <channel site="rotana.net" site_id="437" lang="ar" xmltv_id="rotana.437">روتانا كوميدي</channel>
+  <channel site="rotana.net" site_id="436" lang="ar" xmltv_id="rotana.436">روتانا دراما</channel>
+  <channel site="rotana.net" site_id="435" lang="ar" xmltv_id="rotana.435">روتانا خليجية</channel>
+</channels>

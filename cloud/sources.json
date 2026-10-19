@@ -1,0 +1,448 @@
+{
+ "_comment": "grab = channels grabbed by iptv-org/epg from cloud/channels/<site>.channels.xml ; xmltv = ready XMLTV files repacked for the receiver. 'sat' = satellites the channels are found on (the receiver only downloads files for satellites in its bouquets). open-epg.com files are credited to open-epg.com; the service reference database comes from EPGGrabber (ziko-ZR1, GPL-3.0).",
+ "days": 3,
+ "grab": {
+  "ar_shahid": {
+   "site": "shahid.mbc.net",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_osn": {
+   "site": "osn.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_elcinema": {
+   "site": "elcinema.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_bein": {
+   "site": "bein.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_rotana": {
+   "site": "rotana.net",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_aljazeera": {
+   "site": "aljazeera.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_beinsports": {
+   "site": "beinsports.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_roya": {
+   "site": "roya-tv.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_art": {
+   "site": "artonline.tv",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_ayn": {
+   "site": "ayn.om",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  },
+  "ar_snrt": {
+   "site": "snrt.ma",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ]
+  }
+ },
+ "xmltv": {
+  "eg": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_EG1.xml.gz",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "مصر"
+  },
+  "ae": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_AE1.xml.gz",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "الإمارات والخليج"
+  },
+  "sa": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SA2.xml.gz",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "السعودية"
+  },
+  "bein": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_BEIN1.xml.gz",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "beIN"
+  },
+  "it": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "Italia"
+  },
+  "pl": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_PL1.xml.gz",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "Polska"
+  },
+  "gr": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_GR1.xml.gz",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "Ελλάδα"
+  },
+  "fr": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_FR1.xml.gz",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "France"
+  },
+  "uk": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_UK1.xml.gz",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "UK / International"
+  },
+  "ro": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_RO1.xml.gz",
+   "sat": [
+    "hotbird",
+    "amos"
+   ],
+   "title": "România"
+  },
+  "ua": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_UA1.xml.gz",
+   "sat": [
+    "hotbird",
+    "amos"
+   ],
+   "title": "Україна"
+  },
+  "rs": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_RS1.xml.gz",
+   "sat": [
+    "eutelsat16"
+   ],
+   "title": "Srbija"
+  },
+  "hr": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_HR1.xml.gz",
+   "sat": [
+    "eutelsat16"
+   ],
+   "title": "Hrvatska"
+  },
+  "ba": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_BA1.xml.gz",
+   "sat": [
+    "eutelsat16"
+   ],
+   "title": "Bosna i Hercegovina"
+  },
+  "al": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_AL1.xml.gz",
+   "sat": [
+    "eutelsat16"
+   ],
+   "title": "Shqipëri"
+  },
+  "bg": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_BG1.xml.gz",
+   "sat": [
+    "bulgariasat"
+   ],
+   "title": "България"
+  },
+  "hu": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_HU1.xml.gz",
+   "sat": [
+    "amos"
+   ],
+   "title": "Magyarország"
+  },
+  "il": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_IL1.xml.gz",
+   "sat": [
+    "amos"
+   ],
+   "title": "ישראל"
+  },
+  "oe_egypt1": {
+   "url": "https://www.open-epg.com/files/egypt1.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: مصر 1"
+  },
+  "oe_egypt2": {
+   "url": "https://www.open-epg.com/files/egypt2.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: مصر 2"
+  },
+  "oe_uae1": {
+   "url": "https://www.open-epg.com/files/uae1.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 1"
+  },
+  "oe_uae2": {
+   "url": "https://www.open-epg.com/files/uae2.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 2"
+  },
+  "oe_uae3": {
+   "url": "https://www.open-epg.com/files/uae3.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 3"
+  },
+  "oe_uae4": {
+   "url": "https://www.open-epg.com/files/uae4.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 4"
+  },
+  "oe_uae5": {
+   "url": "https://www.open-epg.com/files/uae5.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 5"
+  },
+  "oe_uae6": {
+   "url": "https://www.open-epg.com/files/uae6.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات 6"
+  },
+  "oe_uaepremium2": {
+   "url": "https://www.open-epg.com/files/uaepremium2.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات مميز 2"
+  },
+  "oe_uaepremium3": {
+   "url": "https://www.open-epg.com/files/uaepremium3.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الإمارات مميز 3"
+  },
+  "oe_qatar1": {
+   "url": "https://www.open-epg.com/files/qatar1.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: قطر 1"
+  },
+  "oe_qatar2": {
+   "url": "https://www.open-epg.com/files/qatar2.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: قطر 2"
+  },
+  "oe_qatar3": {
+   "url": "https://www.open-epg.com/files/qatar3.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: beIN Sports"
+  },
+  "oe_qatar4": {
+   "url": "https://www.open-epg.com/files/qatar4.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: beIN ترفيه 1"
+  },
+  "oe_qatar5": {
+   "url": "https://www.open-epg.com/files/qatar5.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: beIN ترفيه 2"
+  },
+  "oe_qatar6": {
+   "url": "https://www.open-epg.com/files/qatar6.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: الكأس"
+  },
+  "oe_qatarpremium": {
+   "url": "https://www.open-epg.com/files/qatarpremium.xml",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "title": "open-epg: قطر مميز"
+  },
+  "oe_saudiarabia1": {
+   "url": "https://www.open-epg.com/files/saudiarabia1.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: السعودية 1"
+  },
+  "oe_saudiarabia2": {
+   "url": "https://www.open-epg.com/files/saudiarabia2.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: السعودية 2"
+  },
+  "oe_saudiarabia3": {
+   "url": "https://www.open-epg.com/files/saudiarabia3.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: السعودية 3"
+  },
+  "oe_saudiarabia4": {
+   "url": "https://www.open-epg.com/files/saudiarabia4.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: السعودية 4"
+  },
+  "oe_arabiapremiumar": {
+   "url": "https://www.open-epg.com/files/arabiapremiumar.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "open-epg: العربية مميز"
+  },
+  "oe_poland": {
+   "url": "https://www.open-epg.com/files/poland.xml",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "open-epg: poland"
+  },
+  "oe_poland1": {
+   "url": "https://www.open-epg.com/files/poland1.xml",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "open-epg: poland1"
+  },
+  "oe_poland2": {
+   "url": "https://www.open-epg.com/files/poland2.xml",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "open-epg: poland2"
+  },
+  "oe_polandpremium": {
+   "url": "https://www.open-epg.com/files/polandpremium.xml",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "open-epg: polandpremium"
+  }
+ }
+}

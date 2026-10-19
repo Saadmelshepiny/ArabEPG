@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channels>
+  <channel site="artonline.tv" site_id="#" lang="ar" xmltv_id="art.#">افلام 1</channel>
+  <channel site="artonline.tv" site_id="#Aflam2" lang="ar" xmltv_id="art.#Aflam2">افلام 2</channel>
+  <channel site="artonline.tv" site_id="#Cinema" lang="ar" xmltv_id="art.#Cinema">سينما</channel>
+  <channel site="artonline.tv" site_id="#Hekayat" lang="ar" xmltv_id="art.#Hekayat">حكايات</channel>
+  <channel site="artonline.tv" site_id="#Hekayat2" lang="ar" xmltv_id="art.#Hekayat2">حكايات 2</channel>
+</channels>

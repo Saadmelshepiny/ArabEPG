@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channels>
+  <channel site="aljazeera.com" site_id="aja#aj2" lang="ar" xmltv_id="aljazeera.aja#aj2">Al Jazeera 2</channel>
+  <channel site="aljazeera.com" site_id="aja#" lang="ar" xmltv_id="aljazeera.aja#">Al Jazeera Arabic</channel>
+  <channel site="aljazeera.com" site_id="aje#" lang="en" xmltv_id="aljazeera.aje#">Al Jazeera English</channel>
+</channels>

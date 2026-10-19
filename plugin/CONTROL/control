@@ -1,0 +1,10 @@
+Package: enigma2-plugin-extensions-arabepg
+Version: 3.0
+Description: ArabEPG - online EPG for Arabic (Nilesat/Arabsat) and European (Hotbird 13E, Eutelsat 16E, BulgariaSat 1.9E, Amos 4W) channels
+Section: extra
+Priority: optional
+Maintainer: Saad Elshepiny
+Homepage: https://github.com/Saadmelshepiny/ArabEPG
+Architecture: all
+Depends: enigma2
+Source: https://github.com/Saadmelshepiny/ArabEPG

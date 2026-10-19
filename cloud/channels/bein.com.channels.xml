@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<channels>
+  <channel site="bein.com" site_id="sports#40" lang="en" xmltv_id="bein.sports#40">Alkass Eight</channel>
+  <channel site="bein.com" site_id="sports#37" lang="en" xmltv_id="bein.sports#37">Alkass Five</channel>
+  <channel site="bein.com" site_id="sports#36" lang="en" xmltv_id="bein.sports#36">Alkass Four</channel>
+  <channel site="bein.com" site_id="sports#33" lang="en" xmltv_id="bein.sports#33">Alkass One</channel>
+  <channel site="bein.com" site_id="sports#39" lang="en" xmltv_id="bein.sports#39">Alkass Seven</channel>
+  <channel site="bein.com" site_id="sports#38" lang="en" xmltv_id="bein.sports#38">Alkass Six</channel>
+  <channel site="bein.com" site_id="sports#35" lang="en" xmltv_id="bein.sports#35">Alkass Three</channel>
+  <channel site="bein.com" site_id="sports#34" lang="en" xmltv_id="bein.sports#34">Alkass Two</channel>
+  <channel site="bein.com" site_id="entertainment#31" lang="en" xmltv_id="bein.entertainment#31">CBeebies Middle East</channel>
+  <channel site="bein.com" site_id="entertainment#25" lang="en" xmltv_id="bein.entertainment#25">Baraem</channel>
+  <channel site="bein.com" site_id="sports#15" lang="en" xmltv_id="bein.sports#15">beIN Sports 2 French</channel>
+  <channel site="bein.com" site_id="entertainment#10" lang="en" xmltv_id="bein.entertainment#10">beIN Series 2</channel>
+  <channel site="bein.com" site_id="entertainment#11" lang="en" xmltv_id="bein.entertainment#11">beIN Drama</channel>
+  <channel site="bein.com" site_id="entertainment#1" lang="en" xmltv_id="bein.entertainment#1">beIN Movies 1</channel>
+  <channel site="bein.com" site_id="entertainment#2" lang="en" xmltv_id="bein.entertainment#2">beIN Movies 2</channel>
+  <channel site="bein.com" site_id="entertainment#3" lang="en" xmltv_id="bein.entertainment#3">beIN Movies 3</channel>
+  <channel site="bein.com" site_id="entertainment#4" lang="en" xmltv_id="bein.entertainment#4">beIN Movies 4</channel>
+  <channel site="bein.com" site_id="entertainment#8" lang="en" xmltv_id="bein.entertainment#8">bein entertainment#8</channel>
+  <channel site="bein.com" site_id="entertainment#9" lang="en" xmltv_id="bein.entertainment#9">beIN Series 1</channel>
+  <channel site="bein.com" site_id="sports#3" lang="en" xmltv_id="bein.sports#3">beIN Sports 3</channel>
+  <channel site="bein.com" site_id="sports#4" lang="en" xmltv_id="bein.sports#4">beIN Sports 4</channel>
+  <channel site="bein.com" site_id="sports#5" lang="en" xmltv_id="bein.sports#5">beIN Sports 5</channel>
+  <channel site="bein.com" site_id="sports#6" lang="en" xmltv_id="bein.sports#6">beIN Sports 6</channel>
+  <channel site="bein.com" site_id="sports#7" lang="en" xmltv_id="bein.sports#7">beIN Sports 7</channel>
+  <channel site="bein.com" site_id="sports#8" lang="en" xmltv_id="bein.sports#8">beIN Sports 8</channel>
+  <channel site="bein.com" site_id="sports#9" lang="en" xmltv_id="bein.sports#9">beIN Sports 9</channel>
+  <channel site="bein.com" site_id="sports#2" lang="en" xmltv_id="bein.sports#2">beIN Sports 2</channel>
+  <channel site="bein.com" site_id="sports#17" lang="en" xmltv_id="bein.sports#17">beIN Sports Xtra 1</channel>
+  <channel site="bein.com" site_id="sports#18" lang="en" xmltv_id="bein.sports#18">beIN Sports Xtra 2</channel>
+  <channel site="bein.com" site_id="sports#19" lang="en" xmltv_id="bein.sports#19">beIN Sports Xtra 3</channel>
+  <channel site="bein.com" site_id="sports#16" lang="en" xmltv_id="bein.sports#16">bein sports#16</channel>
+  <channel site="bein.com" site_id="sports#20" lang="en" xmltv_id="bein.sports#20">beIN Sports Xtra 4</channel>
+  <channel site="bein.com" site_id="sports#21" lang="en" xmltv_id="bein.sports#21">beIN Sports Xtra 5</channel>
+  <channel site="bein.com" site_id="sports#22" lang="en" xmltv_id="bein.sports#22">beIN Sports Xtra 6</channel>
+  <channel site="bein.com" site_id="sports#24" lang="en" xmltv_id="bein.sports#24">beIN Sports Xtra 8</channel>
+  <channel site="bein.com" site_id="sports#25" lang="en" xmltv_id="bein.sports#25">beIN Sports Xtra 9</channel>
+  <channel site="bein.com" site_id="sports#26" lang="en" xmltv_id="bein.sports#26">beIN Sports 4KHDR</channel>
+  <channel site="bein.com" site_id="sports#27" lang="en" xmltv_id="bein.sports#27">beIN Sports Max 1</channel>
+  <channel site="bein.com" site_id="sports#28" lang="en" xmltv_id="bein.sports#28">beIN Sports Max 2</channel>
+  <channel site="bein.com" site_id="sports#29" lang="en" xmltv_id="bein.sports#29">beIN Sports Max 3</channel>
+  <channel site="bein.com" site_id="sports#30" lang="en" xmltv_id="bein.sports#30">beIN Sports Max 4</channel>
+  <channel site="bein.com" site_id="sports#31" lang="en" xmltv_id="bein.sports#31">beIN Sports Max 5</channel>
+  <channel site="bein.com" site_id="sports#32" lang="en" xmltv_id="bein.sports#32">beIN Sports Max 6</channel>
+  <channel site="bein.com" site_id="sports#23" lang="en" xmltv_id="bein.sports#23">beIN Sports Xtra 7</channel>
+  <channel site="bein.com" site_id="sports#1" lang="en" xmltv_id="bein.sports#1">beIN Sports 1</channel>
+  <channel site="bein.com" site_id="sports#10" lang="en" xmltv_id="bein.sports#10">beIN Sports News</channel>
+  <channel site="bein.com" site_id="sports#11" lang="en" xmltv_id="bein.sports#11">beIN Sports</channel>
+  <channel site="bein.com" site_id="sports#12" lang="en" xmltv_id="bein.sports#12">beIN Sports 1 English</channel>
+  <channel site="bein.com" site_id="sports#13" lang="en" xmltv_id="bein.sports#13">beIN Sports 2 English</channel>
+  <channel site="bein.com" site_id="sports#14" lang="en" xmltv_id="bein.sports#14">beIN Sports 1 French</channel>
+  <channel site="bein.com" site_id="entertainment#29" lang="en" xmltv_id="bein.entertainment#29">Be Junior</channel>
+  <channel site="bein.com" site_id="entertainment#22" lang="en" xmltv_id="bein.entertainment#22">Bloomberg TV</channel>
+  <channel site="bein.com" site_id="entertainment#21" lang="en" xmltv_id="bein.entertainment#21">Club MTVEurope</channel>
+  <channel site="bein.com" site_id="entertainment#26" lang="en" xmltv_id="bein.entertainment#26">CNNArabic</channel>
+  <channel site="bein.com" site_id="entertainment#28" lang="en" xmltv_id="bein.entertainment#28">Discovery Channel Middle East Africa</channel>
+  <channel site="bein.com" site_id="entertainment#27" lang="en" xmltv_id="bein.entertainment#27">Euronews English</channel>
+  <channel site="bein.com" site_id="entertainment#17" lang="en" xmltv_id="bein.entertainment#17">Fatafeat</channel>
+  <channel site="bein.com" site_id="entertainment#14" lang="en" xmltv_id="bein.entertainment#14">Food Network EMEA</channel>
+  <channel site="bein.com" site_id="entertainment#6" lang="en" xmltv_id="bein.entertainment#6">Fox Action Movies MENA</channel>
+  <channel site="bein.com" site_id="entertainment#13" lang="en" xmltv_id="bein.entertainment#13">Fox Arabia</channel>
+  <channel site="bein.com" site_id="entertainment#18" lang="en" xmltv_id="bein.entertainment#18">Fox Life Middle East</channel>
+  <channel site="bein.com" site_id="entertainment#5" lang="en" xmltv_id="bein.entertainment#5">Fox Movies Middle East</channel>
+  <channel site="bein.com" site_id="entertainment#15" lang="en" xmltv_id="bein.entertainment#15">HGTVArabia</channel>
+  <channel site="bein.com" site_id="entertainment#30" lang="en" xmltv_id="bein.entertainment#30">Jeem TV</channel>
+  <channel site="bein.com" site_id="entertainment#19" lang="en" xmltv_id="bein.entertainment#19">MTV80 s</channel>
+  <channel site="bein.com" site_id="entertainment#20" lang="en" xmltv_id="bein.entertainment#20">MTV90 s</channel>
+  <channel site="bein.com" site_id="entertainment#23" lang="en" xmltv_id="bein.entertainment#23">beINJUNIOR</channel>
+  <channel site="bein.com" site_id="entertainment#24" lang="en" xmltv_id="bein.entertainment#24">JeemTV</channel>
+  <channel site="bein.com" site_id="entertainment#7" lang="en" xmltv_id="bein.entertainment#7">Star Movies Middle East</channel>
+  <channel site="bein.com" site_id="entertainment#16" lang="en" xmltv_id="bein.entertainment#16">Star World Middle East</channel>
+  <channel site="bein.com" site_id="entertainment#12" lang="en" xmltv_id="bein.entertainment#12">beINGOURMET</channel>
+</channels>
