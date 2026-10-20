@@ -910,6 +910,163 @@ def grab_snrt(ids, days, stop=None):
     return res
 
 
+# ===================================================================== LBCI (lbcgroup.tv, official, Lebanon)
+def _last_sunday(year, month):
+    for day in range(31, 24, -1):
+        try:
+            t = calendar.timegm((year, month, day, 0, 0, 0, 0, 0, 0))
+        except ValueError:
+            continue
+        if time.gmtime(t).tm_mon == month and time.gmtime(t).tm_wday == 6:
+            return day
+    return 31
+
+
+def beirut_offset(year, month, day):
+    """Lebanon: UTC+3 from the last Sunday of March to the last Sunday of October, UTC+2 otherwise."""
+    if 3 < month < 10:
+        return 3 * 3600
+    if month == 3:
+        return 3 * 3600 if day >= _last_sunday(year, 3) else 2 * 3600
+    if month == 10:
+        return 3 * 3600 if day < _last_sunday(year, 10) else 2 * 3600
+    return 2 * 3600
+
+
+LBCI_URL = 'https://www.lbcgroup.tv/schedule-channels-date/%s/%d/%02d/%02d/ar'
+
+
+def lbci_parse(html, year, month, day, shift=None):
+    """one Beirut day. The site shows the times in another time zone; the day list always starts at Beirut
+    midnight, so the shift is read from the first row of the day (e.g. 18:01 -> +6 hours)."""
+    html = u(html)
+    rows = []
+    for block in re.split(r'vod-schedule-listing-content', html)[1:]:
+        tm = re.search(r'text-title-29">\s*(\d\d):(\d\d)\s*<', block)
+        du = re.search(r'المدة:\s*(\d+)', block)
+        ti = re.search(r'vod-schedule-info.*?<a [^>]*>\s*([^<]+?)\s*</a>', block, re.S)
+        if not (tm and ti):
+            continue
+        de = re.search(r'vod-schedule-description">\s*([^<]*?)\s*</div>', block, re.S)
+        now = u'يعرض الان' in block[:600]
+        rows.append((int(tm.group(1)), int(tm.group(2)), int(du.group(1)) if du else 0,
+                     _unescape(ti.group(1)), _unescape(de.group(1)) if de else u'', now))
+    rows = [r for r in rows if not r[5]]           # the "on now" box is repeated at the top
+    if not rows:
+        return [], shift
+    if len(rows) >= 10:      # a full day: it starts at Beirut midnight
+        first = rows[0][0] * 60 + rows[0][1]
+        shift = int(round(((1440 - first) % 1440) / 60.0)) * 60   # minutes from the shown time to Beirut time
+    if shift is None:
+        return [], None      # today's page only lists what is left: wait for a full day to learn the shift
+    base = calendar.timegm((year, month, day, 0, 0, 0, 0, 0, 0)) - beirut_offset(year, month, day)
+    out, prev = [], None
+    for h, m, dur, title, desc, _n in rows:
+        mins = (h * 60 + m + shift) % 1440
+        st = base + mins * 60
+        while prev is not None and st < prev - 6 * 3600:
+            st += 86400
+        prev = st
+        out.append(ev(st, dur * 60, title, u'', desc, genre_nibble(title)))
+    return finish(out), shift
+
+
+def grab_lbci(ids, days, stop=None):
+    res = {}
+    for cid in ids:
+        evs, shift, pages = [], None, []
+        for d0 in day_starts(max(days, 2)):
+            if stop and stop():
+                break
+            lt = time.gmtime(d0 + 3 * 3600)
+            try:
+                pages.append((http_get(LBCI_URL % (cid, lt.tm_year, lt.tm_mon, lt.tm_mday), timeout=40),
+                              lt.tm_year, lt.tm_mon, lt.tm_mday))
+            except Exception as e:
+                log(u'LBCI %s: %s' % (cid, e))
+        for page, y, m, d in pages[1:] + pages[:1]:     # full days first: they show the time shift
+            got, shift = lbci_parse(page, y, m, d, shift)
+            evs.extend(got)
+        res[cid] = finish(evs)
+    return res
+
+
+# ===================================================================== Tunisia TV (tunisiatv.tn, official)
+TUNIS = 3600     # Tunisia keeps UTC+1 all year
+TUNISIA_NAMES = {'69c58aac8d6cac7a55cd2e09': u'الوطنية 1', '69c593d18d6cac7a55cd575c': u'الوطنية 2'}
+
+
+def tunisia_parse(html, year, month, day):
+    """the day runs from 06:00 to 05:59 the next morning (Tunisia time)."""
+    html = u(html)
+    base = calendar.timegm((year, month, day, 0, 0, 0, 0, 0, 0)) - TUNIS
+    out, prev = [], None
+    for m in re.finditer(r'<time>(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d)</time>\s*<h3>\s*<a[^>]*>([^<]+)</a>\s*</h3>'
+                         r'(?:\s*<p>([^<]*)</p>)?', html):
+        h1, m1, h2, m2 = int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4))
+        st = base + h1 * 3600 + m1 * 60
+        if h1 < 6:
+            st += 86400
+        en = base + h2 * 3600 + m2 * 60 + 60
+        if h2 < 6 or en <= st:
+            en += 86400
+        if prev is not None and st < prev:
+            continue
+        prev = st
+        title = _unescape(m.group(5))
+        out.append(ev(st, en - st, title, u'', _unescape(m.group(6) or u''), genre_nibble(title)))
+    return finish(out)
+
+
+def grab_tunisia(ids, days, stop=None):
+    res = {}
+    for cid in ids:
+        evs = []
+        name = TUNISIA_NAMES.get(cid, u'x')
+        for d0 in day_starts(days):
+            if stop and stop():
+                break
+            lt = time.gmtime(d0 + TUNIS)
+            wd = (lt.tm_wday + 1) % 7      # the site numbers the days like JavaScript: Sunday = 0
+            url = 'https://www.tunisiatv.tn/ar/programme/%d/%s/%s' % (wd, cid, quote(name.encode('utf-8')))
+            try:
+                evs.extend(tunisia_parse(http_get(url, timeout=40), lt.tm_year, lt.tm_mon, lt.tm_mday))
+            except Exception as e:
+                log(u'Tunisia TV %s: %s' % (cid, e))
+        res[cid] = finish(evs)
+    return res
+
+
+# ===================================================================== TRT Arabi (trtarabi.com, official, GMT)
+def trt_parse(html, now=None):
+    html = u(html)
+    now = now or time.time()
+    g = time.gmtime(now)
+    base = calendar.timegm((g.tm_year, g.tm_mon, g.tm_mday, 0, 0, 0, 0, 0, 0))
+    out, prev = [], None
+    for m in re.finditer(r'leading-tight">(\d\d):(\d\d)</span><span[^>]*>\(\s*GMT\s*\)</span>.*?text-grey-12">'
+                         r'([^<]+)</div>(?:<div[^>]*text-grey-10">([^<]*)</div>)?', html, re.S):
+        st = base + int(m.group(1)) * 3600 + int(m.group(2)) * 60
+        while prev is not None and st < prev:
+            st += 86400
+        prev = st
+        title = re.sub(r'\s+', u' ', _unescape(m.group(3))).strip()
+        out.append(ev(st, 0, title, u'', _unescape(m.group(4) or u'').strip(), genre_nibble(title)))
+    return finish(out)
+
+
+def grab_trt(ids, days, stop=None):
+    res = dict((i, []) for i in ids)
+    try:
+        evs = trt_parse(http_get('https://www.trtarabi.com/tv-schedule', timeout=40))
+    except Exception as e:
+        log(u'TRT Arabi: %s' % e)
+        evs = []
+    for i in ids:
+        res[i] = evs
+    return res
+
+
 # ===================================================================== beIN SPORTS (beinsports.com, MENA)
 def grab_beinsports(ids, days, stop=None):
     res = dict((i, []) for i in ids)

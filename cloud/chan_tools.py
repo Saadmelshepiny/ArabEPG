@@ -41,6 +41,8 @@ def main():
     if cmd == 'matrix':
         inc = []
         for d in CFG['grab'].values():
+            if d.get('python'):
+                continue          # grabbed by cloud/official.py with the plugin's own readers
             parts = int(d.get('parts', 1))
             for p in range(1, parts + 1):
                 inc.append({'site': d['site'], 'part': p, 'parts': parts})

@@ -43,12 +43,12 @@ CLOUD_URL = REPO_RAW + '/epg/'
 VERSION_URL = REPO_RAW + '/main/version.json'
 
 SOURCE_ORDER = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt',
-                'elcinema', 'xml', 'xmltv')
+                'lbci', 'tunisia', 'trt', 'elcinema', 'xml', 'xmltv')
 SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 'Rotana', 'aljazeera': 'Al Jazeera',
                 'elcinema': 'elCinema', 'beinsports': 'beIN SPORTS', 'roya': 'Roya', 'art': 'ART',
-                'ayn': 'Oman TV', 'snrt': 'SNRT', 'xml': 'XMLTV', 'xmltv': 'XMLTV'}
+                'ayn': 'Oman TV', 'snrt': 'SNRT', 'lbci': 'LBCI', 'tunisia': 'Tunisia TV', 'trt': 'TRT Arabi', 'xml': 'XMLTV', 'xmltv': 'XMLTV'}
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
-             'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt',
+             'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
 MATCHER_VERSION = 6
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
@@ -172,7 +172,8 @@ def catalog_entry(key):
     return _ENTRY.get(key)
 
 
-OFFICIAL = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt')
+OFFICIAL = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt', 'lbci', 'tunisia',
+            'trt')
 
 
 def source_kind(key):
@@ -960,6 +961,15 @@ class Fetcher(object):
         elif src == 'snrt':
             res.update(sources.grab_snrt(ids, days, stop))
             self.step(len(ids))
+        elif src == 'lbci':
+            res.update(sources.grab_lbci(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'tunisia':
+            res.update(sources.grab_tunisia(ids, days, stop))
+            self.step(len(ids))
+        elif src == 'trt':
+            res.update(sources.grab_trt(ids, days, stop))
+            self.step(len(ids))
         elif src == 'bein':
             res.update(sources.grab_bein(ids, days, cfg['lang'], stop))
             self.step(len(ids))
@@ -974,7 +984,7 @@ class Fetcher(object):
 
 
 ARABIC_SOURCES = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt',
-                  'elcinema')
+                  'lbci', 'tunisia', 'trt', 'elcinema')
 
 
 def _is_arabic_channel(ref, name, keys):
@@ -2202,6 +2212,9 @@ def test_sources(cfg):
         ('ART (Aflam 1)', lambda: sources.grab_art(['#'], 1).get('#')),
         ('Oman TV', lambda: sources.grab_ayn([u'158/قناة-عمان-العامة'], 2).get(u'158/قناة-عمان-العامة')),
         ('SNRT (Al Aoula)', lambda: sources.grab_snrt(['1208'], 2).get('1208')),
+        ('LBCI', lambda: sources.grab_lbci(['1'], 2).get('1')),
+        ('Tunisia TV (Watania 1)', lambda: sources.grab_tunisia(['69c58aac8d6cac7a55cd2e09'], 1).get('69c58aac8d6cac7a55cd2e09')),
+        ('TRT Arabi', lambda: sources.grab_trt(['1'], 1).get('1')),
         ('beIN (Alkass One)', lambda: sources.grab_bein(['sports#33'], 1, cfg['lang']).get('sports#33')),
         ('Rotana (Rotana Drama)', lambda: sources.grab_rotana(['436'], 2, cfg['lang']).get('436')),
         ('Al Jazeera', lambda: sources.grab_aljazeera(['aja#'], 2).get('aja#')),

@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources
 from .sources import log, u, PY3
 
-VERSION = '1.0'
+VERSION = '1.1'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -45,6 +45,9 @@ C.src_roya = ConfigYesNo(default=True)
 C.src_art = ConfigYesNo(default=True)
 C.src_ayn = ConfigYesNo(default=True)
 C.src_snrt = ConfigYesNo(default=True)
+C.src_lbci = ConfigYesNo(default=True)
+C.src_tunisia = ConfigYesNo(default=True)
+C.src_trt = ConfigYesNo(default=True)
 C.src_xmltv = ConfigYesNo(default=False)
 C.xmltv_urls = ConfigText(default='', fixed_size=False)
 C.days = ConfigSelection(default='3', choices=[(str(i), str(i)) for i in range(1, 8)])
@@ -86,7 +89,7 @@ C.copy_epg = ConfigYesNo(default=True)
 
 SRC_CFG = (('shahid', C.src_shahid), ('osn', C.src_osn), ('bein', C.src_bein), ('rotana', C.src_rotana),
            ('aljazeera', C.src_aljazeera), ('elcinema', C.src_elcinema), ('beinsports', C.src_beinsports),
-           ('roya', C.src_roya), ('art', C.src_art), ('ayn', C.src_ayn), ('snrt', C.src_snrt),
+           ('roya', C.src_roya), ('art', C.src_art), ('ayn', C.src_ayn), ('snrt', C.src_snrt), ('lbci', C.src_lbci), ('tunisia', C.src_tunisia), ('trt', C.src_trt),
            ('xmltv', C.src_xmltv))
 
 
@@ -1388,6 +1391,9 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'مصدر ART (أفلام، حكايات، سينما)'), C.src_art),
             getConfigListEntry(T(u'مصدر تلفزيون عمان'), C.src_ayn),
             getConfigListEntry(T(u'مصدر القنوات المغربية SNRT (الأولى، الرياضية، المغربية...)'), C.src_snrt),
+            getConfigListEntry(T(u'مصدر LBCI الرسمي (لبنان)'), C.src_lbci),
+            getConfigListEntry(T(u'مصدر التلفزة التونسية الرسمي (الوطنية 1 و 2)'), C.src_tunisia),
+            getConfigListEntry(T(u'مصدر TRT عربي الرسمي'), C.src_trt),
             getConfigListEntry(T(u'ملفات XMLTV إضافية'), C.src_xmltv),
             getConfigListEntry(T(u'روابط XMLTV (مفصولة بفاصلة)'), C.xmltv_urls),
             getConfigListEntry(T(u'لغة أسماء البرامج'), C.lang),

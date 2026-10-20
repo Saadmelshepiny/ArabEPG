@@ -95,6 +95,36 @@
     "arabsat",
     "hotbird"
    ]
+  },
+  "ar_lbci": {
+   "site": "lbcgroup.tv",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "python": true,
+   "days": 5
+  },
+  "ar_tunisia": {
+   "site": "tunisiatv.tn",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "python": true,
+   "days": 3
+  },
+  "ar_trt": {
+   "site": "trtarabi.com",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "python": true,
+   "days": 1
   }
  },
  "xmltv": {
@@ -466,18 +496,6 @@
     "hotbird"
    ],
    "title": "الجزيرة"
-  },
-  "ca_src": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_CA1.xml.gz",
-   "sat": [],
-   "title": "Canada (source only)",
-   "only_extract": true
-  },
-  "us_src": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_US1.xml.gz",
-   "sat": [],
-   "title": "USA (source only)",
-   "only_extract": true
   }
  },
  "extract": {
@@ -609,76 +627,6 @@
     "arabsat"
    ],
    "title": "قنوات عربية من الملفات الأوروبية"
-  },
-  "ar_from_na": {
-   "from": [
-    "ca_src",
-    "us_src"
-   ],
-   "names": [
-    "Melody",
-    "Panorama",
-    "Al Nahar",
-    "Rotana",
-    "MBC",
-    "Nile",
-    "Al Jazeera",
-    "Aljazeera",
-    "BBC Arabic",
-    "Alhurra",
-    "Al Hurra",
-    "Iqraa",
-    "Al Arabiya",
-    "LBC",
-    "MTV Lebanon",
-    "Al Jadeed",
-    "Dubai",
-    "Abu Dhabi",
-    "Saudi",
-    "Kuwait",
-    "Qatar",
-    "Oman",
-    "Jordan TV",
-    "Syria",
-    "Iraqia",
-    "Sudan",
-    "Libya",
-    "Masr",
-    "Egyptian",
-    "Cima",
-    "Aflam",
-    "Alhayat",
-    "Al Hayah",
-    "Mehwar",
-    "Sada El Balad",
-    "Al Masriya",
-    "Arabica",
-    "Noursat",
-    "Aghapy",
-    "Alkarma",
-    "Al Resalah",
-    "Zee Aflam",
-    "Zee Alwan",
-    "Nogoum",
-    "Mazzika",
-    "Funoon",
-    "Ahly",
-    "Zamalek",
-    "ON Sport",
-    "Alkass",
-    "Al Kass",
-    "Echorouk",
-    "Ennahar",
-    "Nessma",
-    "2M",
-    "Al Aoula"
-   ],
-   "auto_arabic": true,
-   "sat": [
-    "nilesat",
-    "arabsat"
-   ],
-   "title": "قنوات عربية من ملفات أمريكا وكندا"
   }
  }
 }

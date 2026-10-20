@@ -28,6 +28,9 @@ SITES = [
     ('artonline.tv', 'art', [None]),
     ('ayn.om', 'ayn', [None]),
     ('snrt.ma', 'snrt', [None]),
+    ('lbcgroup.tv', 'lbci', [None]),
+    ('tunisiatv.tn', 'tunisia', [None]),
+    ('trtarabi.com', 'trt', [None]),
 ]
 # sat.tv: satellite 1 lineup 33 = Eutelsat/Nilesat 7-8W (MENA), satellite 2 lineup 55 = Hotbird 13E
 SATV_LINEUPS = ('1#33#', '2#55#')

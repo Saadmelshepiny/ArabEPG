@@ -3,6 +3,7 @@
 # needs: work/ (grab outputs), iptv-epg/sites (channel lists), ziko/configs (service references)
 set -e
 python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/SaadEPG/channels.json --cloud cloud/channels
+timeout 15m python3 cloud/official.py --work work || echo "official sources skipped"
 python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
