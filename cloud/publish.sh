@@ -2,9 +2,10 @@
 # build the receiver files from the grabbed guides and publish them to the "epg" branch.
 # needs: work/ (grab outputs), iptv-epg/sites (channel lists), ziko/configs (service references)
 set -e
-python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/ArabEPG/channels.json --cloud cloud/channels
-python3 cloud/build.py --work work --out public --catalog plugin/ArabEPG/channels.json
+python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/SaadEPG/channels.json --cloud cloud/channels
+python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json
 cp version.json public/ 2>/dev/null || true
+timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
 cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
 python3 tools/make_refs.py --src ziko/configs --out public/refs.json && gzip -9 -f public/refs.json || true
 

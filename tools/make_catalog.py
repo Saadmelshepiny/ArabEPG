@@ -5,7 +5,7 @@ Outputs
   --catalog  plugin catalog (json): [{"src","id","names"}]  -> used by the receiver for auto-linking
   --cloud    folder with one <site>.channels.xml per site      -> used by the cloud grabber (GitHub Actions)
 
-Usage: python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/ArabEPG/channels.json --cloud cloud/channels
+Usage: python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/SaadEPG/channels.json --cloud cloud/channels
 """
 import argparse
 import html

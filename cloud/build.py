@@ -263,7 +263,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--work', default='work')
     ap.add_argument('--out', default='public')
-    ap.add_argument('--catalog', default='plugin/ArabEPG/channels.json')
+    ap.add_argument('--catalog', default='plugin/SaadEPG/channels.json')
     ap.add_argument('--skip-download', action='store_true')
     a = ap.parse_args()
     cfg = json.load(open(os.path.join(HERE, 'sources.json'), encoding='utf8'))

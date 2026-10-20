@@ -1,6 +1,6 @@
 {
- "version": "6.3",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-arabepg_6.3_all.ipk",
+ "version": "1.0",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.0_all.ipk",
  "date": "2026-10-20",
- "notes": "6.3: الكأس من مصادر أكثر، حفظ دليل القمر عند المسح الكامل"
+ "notes": "Saad EPG 1.0: الاسم الجديد، ميعادان للتحديث، التحديث على مراحل، قائمة مبسطة، نوع المصدر لكل قناة، حفظ الدليل على الهارد"
 }

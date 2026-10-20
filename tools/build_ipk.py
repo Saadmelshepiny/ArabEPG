@@ -2,7 +2,7 @@
 """Build the enigma2 .ipk from plugin/ (pure Python, no ar/opkg tools needed).
 
 Usage: python3 tools/build_ipk.py [--version 3.0] [--out release]
-The version is read from plugin/ArabEPG/plugin.py (VERSION = '...') when not given.
+The version is read from plugin/SaadEPG/plugin.py (VERSION = '...') when not given.
 Also writes version.json for the plugin's online self-update.
 """
 import argparse
@@ -14,8 +14,8 @@ import tarfile
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PKG = 'enigma2-plugin-extensions-arabepg'
-DEST = './usr/lib/enigma2/python/Plugins/Extensions/ArabEPG'
+PKG = 'enigma2-plugin-extensions-saadepg'
+DEST = './usr/lib/enigma2/python/Plugins/Extensions/SaadEPG'
 REPO_RAW = 'https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main'
 
 
@@ -53,7 +53,7 @@ def main():
     ap.add_argument('--out', default=os.path.join(ROOT, 'release'))
     ap.add_argument('--notes', default='')
     a = ap.parse_args()
-    src = os.path.join(ROOT, 'plugin', 'ArabEPG')
+    src = os.path.join(ROOT, 'plugin', 'SaadEPG')
     ver = a.version or re.search(r"VERSION = '([^']+)'", open(os.path.join(src, 'plugin.py'), encoding='utf8').read()).group(1)
 
     ctl = os.path.join(ROOT, 'plugin', 'CONTROL')

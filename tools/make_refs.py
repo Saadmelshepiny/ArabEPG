@@ -6,7 +6,7 @@ Source: the channel assignment files of EPGGrabber by ZAKARIYA KHA / iet5
 Nilesat / Arabsat / Eutelsat 8W service references.
 
 Output json: {"<orbital hex>:<SID>:<TSID>:<ONID>": ["epg id", ...]}
-Usage: python3 tools/make_refs.py --src ziko/configs --out plugin/ArabEPG/refs.json
+Usage: python3 tools/make_refs.py --src ziko/configs --out plugin/SaadEPG/refs.json
 """
 import argparse
 import glob

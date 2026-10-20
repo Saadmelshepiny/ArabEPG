@@ -1,4 +1,6 @@
 #!/bin/sh
-mkdir -p /etc/enigma2/ArabEPG
-echo "ArabEPG installed. Restart the GUI (enigma2) to load the plugin."
+mkdir -p /etc/enigma2/SaadEPG
+# the plugin was called ArabEPG before: settings and links are taken over automatically
+rm -rf /usr/lib/enigma2/python/Plugins/Extensions/ArabEPG
+echo "Saad EPG installed. Restart the GUI (enigma2) to load the plugin."
 exit 0
