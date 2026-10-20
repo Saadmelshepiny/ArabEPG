@@ -151,6 +151,51 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
     return kept, written
 
 
+AR_RE = re.compile('[\u0621-\u064a]')
+
+
+def extract(gdir, name, spec):
+    """copy the channels that match spec['names'] (or have mostly Arabic titles) out of other guides."""
+    pats = [re.compile(r'(^|[^a-z0-9])%s([^a-z0-9]|$)' % re.escape(n.lower())) for n in spec.get('names', [])]
+    chans, progs = {}, {}
+    for src in spec.get('from', []):
+        path = os.path.join(gdir, src + '.xml.gz')
+        if not os.path.exists(path):
+            continue
+        names, plist = {}, {}
+        for _ev, el in ET.iterparse(open_any(path), events=('end',)):
+            if el.tag == 'channel':
+                names[el.get('id')] = [d.text for d in el.findall('display-name') if d.text]
+                el.clear()
+            elif el.tag == 'programme':
+                plist.setdefault(el.get('channel'), []).append(ET.tostring(el, encoding='unicode'))
+                el.clear()
+        for cid, nm in names.items():
+            label = ' '.join(nm + [cid]).lower()
+            hit = any(p.search(label) for p in pats)
+            if not hit and spec.get('auto_arabic') and plist.get(cid):
+                titles = [re.search(r'<title[^>]*>(.*?)</title>', x, re.S) for x in plist[cid][:40]]
+                titles = [t.group(1) for t in titles if t]
+                hit = bool(titles) and sum(1 for t in titles if AR_RE.search(t)) * 2 >= len(titles)
+            if hit and plist.get(cid) and cid not in chans:
+                chans[cid] = nm or [cid]
+                progs[cid] = plist[cid]
+    if not chans:
+        return {}, 0
+    with gzip.open(os.path.join(gdir, name + '.xml.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<tv generator-info-name="ArabEPG-cloud">\n')
+        for cid, nm in chans.items():
+            f.write('<channel id="%s">%s</channel>\n' % (html.escape(cid), ''.join(
+                '<display-name>%s</display-name>' % html.escape(n) for n in nm[:4])))
+        n = 0
+        for cid, plist in progs.items():
+            for x in plist:
+                f.write(x.strip() + '\n')
+                n += 1
+        f.write('</tv>\n')
+    return chans, n
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--work', default='work')
@@ -198,6 +243,25 @@ def main():
             print('%-14s FAIL %s' % (name, e))
             if os.path.exists(out_path):
                 os.remove(out_path)
+
+    # Arabic channels that only exist in European files (2M, ART Cinema...): a small file for Arabic satellites
+    for name, spec in (cfg.get('extract') or {}).items():
+        t0 = time.time()
+        try:
+            chans, n = extract(gdir, name, spec)
+            if not chans:
+                raise RuntimeError('nothing found')
+            out_path = os.path.join(gdir, name + '.xml.gz')
+            index['files'][name] = {
+                'url': 'guides/%s.xml.gz' % name, 'sat': spec.get('sat', []), 'title': spec.get('title', name),
+                'kind': 'xmltv', 'size': os.path.getsize(out_path), 'programmes': n,
+                'channels': [[cid, names] for cid, names in sorted(chans.items())]}
+            status['files'][name] = {'ok': True, 'channels': len(chans), 'programmes': n,
+                                     'size_kb': os.path.getsize(out_path) // 1024, 'sec': int(time.time() - t0)}
+            print('%-14s OK  %5d channels %7d programmes (extracted)' % (name, len(chans), n))
+        except Exception as e:
+            status['files'][name] = {'ok': False, 'error': str(e)[:300]}
+            print('%-14s FAIL %s' % (name, e))
 
     with gzip.open(os.path.join(a.out, 'index.json.gz'), 'wt', encoding='utf-8') as f:
         json.dump(index, f, ensure_ascii=False, separators=(',', ':'))

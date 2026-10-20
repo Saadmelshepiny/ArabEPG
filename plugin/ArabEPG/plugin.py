@@ -3,6 +3,7 @@
 # Enigma2 plugin, Python 2 and Python 3 images (OpenATV, OpenPLi, OpenBH, Egami, VTi ...)
 from __future__ import absolute_import, print_function
 
+import json
 import os
 import re
 import threading
@@ -26,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources
 from .sources import log, u, PY3
 
-VERSION = '5.0'
+VERSION = '6.0'
 
 # --------------------------------------------------------------------- config
 config.plugins.arabepg = ConfigSubsection()
@@ -73,6 +74,7 @@ C.tr_key = ConfigText(default='', fixed_size=False)
 C.tr_limit = ConfigSelection(default='1500', choices=[('500', '500'), ('1500', '1500'), ('3000', '3000')])
 C.zap_epg = ConfigYesNo(default=True)
 C.zap_notify = ConfigYesNo(default=True)
+C.bouquets = ConfigText(default='', fixed_size=False)   # names joined by | (empty = all bouquets)
 C.copy_epg = ConfigYesNo(default=True)
 
 SRC_CFG = (('shahid', C.src_shahid), ('osn', C.src_osn), ('bein', C.src_bein), ('rotana', C.src_rotana),
@@ -107,6 +109,7 @@ def current_cfg(**over):
         'min_score': int(C.match_level2.value) / 100.0, 'verify': C.verify.value, 'lang_mode': C.lang_mode.value,
         'tr_provider': C.tr_provider.value, 'tr_email': C.tr_email.value.strip(), 'tr_url': C.tr_url.value.strip(),
         'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
+        'bouquets': [x for x in C.bouquets.value.split('|') if x],
     }
     cfg.update(over)
     return cfg
@@ -256,6 +259,8 @@ class ArabEPGMain(BaseScreen):
             (u'القنوات والربط الذكي', 'channels'),
             (u'إعادة الربط الذكي لكل القنوات', 'relink'),
             (u'إحصائيات الباقات وعدد البرامج', 'stats'),
+            (u'صحة الدليل (المصادر، المرفوض، المتعارض، المتسرب)', 'health'),
+            (u'اختيار الباقات التي يحدّثها البلوجين', 'bouquets'),
             (u'طريقة الربط اليدوي للقنوات', 'help'),
             (u'قنوات دليلها غير عربي', 'nonar'),
             (u'تصدير الربط المؤكد (لمشاركته عبر السحابة)', 'export'),
@@ -265,6 +270,9 @@ class ArabEPGMain(BaseScreen):
             (u'الإعدادات', 'settings'),
             (u'سجل العمليات', 'log'),
             (u'التحقق من تحديث البلوجين', 'selfupdate'),
+            (u'نسخ احتياطي للإعدادات والربط اليدوي', 'backup'),
+            (u'استرجاع الإعدادات والربط اليدوي', 'restore'),
+            (u'مسح ذاكرة الترجمة القديمة (MyMemory)', 'trclear'),
             (u'حذف الربط اليدوي لكل القنوات', 'reset'),
         ]
         self['list'] = MenuList([(T(a), b) for a, b in self.menu_items])
@@ -326,6 +334,18 @@ class ArabEPGMain(BaseScreen):
             self.session.open(StatsScreen)
         elif a == 'import':
             self.session.open(TextScreen, u'استيراد ملفات EPG', import_text)
+        elif a == 'health':
+            self.session.open(TextScreen, u'صحة الدليل', health_text)
+        elif a == 'bouquets':
+            self.session.openWithCallback(self.refresh, BouquetsScreen)
+        elif a == 'backup':
+            self.session.open(TextScreen, u'نسخ احتياطي', backup_text)
+        elif a == 'restore':
+            self.session.openWithCallback(lambda yes: yes and self.session.open(TextScreen, u'استرجاع', restore_text),
+                                          MessageBox, T(u'استرجاع الإعدادات والربط اليدوي من النسخة الاحتياطية؟'),
+                                          MessageBox.TYPE_YESNO)
+        elif a == 'trclear':
+            self.session.open(TextScreen, u'ذاكرة الترجمة', clear_tr_text)
         elif a == 'reset':
             self.session.openWithCallback(self._reset, MessageBox,
                                           T(u'حذف كل الربط اليدوي والعودة للربط التلقائي الذكي؟'), MessageBox.TYPE_YESNO)
@@ -426,6 +446,88 @@ def non_arabic_text():
     return (u'هذه القنوات العربية لم يُعثر لها إلا على دليل غير عربي في آخر تحديث (%d قناة).\n'
             u'الحلول: اختر لها مصدرا آخر من "القنوات والربط الذكي"، أو من الإعدادات اختر لغة الدليل:\n'
             u'"عربي + ترجمة الإنجليزي إلى العربية" أو "عربي أولا ثم إنجليزي".\n\n' % len(names)) + u'\n'.join(names)
+
+
+def health_text():
+    st = engine.load_state()
+    h = st.get('health') or {}
+    s = st.get('last_stats') or {}
+    out = []
+    if st.get('last'):
+        out.append(u'آخر تحديث: %s - %s قناة، %s برنامج' % (
+            time.strftime('%d/%m %H:%M', time.localtime(st['last'])), s.get('channels', 0), s.get('events', 0)))
+    idx = engine.load_index()
+    if idx.get('generated'):
+        out.append(u'آخر تجميع للسحابة: %s (%d ملف)' % (
+            time.strftime('%d/%m %H:%M', time.localtime(idx['generated'])), len(idx.get('files') or {})))
+    out.append(u'')
+    out.append(u'المصادر (قنوات بها بيانات / المطلوبة):')
+    for label, v in sorted((h.get('sources') or {}).items()):
+        ok, total, empty = v[0], v[1], v[2]
+        out.append(u'  %s: %d/%d%s' % (label, ok, total, (u'  - بدون بيانات: ' + u'، '.join(empty)) if empty else u''))
+    out.append(u'')
+    out.append(u'رُفض لعدم مطابقة دليل القمر: %d' % h.get('rejected', 0))
+    out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
+    out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
+    out.append(u'عناوين تُرجمت للعربي: %d' % h.get('translated', 0))
+    conf = h.get('conflicts') or []
+    out.append(u'قنوات رقم خدمتها مشترك مع قناة أخرى (لا يضاف لها دليل): %d' % len(conf))
+    if conf:
+        out.append(u'  ' + u'، '.join(conf[:40]))
+    leaks = h.get('leaks') or {}
+    out.append(u'قنوات كان دليلها يظهر على قنوات أخرى (موقوفة 30 يوما): %d' % len(leaks))
+    names = dict(engine.get_services()) if leaks else {}
+    for r, v in list(leaks.items())[:20]:
+        out.append(u'  %s ← ظهر على: %s' % (names.get(r, r), u'، '.join(v.get('victims') or [])))
+    return u'\n'.join(out)
+
+
+def _settings_dict():
+    out = {}
+    for k, v in C.dict().items():
+        try:
+            val = v.value
+            json.dumps(val)
+            out[k] = val
+        except Exception:
+            pass
+    return out
+
+
+def backup_text():
+    d = engine.backup_all(_settings_dict())
+    if not d:
+        return u'لا يوجد هارد أو فلاشة متصلة للنسخ الاحتياطي.'
+    return u'تم حفظ الإعدادات والربط اليدوي وما تعلمه البلوجين في:\n%s\n\nبعد تفليش الريسيفر: ثبّت البلوجين ثم اختر "استرجاع".' % d
+
+
+def restore_text():
+    d, settings = engine.restore_all()
+    if not d:
+        return u'لم يتم العثور على نسخة احتياطية (ArabEPG_backup) على الهارد أو الفلاشة.'
+    n = 0
+    for k, val in (settings or {}).items():
+        try:
+            item = getattr(C, k)
+            item.value = val
+            item.save()
+            n += 1
+        except Exception:
+            pass
+    try:
+        configfile.save()
+    except Exception:
+        pass
+    return u'تم الاسترجاع من:\n%s\n%d إعداد + الربط اليدوي.\nشغّل "تحديث دليل البرامج الآن".' % (d, n)
+
+
+def clear_tr_text():
+    p = os.path.join(engine.cache_dir(), 'translations.json.gz')
+    try:
+        os.remove(p)
+        return u'تم مسح ذاكرة الترجمة القديمة. الترجمة الآن من قاموس السحابة، وما ينقص يترجم من جديد.'
+    except OSError:
+        return u'ذاكرة الترجمة فارغة بالفعل.'
 
 
 def export_text():
@@ -638,7 +740,7 @@ class ChannelsScreen(BaseScreen):
             'up': self.up, 'down': self.down, 'left': self.pgup, 'right': self.pgdown}, -1)
         self.relink = relink
         self.filter = 0
-        self.services, self.auto, self.epg, self.held = [], {}, {}, {}
+        self.services, self.auto, self.epg, self.held, self.conflicts = [], {}, {}, {}, set()
         self.job = None
         self.onLayoutFinish.append(self.load)
         self.onClose.append(lambda: self.job and self.job.cancel())
@@ -683,6 +785,7 @@ class ChannelsScreen(BaseScreen):
         st = engine.load_state()
         filled = st['filled']
         self.held = st.get('review') or {}
+        self.conflicts = engine.triple_conflicts(self.services)
         epg = eEPGCache.getInstance()
         self.epg = {}
         for ref, _n in self.services:
@@ -707,7 +810,7 @@ class ChannelsScreen(BaseScreen):
                 how = u'يدوي' if manual else u'%d%%' % int(cands[0][1] * 100)
                 src = u'%s (%s)' % (engine.display_key(key), how)
             else:
-                src = u'(معطل)' if key == '-' else u'—'
+                src = (u'(دليل القمر مخفي)' if mapping.get(ref) == '!' else u'(معطل)') if key == '-' else u'—'
             rows.append((T(u'[%s] %s  >>  %s' % (self.epg.get(ref, ' '), name, src)),
                          (ref, name, key, cands, manual)))
         self['list'].setList(rows)
@@ -731,6 +834,9 @@ class ChannelsScreen(BaseScreen):
         show_picon(self['picon'], find_picon(ref, name))
         st = engine.load_state()['filled'].get(ref)
         lines = [name, u'القمر: %s' % engine.SAT_TITLES.get(engine.sat_of_ref(ref), engine.sat_of_ref(ref))]
+        if ref in self.conflicts:
+            lines.append(u'تنبيه: رقم خدمة هذه القناة مشترك مع قناة أخرى مختلفة، فالريسيفر لا يفرق بين دليليهما.')
+            lines.append(u'لذلك لا يضيف البلوجين دليلا لها حتى لا يظهر على القناة الأخرى.')
         if engine.load_refs().get(engine.ref_key(ref) or ''):
             lines.append(u'رقم الخدمة موجود في قاعدة المراجع (ربط مؤكد)')
         lines.append(u'')
@@ -779,7 +885,8 @@ class ChannelsScreen(BaseScreen):
         if c[2] and c[2] != '-' and not c[4]:
             items.append((T(u'>> تأكيد الربط الحالي: %s' % engine.display_key(c[2])), c[2]))
         items += [(T(u'>> بحث بالاسم...'), 'search'), (T(u'>> ربط تلقائي ذكي'), 'auto'),
-                 (T(u'>> تعطيل البلوجين لهذه القناة'), '-')]
+                 (T(u'>> تعطيل البلوجين لهذه القناة'), '-'),
+                 (T(u'>> إخفاء دليل القمر الخطأ لهذه القناة'), '!')]
         sats = list(engine.user_satellites(self.services))
         m = engine.matcher(sats)
         for k, sc in m.match_all(name, engine._allow_for(enabled, engine.sat_of_ref(ref)), min_score=0.6):
@@ -833,7 +940,7 @@ class ChannelsScreen(BaseScreen):
             m.pop(ref, None)
         else:
             m[ref] = v
-            if v != '-':
+            if v not in ('-', '!'):
                 engine.learn(name, v, ref)     # same name/service on other satellites/feeds follows
                 if old and old != v:
                     engine.reject(name, old)   # never suggest the wrong one again
@@ -947,6 +1054,75 @@ class NowNextScreen(BaseScreen):
 
 
 # --------------------------------------------------------------------- bouquet statistics
+class BouquetsScreen(BaseScreen):
+    """choose the bouquets the plugin updates (none chosen = all)."""
+
+    def __init__(self, session):
+        self.skin = skin(900, 640, (
+            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
+            'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" transparent="1" />'
+            '<widget name="info" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
+            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
+            _s(10), _s(62), _s(880), _s(480), _s(34), _s(21), TXT, BG,
+            _s(10), _s(550), _s(880), _s(80), _s(17), DIM, BG))
+        BaseScreen.__init__(self, session, u'الباقات التي يحدّثها البلوجين')
+        self.chosen = set(x for x in C.bouquets.value.split('|') if x)
+        self.all = []
+        self['list'] = MenuList([])
+        self['info'] = Label(T(u'OK: اختيار/إلغاء   الأخضر: حفظ   الأصفر: الكل/لا شيء   الخروج: بدون حفظ\n'
+                               u'لو لم تختر أي باقة، يحدّث البلوجين كل الباقات.'))
+        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions'], {
+            'ok': self.toggle, 'cancel': self.close, 'green': self.save, 'yellow': self.toggle_all}, -1)
+        self.onLayoutFinish.append(self.load)
+
+    def load(self):
+        try:
+            self.all = [(b, len(items)) for b, items in engine.get_bouquets()]
+        except Exception as e:
+            self.all = []
+            log(u'الباقات: %s' % e)
+        self.build()
+
+    def build(self, keep=0):
+        rows = []
+        for b, n in self.all:
+            mark = u'[x]' if (b in self.chosen or not self.chosen) else u'[ ]'
+            rows.append((T(u'%s  %s  (%d قناة)' % (mark, b, n)), b))
+        self['list'].setList(rows)
+        if rows:
+            self['list'].moveToIndex(min(keep, len(rows) - 1))
+
+    def toggle(self):
+        cur = self['list'].getCurrent()
+        if not cur:
+            return
+        if not self.chosen:
+            self.chosen = set(b for b, _n in self.all)
+        b = cur[1]
+        if b in self.chosen:
+            self.chosen.discard(b)
+        else:
+            self.chosen.add(b)
+        self.build(self['list'].getSelectedIndex())
+
+    def toggle_all(self):
+        everything = not self.chosen or set(b for b, _n in self.all) <= self.chosen
+        self.chosen = set([u'\u0000']) if everything else set()   # none / all
+        self.build(self['list'].getSelectedIndex())
+
+    def save(self):
+        chosen = [b for b, _n in self.all if b in self.chosen]
+        if len(chosen) == len(self.all):
+            chosen = []
+        if not chosen and self.chosen and self.chosen != set(b for b, _n in self.all):
+            self.session.open(MessageBox, T(u'اختر باقة واحدة على الأقل.'), MessageBox.TYPE_ERROR, timeout=4)
+            return
+        C.bouquets.value = u'|'.join(chosen)
+        C.bouquets.save()
+        configfile.save()
+        self.close()
+
+
 class StatsScreen(BaseScreen):
     def __init__(self, session):
         self.skin = skin(1180, 680, (
@@ -1136,6 +1312,9 @@ class AutoUpdate(object):
             if time.time() - self.zap_seen.get(ref, 0) < 6 * 3600:
                 return
             epg = eEPGCache.getInstance()
+            if engine.load_mapping().get(ref) == '!':
+                engine.clear_plugin_epg(epg, [ref])    # hide the satellite's wrong guide again
+                return
             if engine.epg_count(epg, ref, 6) > 0:
                 return
             from enigma import eServiceCenter
@@ -1148,6 +1327,8 @@ class AutoUpdate(object):
             linked = bool(known and known[0][0] != '-') or bool(engine.linked_refs().get(engine.ref_key(ref) or '')) \
                 or bool(engine.load_refs().get(engine.ref_key(ref) or ''))
             if known and known[0][0] == '-':
+                if engine.load_mapping().get(ref) == '!':
+                    engine.clear_plugin_epg(epg, [ref])
                 return
             job = engine.Updater(current_cfg(target='all', smart=False), set([ref]), [(ref, name)], quiet=True)
             if job.start():
@@ -1223,6 +1404,43 @@ def nownext(session, **kwargs):
     session.open(NowNextScreen)
 
 
+def wrong_epg(session, **kwargs):
+    try:
+        sref = session.nav.getCurrentlyPlayingServiceReference()
+        ref = engine.clean_ref(sref.toString()) if sref else None
+        from enigma import eServiceCenter
+        info = eServiceCenter.getInstance().info(sref) if sref else None
+        name = u(info and info.getName(sref) or '').replace(u'\x86', u'').replace(u'\x87', u'')
+    except Exception:
+        ref = None
+    if not ref:
+        return
+    st = engine.load_state()['filled'].get(ref)
+    if st:
+        msg = (u'دليل "%s" أضافه البلوجين من: %s\nهل هو خطأ؟ سيُمسح ولن يُستخدم هذا المصدر لهذه القناة مرة أخرى، '
+               u'ثم يبحث البلوجين عن مصدر آخر.' % (name, engine.display_key(st.get('key', ''))))
+    else:
+        msg = (u'دليل "%s" يأتي من القمر نفسه وليس من البلوجين.\nهل تريد إخفاءه؟ (يمكن إلغاء ذلك من شاشة '
+               u'القنوات بالربط التلقائي الذكي)' % name)
+
+    def done(yes):
+        if not yes:
+            return
+        epg = eEPGCache.getInstance()
+        if engine.mark_wrong(ref, name) == 'satellite':
+            m = engine.load_mapping()
+            m[ref] = '!'
+            engine.save_mapping(m)
+        n, how = engine.clear_plugin_epg(epg, [ref])
+        if how is None:
+            engine.clear_plugin_epg(epg, [ref], everything=True)
+            start_update(target='all')     # the whole guide was cleared: bring it back now
+        else:
+            start_update(set([ref]), target='all')
+        session.open(MessageBox, T(u'تم. سيُعاد تجهيز الدليل خلال دقائق.'), MessageBox.TYPE_INFO, timeout=5)
+    session.openWithCallback(done, MessageBox, T(msg), MessageBox.TYPE_YESNO)
+
+
 def sessionstart(reason, session=None, **kwargs):
     if reason == 0 and session is not None and AutoUpdate.instance is None:
         try:
@@ -1240,5 +1458,7 @@ def Plugins(**kwargs):
         PluginDescriptor(name=name, description=desc, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
         PluginDescriptor(name=T(u'ArabEPG - الآن وبعده'), description=desc,
                          where=PluginDescriptor.WHERE_EVENTINFO, fnc=nownext),
+        PluginDescriptor(name=T(u'ArabEPG - الدليل خطأ لهذه القناة'), description=desc,
+                         where=PluginDescriptor.WHERE_EVENTINFO, fnc=wrong_epg),
         PluginDescriptor(where=PluginDescriptor.WHERE_SESSIONSTART, fnc=sessionstart),
     ]

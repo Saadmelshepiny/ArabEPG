@@ -12,6 +12,7 @@ import argparse
 import collections
 import glob
 import gzip
+import html
 import json
 import os
 import re
@@ -24,6 +25,14 @@ LATIN = re.compile(r'[A-Za-z]{3}')
 MAX_ENTRIES = 250000
 
 
+def usable(src, res):
+    """reject half-translated or truncated results"""
+    ar = len(AR.findall(res))
+    lat = len(re.findall(r'[A-Za-z]', res))
+    src_letters = len(re.findall(r'[A-Za-z]', src)) or 1
+    return ar >= 2 and lat <= 0.35 * (ar + lat) and ar >= 0.3 * src_letters
+
+
 def needs(t):
     return bool(LATIN.search(t)) and not AR.search(t)
 
@@ -32,7 +41,7 @@ def titles(guides_dir):
     count = collections.Counter()
     for path in sorted(glob.glob(os.path.join(guides_dir, '*.xml.gz'))):
         name = os.path.basename(path)[:-7]
-        if not any(name == p or name.startswith(p) for p in AR_FILES):
+        if name == 'ar_from_eu' or not any(name == p or name.startswith(p) for p in AR_FILES):
             continue
         with gzip.open(path, 'rb') as f:
             for _ev, el in ET.iterparse(f, events=('end',)):
@@ -73,7 +82,8 @@ def main():
     ap.add_argument('--budget', type=int, default=1800, help='seconds of translation per run')
     a = ap.parse_args()
     t0 = time.time()
-    prev = dict((k, v) for k, v in load(a.prev).items() if v and AR.search(v))
+    prev = dict((k, html.unescape(v).replace('"', '').strip()) for k, v in load(a.prev).items() if v)
+    prev = dict((k, v) for k, v in prev.items() if usable(k, v))
     count = titles(a.guides)
     todo = [t for t, _n in count.most_common() if t not in prev]
     print('titles: %d unique English, %d already translated, %d new' % (len(count), len(count) - len(todo), len(todo)))
@@ -85,11 +95,11 @@ def main():
             if time.time() - t0 > a.budget:
                 break
             try:
-                r = tr.translate(t).strip()
+                r = html.unescape(tr.translate(t)).replace('"', '').strip()
             except Exception as e:
                 print('error:', t, e)
                 continue
-            if r and AR.search(r) and r != t:
+            if r and r != t and usable(t, r):
                 out[t] = r
                 done += 1
     # keep the dictionary small: titles still in the guides first, then the newest older ones

@@ -66,9 +66,11 @@ class Translator(object):
 
     @staticmethod
     def good(text):
-        """a usable translation contains Arabic and no service message."""
+        """a usable translation: mostly Arabic, no service message, not half English."""
         t = u(text or u'')
-        return bool(re.search(u'[\u0621-\u064a]', t)) and not _SERVICE_MSG.search(t)
+        ar = len(re.findall(u'[\u0621-\u064a]', t))
+        lat = len(re.findall(u'[A-Za-z]', t))
+        return ar >= 2 and lat <= 0.35 * (ar + lat) and u'&quot;' not in t and not _SERVICE_MSG.search(t)
 
     def save(self):
         if not self.dirty:
@@ -126,7 +128,7 @@ class Translator(object):
         seen = set()
         for t in texts:
             t = u(t).strip()
-            if t and t not in seen and t not in self.cache and t not in self.cloud and self.needs(t):
+            if t and t not in seen and t not in self.cache and not self.good(self.cloud.get(t)) and self.needs(t):
                 seen.add(t)
                 todo.append(t)
         todo = todo[:limit]

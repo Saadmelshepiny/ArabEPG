@@ -32,7 +32,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 3
+MATCHER_VERSION = 4
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -306,6 +306,7 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
                     _save(REFS_FILE, refs)
         except Exception:
             pass
+    if use_cloud:
         try:   # Arabic translations made in the cloud (no daily limit)
             tp = cloud_tr_path()
             if force or time.time() - _mtime(tp) > 12 * 3600:
@@ -348,7 +349,8 @@ def cloud_xml_entries(user_sats):
         if f.get('kind') != 'xmltv' or not _sat_ok(f, user_sats):
             continue
         for cid, names in f.get('channels') or []:
-            out.append({'src': 'xml', 'id': u'%s/%s' % (fname, cid), 'names': names or [cid]})
+            names = [re.sub(u'\\.[a-z]{2}$', u'', u(n)).strip() for n in (names or [cid])]
+            out.append({'src': 'xml', 'id': u'%s/%s' % (fname, cid), 'names': names})
     return out
 
 
@@ -415,6 +417,38 @@ def learn(name, key, ref=None):
     d['alias'][n] = key
     d['reject'] = [r for r in d['reject'] if r != [n, key]]
     _save(LEARN_FILE, d)
+
+
+def reject_auto(name, key):
+    """the satellite guide proved this automatic link wrong: do not use it for 7 days, then check again."""
+    d = load_learned()
+    n = norm(name)
+    if n and key:
+        d.setdefault('auto_reject', {})['%s|%s' % (n, key)] = int(time.time())
+        _save(LEARN_FILE, d)
+
+
+def mark_wrong(ref, name):
+    """the user says the guide on this channel is wrong. -> 'plugin' (a plugin guide was removed and its
+    source will not be used again for this name) or 'satellite' (the guide comes from the satellite)."""
+    st = load_state()
+    f = st['filled'].get(ref)
+    if not f:
+        return 'satellite'
+    key = u(f.get('key', ''))
+    if key.startswith('copy:'):
+        st['no_copy'] = list(set(st.get('no_copy', []) + [ref]))
+    elif key:
+        reject(name, key)
+        unlearn_ref(ref, key)
+        m = load_mapping()
+        if m.get(ref) == key:
+            del m[ref]
+            save_mapping(m)
+    st['filled'].pop(ref, None)
+    save_state(st)
+    log(u'أبلغت أن دليل %s خطأ: تم إلغاء المصدر %s' % (name, display_key(key)))
+    return 'plugin'
 
 
 def unlearn_ref(ref, key):
@@ -506,6 +540,9 @@ def smart_link(services, enabled, force=False, min_score=0.86):
             for cid, _n in f.get('channels') or []:
                 xml_ids.setdefault(cid, u'xml:%s/%s' % (fname, cid))
     rejected = set(tuple(r) for r in learned['reject'])
+    for k, t in (learned.get('auto_reject') or {}).items():
+        if time.time() - t < 7 * 86400:
+            rejected.add(tuple(k.split('|', 1)))
     confirmed_refs = linked_refs()
     manual_keys = set(learned['alias'].values()) | set(v for v in load_mapping().values() if v != '-')
     out, changed = {}, False
@@ -536,7 +573,9 @@ def smart_link(services, enabled, force=False, min_score=0.86):
             if by_ref:
                 confirmed = [(k, 1.0) for k, _s in cands if k in by_ref]
                 rest = [c for c in cands if c[0] not in by_ref]
-                extra = sorted(((k, sc) for k, sc in by_ref.items() if k not in dict(cands)),
+                # the database is old for many Nilesat services (frequencies get reused by other channels):
+                # its link is only used when the channel name also looks like that online channel
+                extra = sorted(((k, sc) for k, sc in by_ref.items() if k not in dict(cands) and name_close(name, k)),
                                key=lambda kv: (-kv[1], SOURCE_ORDER.index(kv[0].split(':')[0])
                                                if kv[0].split(':')[0] in SOURCE_ORDER else 99))
                 cands = confirmed + extra + rest   # the service id beats a name that only looks alike
@@ -562,8 +601,10 @@ def smart_link(services, enabled, force=False, min_score=0.86):
 def resolve(ref, mapping, auto):
     """-> (candidates [(key, score)], manual)"""
     k = mapping.get(ref)
-    if k and (k == '-' or source_of(k).split(':')[0] in SOURCE_ORDER):
-        return ([(k, 1.0)] if k != '-' else [('-', 0)]), True
+    if k in ('-', '!'):     # '-' plugin off for this channel, '!' also hide the satellite's own (wrong) guide
+        return [('-', 0)], True
+    if k and source_of(k).split(':')[0] in SOURCE_ORDER:
+        return [(k, 1.0)], True
     return [c for c in (auto.get(ref) or []) if c[0].split(':')[0] in SOURCE_ORDER], False
 
 
@@ -657,6 +698,31 @@ def now_next(epgcache, ref):
     while len(out) < 2:
         out.append(None)
     return out[0], out[1]
+
+
+def epg_triple(ref):
+    """the receiver keeps the guide per (service id, transport id, network id) - NOT per frequency."""
+    p = u(ref).split(':')
+    try:
+        return int(p[3], 16), int(p[4], 16), int(p[5], 16)
+    except (ValueError, IndexError):
+        return None
+
+
+def triple_conflicts(services):
+    """services that share their guide slot with a DIFFERENT channel (or have no service id):
+    a guide imported for one of them would also appear on the others."""
+    slots = {}
+    for ref, name in services:
+        t = epg_triple(ref)
+        if t:
+            slots.setdefault(t, set()).add(copy_key(name) or norm(name) or u'?')
+    bad = set()
+    for ref, _n in services:
+        t = epg_triple(ref)
+        if not t or t[0] == 0 or len(slots.get(t, ())) > 1:
+            bad.add(ref)
+    return bad
 
 
 def import_events(epgcache, refs, events):
@@ -884,26 +950,48 @@ def _is_arabic_channel(ref, name, keys):
     return keys[0].split(':')[0] in ARABIC_SOURCES
 
 
+_FLUSH = {'how': None, 'logged': False}
+
+
 def clear_plugin_epg(epgcache, refs, everything=False):
-    """remove the guide of the given services (or the whole EPG cache). -> (cleared, method)"""
+    """remove the guide of the given services (or the whole EPG cache). -> (cleared, method)
+    The way to clear ONE service differs between images; the first one that works is remembered."""
     if everything:
         epgcache.flushEPG()
         return len(refs), 'all'
-    done = 0
-    from enigma import eServiceReference
-    for r in refs:
-        p = r.split(':')
+    if not _FLUSH['logged']:
+        _FLUSH['logged'] = True
         try:
-            sid, tsid, onid = int(p[3], 16), int(p[4], 16), int(p[5], 16)
+            log(u'flushEPG: %s' % (u(getattr(epgcache.flushEPG, '__doc__', '') or u'')[:300].replace(u'\n', u' ')))
+        except Exception:
+            pass
+    from enigma import eServiceReference
+
+    def ways(r):
+        p = r.split(':')
+        sid, tsid, onid = int(p[3], 16), int(p[4], 16), int(p[5], 16)
+        return (('ints', lambda: epgcache.flushEPG(sid, onid, tsid)),
+                ('sref', lambda: epgcache.flushEPG(eServiceReference(_enc(r)))),
+                ('str', lambda: epgcache.flushEPG(_enc(r))))
+    done = 0
+    for r in refs:
+        try:
+            options = ways(r)
         except (ValueError, IndexError):
             continue
-        try:
-            epgcache.flushEPG(sid, onid, tsid)
-        except Exception:
+        ok = False
+        for name, fn in options:
+            if _FLUSH['how'] not in (None, name):
+                continue
             try:
-                epgcache.flushEPG(eServiceReference(_enc(r)))
+                fn()
+                _FLUSH['how'] = name
+                ok = True
+                break
             except Exception:
-                return done, None   # this image cannot clear a single service
+                continue
+        if not ok:
+            return done, None   # this image cannot clear a single service
         done += 1
     return done, 'service'
 
@@ -918,6 +1006,49 @@ def export_linked_refs(path='/tmp/linked_refs.json'):
     with open(path, 'wb') as f:
         f.write(json.dumps(out, ensure_ascii=False, indent=0, sort_keys=True).encode('utf-8'))
     return path, len(out)
+
+
+BACKUP_MOUNTS = ('/media/hdd', '/media/usb', '/media/mmc', '/media/usb2')
+
+
+def backup_dir(existing=False):
+    for d in BACKUP_MOUNTS:
+        if os.path.ismount(d) and os.access(d, os.W_OK):
+            p = os.path.join(d, 'ArabEPG_backup')
+            if not existing or os.path.exists(os.path.join(p, 'settings.json')):
+                return p
+    return None
+
+
+def backup_all(settings):
+    """settings: {name: value}. -> folder or None"""
+    d = backup_dir()
+    if not d:
+        return None
+    if not os.path.isdir(d):
+        os.makedirs(d)
+    _save(os.path.join(d, 'settings.json'), settings)
+    for f in (MAP_FILE, LEARN_FILE):
+        if os.path.exists(f):
+            _save(os.path.join(d, os.path.basename(f)), _load(f, {}))
+    _save(os.path.join(d, 'info.json'), {'t': int(time.time())})
+    return d
+
+
+def restore_all():
+    """-> (folder, settings dict) or (None, None)"""
+    d = backup_dir(existing=True)
+    if not d:
+        return None, None
+    for f in (MAP_FILE, LEARN_FILE):
+        b = os.path.join(d, os.path.basename(f))
+        if os.path.exists(b):
+            _save(f, _load(b, {}))
+    try:
+        os.remove(AUTO_FILE)      # link again with the restored choices
+    except OSError:
+        pass
+    return d, _load(os.path.join(d, 'settings.json'), {})
 
 
 def reset_plugin_data():
@@ -1077,6 +1208,21 @@ def align(native, events, shift=0, tol=300, only_distinct=False):
     return float(hit) / len(starts), len(starts)
 
 
+def align_back(native, events, shift=0, tol=300, only_distinct=False):
+    """the other direction: share of the online guide's starts (inside the satellite's time span)
+    that the satellite also has. A short online list (main shows only) is still fully confirmed."""
+    if not native or not events:
+        return 0.0, 0
+    lo = min(b for b, _d, _t in native)
+    hi = max(b + d for b, d, _t in native)
+    fake = [(e[0] + shift, e[1], e[2]) for e in events if lo <= e[0] + shift < hi and
+            (not only_distinct or _distinct(e[0] + shift))]
+    if not fake:
+        return 0.0, 0
+    r, n = align([(b, d, t) for b, d, t in fake], [(b,) for b, _d, _t in native], 0, tol)
+    return r, n
+
+
 def _titles_at(native, events, shift):
     """how many satellite programmes start at the same (shifted) time with the same title online"""
     starts = {}
@@ -1093,25 +1239,44 @@ def _titles_at(native, events, shift):
 
 def check_link(native, events):
     """compare one online guide with the satellite guide.
-    -> ('ok'|'wrong'|'unknown', shift_seconds, details)"""
+    -> ('ok'|'wrong'|'offset'|'unknown', hours, details)
+    'offset': the two guides are the same schedule shifted by whole hours. Which side is wrong
+    cannot be known (many satellite guides carry a wrong time zone), so nothing is changed."""
     if not native or not events:
         return 'unknown', 0, u''
     now = time.time()
     cur = [t for b, d, t in native if b <= now < b + d]
     tsim = _title_sim(cur[0], _event_at(events, now)) if cur else None
     al, nb = align(native, events)
+    bk, nk = align_back(native, events)
     ald, nd = align(native, events, only_distinct=True)
-    if (tsim is not None and tsim >= 0.5) or (nd >= 2 and ald >= 0.8) or _titles_at(native, events, 0) >= 2:
+    bkd, nkd = align_back(native, events, only_distinct=True)
+    if (tsim is not None and tsim >= 0.5) or _titles_at(native, events, 0) >= 2 or \
+            (nd >= 2 and ald >= 0.8) or (nkd >= 2 and bkd >= 0.8):
         return 'ok', 0, u'%d/%d' % (int(al * nb + 0.5), nb)
-    contradiction = (nb >= 4 and al <= 0.34) or (nd >= 3 and ald == 0)
-    if contradiction:
-        for sh in (3600, -3600, 7200, -7200, 10800, -10800):
-            a2, n2 = align(native, events, sh, only_distinct=True)
-            if (n2 >= 2 and a2 >= 0.8) or _titles_at(native, events, sh) >= 2:
-                return 'ok', sh, u'فرق توقيت %+d ساعة' % (sh // 3600)
-        if tsim is None or tsim < 0.3:
-            return 'wrong', 0, u'المواعيد %d/%d' % (int(al * nb + 0.5), nb)
+    contradiction = (nb >= 4 and al <= 0.34 and (nk < 3 or bk <= 0.34)) or \
+        (nd >= 3 and ald == 0 and (nkd < 2 or bkd == 0))
+    if not contradiction:
+        return 'unknown', 0, u''
+    for sh in (3600, -3600, 7200, -7200, 10800, -10800):
+        a2, _n2 = align(native, events, sh)
+        b2, n3 = align_back(native, events, sh)
+        if (a2 >= 0.8 and (n3 < 3 or b2 >= 0.6)) or _titles_at(native, events, sh) >= 2:
+            return 'offset', sh // 3600, u'فرق %+d ساعة' % (sh // 3600)
+    if tsim is None or tsim < 0.3:
+        return 'wrong', 0, u'المواعيد %d/%d' % (int(al * nb + 0.5), nb)
     return 'unknown', 0, u''
+
+
+def name_like(a, b):
+    """two receiver names of the same channel (HD/SD/backup copies, Arabic or Latin spelling)"""
+    from difflib import SequenceMatcher
+    from .matcher import latin
+    ka, kb = copy_key(a), copy_key(b)
+    if ka and ka == kb:
+        return True
+    la, lb = latin(a), latin(b)
+    return bool(la and lb and SequenceMatcher(None, la, lb).ratio() >= 0.85)
 
 
 def copy_key(name):
@@ -1144,6 +1309,7 @@ def find_copies(epgcache, bouquets, targets=None, days=3, mapping=None):
     """-> {target ref: {'from': donor ref, 'from_name', 'name', 'bouquet', 'events'}}  (main thread)"""
     counts, nows, plan = {}, {}, {}
     refdb = load_refs()
+    nocopy = set(load_state().get('no_copy', []))
     mapping = mapping or {}
 
     def cnt(r):
@@ -1172,6 +1338,7 @@ def find_copies(epgcache, bouquets, targets=None, days=3, mapping=None):
             if targets is not None and not [1 for r, _n in members if r in targets]:
                 continue
             empty = [m for m in members if (targets is None or m[0] in targets) and m[0] not in plan and
+                     m[0] not in nocopy and
                      mapping.get(m[0]) != '-' and cnt(m[0]) < 3]
             if not empty:
                 continue
@@ -1232,6 +1399,8 @@ class Updater(object):
         self.started = time.time()
         self._pct = 0.0
         self.stats = {'channels': 0, 'events': 0, 'failed': 0, 'backup': 0, 'skipped': 0}
+        self.health = {'sources': {}}
+        self.conflicts = set()
         self.summary = []
 
     # ---- progress API (read by the screen)
@@ -1268,6 +1437,76 @@ class Updater(object):
     def stop(self):
         return self.cancel
 
+    def _flush(self, refs, why):
+        """remove the plugin's guide from these services. -> 'one' | 'all' | None
+        Images that cannot clear one service get the whole cache cleared (the satellite guide comes back
+        by itself and this update imports everything again right after)."""
+        refs = list(refs)
+        if not refs:
+            return None
+        try:
+            n, how = clear_plugin_epg(self.epgcache, refs)
+        except Exception as e:
+            n, how = 0, None
+            log(u'مسح (%s): %s' % (why, e))
+        if how == 'service':
+            log(u'تم مسح %s من %d قناة' % (why, n))
+            return 'one'
+        try:
+            self.epgcache.flushEPG()
+            log(u'تم مسح %s (%d قناة): الصورة لا تمسح قناة واحدة، فمُسح الدليل كله وسيعاد تحميله الآن' % (
+                why, len(refs)))
+            return 'all'
+        except Exception as e:
+            log(u'تعذر المسح: %s' % e)
+        return None
+
+    def _find_leaks(self, imported):
+        """services that were NOT given a guide but now show exactly a guide that was imported for another
+        channel (same programme, same start, same next programme): the receiver mixes the two.
+        -> {importing ref: [names of the channels it leaked to]}"""
+        now = time.time()
+        sig = {}
+        for ref, evs in imported.items():
+            cur = [e for e in evs if e[0] <= now < e[0] + e[1]]
+            if not cur:
+                continue
+            c = cur[0]
+            nxt = [e for e in evs if e[0] >= c[0] + c[1] - 60]
+            nx = min(nxt, key=lambda e: e[0]) if nxt else None
+            sig.setdefault((int(c[0]), u(c[2])), []).append((ref, (int(nx[0]), u(nx[2])) if nx else None))
+        if not sig:
+            return {}
+        names = dict(self.all_services)
+        leaks, shown = {}, 0
+        for ref, name in self.all_services:
+            if ref in imported:
+                continue
+            nw, nx = now_next(self.epgcache, ref)
+            if not nw or not nw[0]:
+                continue
+            hits = sig.get((int(nw[1]), u(nw[0])))
+            if not hits:
+                continue
+            t_ref = epg_triple(ref)
+            for src, nsig in hits:
+                sname = names.get(src, u'')
+                if name_like(sname, name):
+                    continue        # the same channel (another copy) - not a leak
+                if nsig and nx and (int(nx[1]), u(nx[0])) != nsig:
+                    continue
+                t_src = epg_triple(src)
+                if not t_src or not t_ref or t_src[0] != t_ref[0]:
+                    continue        # a leak always keeps the service id
+                leaks.setdefault(src, []).append(name)
+                if shown < 12:
+                    shown += 1
+                    log(u'تسرب: دليل %s [%X:%X:%X] ظهر على %s [%X:%X:%X]' % (
+                        sname, t_src[0], t_src[1], t_src[2], name, t_ref[0], t_ref[1], t_ref[2]))
+        if leaks:
+            log(u'دليل %d قناة كان يظهر على قنوات أخرى - لن يُضاف لها دليل بعد الآن (30 يوما)' % len(leaks))
+        return leaks
+
     def _translate(self, tjobs, results):
         """English guides of Arabic channels -> Arabic titles (cached, limited per day by the provider)."""
         if not tjobs:
@@ -1293,6 +1532,7 @@ class Updater(object):
             results[k], n = tr.apply(results.get(k) or [])
             done += n
         tr.save()
+        self.stats['translated'] = done
         st.done, st.state = 1, 'ok'
         st.info = u'%d عنوان' % done
         log(u'الترجمة: %d ترجمة جديدة، %d برنامج أصبح بالعربي (الذاكرة: %d، السحابة: %d)' % (
@@ -1302,6 +1542,15 @@ class Updater(object):
         """once after updating from 4.0/4.1: remove guides copied between unnamed services and re-import
         everything, so titles like "INVALID EMAIL PROVIDED" are replaced."""
         st = load_state()
+        if not st.get('repair51'):
+            d = load_learned()
+            if d.get('reject'):
+                log(u'إصلاح: إلغاء %d رفض قديم (الإصدار 5.0 كان يرفض نهائيا، الآن الرفض لأسبوع ثم يعاد التحقق)' %
+                    len(d['reject']))
+                d['reject'] = []
+                _save(LEARN_FILE, d)
+            st['repair51'] = True
+            save_state(st)
         if st.get('repair', 0) >= 42:
             return
         bad = [r for r, f in st['filled'].items()
@@ -1334,7 +1583,14 @@ class Updater(object):
             self.epgcache = eEPGCache.getInstance()
             if self.only_refs is None:
                 self._repair()
-            self.bouquets = get_bouquets()
+            self.all_bouquets = get_bouquets()
+            self.all_services = get_services(self.all_bouquets) + [x for x in self.extra]
+            self.conflicts = triple_conflicts(self.all_services)
+            for r, v in (load_state().get('leak') or {}).items():
+                if time.time() - v.get('t', 0) < 30 * 86400:
+                    self.conflicts.add(r)
+            wanted = self.cfg.get('bouquets') or []
+            self.bouquets = [b for b in self.all_bouquets if not wanted or b[0] in wanted]
             self.services = get_services(self.bouquets)
             known = set(r for r, _n in self.services)
             for r, n in self.extra:            # e.g. a channel being watched that is in no bouquet
@@ -1409,9 +1665,13 @@ class Updater(object):
             now = time.time()
             jobs = []
             arabic_mode = cfg.get('lang_mode', 'ar_only') != 'any'
+            stale = []
             for ref, name in self.services:
                 cands, manual = resolve(ref, mapping, auto)
                 s.done += 1
+                fk = u(state['filled'].get(ref, {}).get('key', ''))
+                if fk and not fk.startswith('copy:') and fk not in [c[0] for c in cands]:
+                    stale.append(ref)
                 if cands and cands[0][0] == '-':
                     continue
                 if not cands:
@@ -1438,6 +1698,9 @@ class Updater(object):
                     keys = [k for k in keys if not k.startswith('xml:')] + [k for k in keys if k.startswith('xml:')]
                 jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None,
                              'scores': scores, 'manual': manual})
+            self.stale = stale
+            if stale:
+                log(u'قنوات تغيّر ربطها (سيُمسح دليلها القديم): %d' % len(stale))
             s.state = 'ok'
             s.info = u'%d قناة' % len(jobs)
             log(u'قنوات الباقات: %d | سيتم تحديث: %d | تم تخطي (دليلها حديث): %d' % (
@@ -1499,6 +1762,7 @@ class Updater(object):
                     st.info = u'%d/%d' % (ok, len(ids))
                     log(u'%s: %d/%d قناة بها بيانات' % (label, ok, len(ids)))
                     empty = [display_key(src + ':' + c).split(': ', 1)[-1] for c in ids if not got.get(c)]
+                    self.health['sources'][label] = [ok, len(ids), empty[:15]]
                     if empty and src != 'xml':
                         log(u'%s بدون بيانات: %s' % (label, u'، '.join(empty[:12])))
 
@@ -1563,10 +1827,12 @@ class Updater(object):
                 if verdict == 'ok':
                     j['verified'] = True
                     verified_pairs.append((j['ref'], j['key']))
-                    if sh:
-                        j['shift'] = sh
-                        shifted += 1
-                        log(u'تصحيح فرق التوقيت: %s (%s) %s' % (j['name'], display_key(j['key']), info))
+                    continue
+                if verdict == 'offset':   # same schedule, other time zone: keep the online guide as it is
+                    shifted += 1
+                    j['verified'] = True
+                    log(u'نفس الجدول مع فرق توقيت (%s) بين دليل القمر و %s: %s - تم الاعتماد على المصدر' % (
+                        info, display_key(j['key']), j['name']))
                     continue
                 if j.get('manual'):     # your own choice is kept, but you are told
                     log(u'تنبيه: الربط اليدوي لا يطابق دليل القمر (%s): %s ← %s' % (info, j['name'], display_key(j['key'])))
@@ -1575,9 +1841,9 @@ class Updater(object):
                 alt = None
                 for k in j['cands']:
                     if k != j['key'] and results.get(k) and name_close(j['name'], k):
-                        v2, sh2, _i = check_link(nat, results.get(k))
+                        v2, _sh2, _i = check_link(nat, results.get(k))
                         if v2 == 'ok':
-                            alt, j['shift'] = k, sh2
+                            alt = k
                             break
                 if alt:
                     log(u'تصحيح الربط بمقارنة دليل القمر: %s: %s ← %s' % (j['name'], display_key(j['key']), display_key(alt)))
@@ -1591,9 +1857,9 @@ class Updater(object):
             if checked:
                 log(u'التحقق بدليل القمر (العناوين ومواعيد البرامج): %d قناة، متطابقة %d، تصحيح %d، رفض %d%s' % (
                     checked, len([1 for j in jobs if j.get('verified')]), fixed, len(rejected),
-                    (u'، فرق توقيت %d' % shifted) if shifted else u''))
+                    (u'، فرق توقيت فقط %d' % shifted) if shifted else u''))
             for ref, name, key in rejected:
-                reject(name, key)
+                reject_auto(name, key)
                 unlearn_ref(ref, key)
             self.stats['rejected'] = len(rejected)
 
@@ -1636,74 +1902,112 @@ class Updater(object):
                 if self.stats['backup']:
                     log(u'تم استخدام النسخة الاحتياطية لـ %d قناة' % self.stats['backup'])
 
-            # 6. import
+            # 6. import (clean-up first, then a leak check afterwards)
+            now = int(time.time())
+            blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts]
+            for j in blocked:
+                j['key'], j['conflict'] = None, True
+            if blocked:
+                log(u'لم يُستورد دليل %d قناة لأن رقم خدمتها مشترك مع قناة أخرى مختلفة (كان الدليل سيظهر على '
+                    u'القناتين معًا): %s' % (len(blocked), u'، '.join(j['name'] for j in blocked[:10])))
+            to_clean = set(r for r in state['filled'] if r in self.conflicts)
+            to_clean |= set(r for r, _n, _k in rejected if r in state['filled'])
+            to_clean |= set(getattr(self, 'stale', ()))
+            for r in to_clean:
+                state['filled'].pop(r, None)
             groups = {}
             for j in jobs:
                 if j['key']:
                     groups.setdefault((j['key'], j.get('shift', 0)), []).append(j['ref'])
-                elif not j.get('rejected') and not j.get('held'):
+                elif not j.get('rejected') and not j.get('held') and not j.get('conflict'):
                     self.stats['failed'] += 1
-            # a wrong guide imported earlier must not stay on the channel
-            wrong = [r for r, _n, _k in rejected if r in state['filled']]
-            if wrong:
-                try:
-                    clear_plugin_epg(self.epgcache, wrong)
-                except Exception as e:
-                    log(u'مسح الدليل الخطأ: %s' % e)
-                for r in wrong:
-                    del state['filled'][r]
-                log(u'تم مسح دليل خطأ سابق من %d قناة' % len(wrong))
-            s = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
-            now = int(time.time())
-            for (key, shift), refs in groups.items():
-                if self.cancel:
-                    break
-                evs = results.get(key) or []
-                if shift:
-                    evs = [(e[0] + shift,) + tuple(e[1:]) for e in evs]
-                try:
-                    n = import_events(self.epgcache, refs, evs)
-                    self.stats['channels'] += len(refs)
-                    self.stats['events'] += n
-                    until = max(e[0] + e[1] for e in evs)
-                    for r in refs:
-                        state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
-                        if shift:
-                            state['filled'][r]['shift'] = shift
-                except Exception as e:
-                    self.stats['failed'] += len(refs)
-                    log(u'فشل الاستيراد %s: %s' % (key, e))
-                s.done += 1
-            s.state = 'ok'
-
-            # 7. copies of the same channel in the same bouquet that are still empty
             got_guide = set(r for refs in groups.values() for r in refs)
-            copies = [(t, c) for t, c in self.copies.items() if t not in got_guide]
-            n_copied = 0
-            if copies and not self.cancel:
-                s = self.stage('copy', u'نسخ الدليل من نسخة أخرى لنفس القناة', len(copies), 1)
-                for t, c in copies:
-                    try:
-                        n = import_events(self.epgcache, [t], c['events'])
-                        state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'],
-                                              'name': c['name'], 't': now,
-                                              'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
-                        self.stats['channels'] += 1
-                        self.stats['events'] += n
-                        n_copied += 1
-                        log(u'نسخ الدليل: %s ← %s (%s، %d برنامج)' % (c['name'], c['from_name'], c['bouquet'], n))
-                    except Exception as e:
-                        log(u'فشل نسخ دليل %s: %s' % (c['name'], e))
-                    s.done += 1
-                s.state = 'ok'
-                s.info = u'%d قناة' % n_copied
+            copies = [(t, c) for t, c in self.copies.items() if t not in got_guide and t not in self.conflicts]
+            if to_clean and self._flush(to_clean, u'دليل خطأ أو قديم'):
+                to_clean = set()
+
+            def do_import(exclude, quiet=False):
+                done = {}
+                st = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
+                for (key, shift), refs in groups.items():
+                    if self.cancel:
+                        break
+                    refs = [r for r in refs if r not in exclude]
+                    evs = results.get(key) or []
+                    if shift:
+                        evs = [(e[0] + shift,) + tuple(e[1:]) for e in evs]
+                    if refs and evs:
+                        try:
+                            n = import_events(self.epgcache, refs, evs)
+                            until = max(e[0] + e[1] for e in evs)
+                            for r in refs:
+                                done[r] = evs
+                                state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
+                                if shift:
+                                    state['filled'][r]['shift'] = shift
+                        except Exception as e:
+                            log(u'فشل الاستيراد %s: %s' % (key, e))
+                    st.done += 1
+                st.state = 'ok'
+                if copies and not self.cancel:
+                    st = self.stage('copy', u'نسخ الدليل من نسخة أخرى لنفس القناة', len(copies), 1)
+                    for t, c in copies:
+                        if t in exclude:
+                            continue
+                        try:
+                            n = import_events(self.epgcache, [t], c['events'])
+                            done[t] = c['events']
+                            state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'],
+                                                  'name': c['name'], 't': now,
+                                                  'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
+                            if not quiet:
+                                log(u'نسخ الدليل: %s ← %s (%s، %d برنامج)' % (c['name'], c['from_name'],
+                                                                         c['bouquet'], n))
+                        except Exception as e:
+                            log(u'فشل نسخ دليل %s: %s' % (c['name'], e))
+                        st.done += 1
+                    st.state = 'ok'
+                return done
+
+            imported = do_import(set())
+            # 6b. leak check: a guide must not show up on another channel (receivers that keep the guide
+            # per service number show it on every channel with the same number)
+            if not self.cancel:
+                leaks = self._find_leaks(imported)
+                if leaks:
+                    for src, victims in leaks.items():
+                        state['filled'].pop(src, None)
+                        state.setdefault('leak', {})[src] = {'t': now, 'victims': victims[:5]}
+                    if self._flush(set(leaks), u'دليل تسرب لقنوات أخرى') == 'all':
+                        imported = do_import(set(leaks), quiet=True)
+                    for src in leaks:
+                        imported.pop(src, None)
+            self.stats['channels'] = len(imported)
+            self.stats['events'] = sum(len(v) for v in imported.values())
+            n_copied = len([1 for t, _c in copies if t in imported])
+            if n_copied:
+                log(u'نسخ الدليل من نسخة أخرى لنفس القناة: %d قناة' % n_copied)
             self.stats['copied'] = n_copied
-            copied_refs = set(t for t, _c in copies if t in state['filled'] and
-                              u(state['filled'][t].get('key', '')).startswith('copy:'))
+            copied_refs = set(t for t, _c in copies if t in imported)
             for j in jobs:
                 if not j['key'] and j['ref'] in copied_refs:
                     self.stats['failed'] -= 1
                     j['copied'] = True
+            hidden = [r for r, v in load_mapping().items() if v == '!' and r in dict(self.all_services)]
+            if hidden:
+                n, how = clear_plugin_epg(self.epgcache, hidden)
+                if how:
+                    log(u'تم إخفاء دليل القمر الخطأ من %d قناة' % n)
+                else:
+                    log(u'إخفاء دليل القمر: هذه الصورة لا تسمح بمسح دليل قناة واحدة')
+            self.stats['conflicts'] = len(blocked)
+            self.health['held'] = len(held)
+            self.health['rejected'] = len(rejected)
+            self.health['conflicts'] = [j['name'] for j in blocked][:60]
+            self.health['leaks'] = dict((k, v) for k, v in (state.get('leak') or {}).items())
+            self.health['copied'] = n_copied
+            self.health['translated'] = self.stats.get('translated', 0)
+            state['health'] = self.health
             try:
                 self.epgcache.save()
             except Exception:
@@ -1716,7 +2020,7 @@ class Updater(object):
                 log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
             save_state(state)
             failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied') and not j.get('rejected')
-                            and not j.get('held')]
+                            and not j.get('held') and not j.get('conflict')]
             self.summary = [
                 u'تم تحديث %d قناة (%d برنامج) خلال %d ثانية' % (
                     self.stats['channels'], self.stats['events'], time.time() - self.started),
