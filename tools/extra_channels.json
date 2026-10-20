@@ -1,0 +1,27 @@
+{
+ "_comment": "Channels that the source site offers but iptv-org/epg does not list yet: {site folder: {site_id: [names]}}",
+ "elcinema.com": {
+  "1231": ["OSN Movies Comedy", "أو إس إن موفيز كوميدي"],
+  "1205": ["OSN Yahala", "OSN Ya Hala", "أو إس إن ياهلا"],
+  "1393": ["OSN One", "OSNtv One", "أو إس إن وان"],
+  "1232": ["OSN Kids", "أو إس إن كيدز"],
+  "1391": ["OSN Movies Hollywood", "أو إس إن موفيز هوليوود"],
+  "1213": ["OSN Movies Premiere", "أو إس إن موفيز بريميير"],
+  "1394": ["OSN Showcase", "أو إس إن شو كايس"],
+  "1392": ["OSN Family Movies", "OSN Movies Family", "أو إس إن فاميلي موفيز"],
+  "1395": ["OSN Crime", "أو إس إن كرايم"],
+  "1285": ["OSN Yahala Aflam", "OSN Ya Hala Aflam", "أو إس إن ياهلا أفلام"],
+  "1396": ["OSN Now", "OSNtv Now", "أو إس إن ناو"],
+  "1390": ["OSN Yahala Bil Arabi", "OSN Ya Hala Bil Arabi", "أو إس إن ياهلا بالعربي"],
+  "1373": ["Mix One", "ميكس وان"],
+  "1383": ["Al Wasat", "Alwasat TV", "الوسط"],
+  "1325": ["beIN Movies Family", "بي إن موفيز فاميلي"],
+  "1246": ["LDC", "ال دي سي"],
+  "1405": ["One Drama", "وان دراما"],
+  "1404": ["One Movies", "وان موفيز"],
+  "1401": ["Massa TV", "ماسة"],
+  "1374": ["Hadramout TV", "Hadhramaut TV", "تلفزيون حضرموت"],
+  "1366": ["Thikrayat", "Thikrayat TV", "ذكريات"],
+  "1398": ["Al Thania", "الثانية"]
+ }
+}

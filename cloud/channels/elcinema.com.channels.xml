@@ -104,4 +104,22 @@
   <channel site="elcinema.com" site_id="1399" lang="ar" xmltv_id="elcinema.1399">إم بي سي مصر دراما</channel>
   <channel site="elcinema.com" site_id="1401" lang="ar" xmltv_id="elcinema.1401">ماسة</channel>
   <channel site="elcinema.com" site_id="1388" lang="en" xmltv_id="elcinema.1388">Al Shams</channel>
+  <channel site="elcinema.com" site_id="1231" lang="ar" xmltv_id="elcinema.1231">OSN Movies Comedy</channel>
+  <channel site="elcinema.com" site_id="1205" lang="ar" xmltv_id="elcinema.1205">OSN Yahala</channel>
+  <channel site="elcinema.com" site_id="1393" lang="ar" xmltv_id="elcinema.1393">OSN One</channel>
+  <channel site="elcinema.com" site_id="1232" lang="ar" xmltv_id="elcinema.1232">OSN Kids</channel>
+  <channel site="elcinema.com" site_id="1391" lang="ar" xmltv_id="elcinema.1391">OSN Movies Hollywood</channel>
+  <channel site="elcinema.com" site_id="1213" lang="ar" xmltv_id="elcinema.1213">OSN Movies Premiere</channel>
+  <channel site="elcinema.com" site_id="1394" lang="ar" xmltv_id="elcinema.1394">OSN Showcase</channel>
+  <channel site="elcinema.com" site_id="1392" lang="ar" xmltv_id="elcinema.1392">OSN Family Movies</channel>
+  <channel site="elcinema.com" site_id="1395" lang="ar" xmltv_id="elcinema.1395">OSN Crime</channel>
+  <channel site="elcinema.com" site_id="1285" lang="ar" xmltv_id="elcinema.1285">OSN Yahala Aflam</channel>
+  <channel site="elcinema.com" site_id="1396" lang="ar" xmltv_id="elcinema.1396">OSN Now</channel>
+  <channel site="elcinema.com" site_id="1390" lang="ar" xmltv_id="elcinema.1390">OSN Yahala Bil Arabi</channel>
+  <channel site="elcinema.com" site_id="1373" lang="ar" xmltv_id="elcinema.1373">Mix One</channel>
+  <channel site="elcinema.com" site_id="1383" lang="ar" xmltv_id="elcinema.1383">Al Wasat</channel>
+  <channel site="elcinema.com" site_id="1325" lang="ar" xmltv_id="elcinema.1325">beIN Movies Family</channel>
+  <channel site="elcinema.com" site_id="1246" lang="ar" xmltv_id="elcinema.1246">LDC</channel>
+  <channel site="elcinema.com" site_id="1405" lang="ar" xmltv_id="elcinema.1405">One Drama</channel>
+  <channel site="elcinema.com" site_id="1404" lang="ar" xmltv_id="elcinema.1404">One Movies</channel>
 </channels>

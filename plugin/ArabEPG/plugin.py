@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources
 from .sources import log, u, PY3
 
-VERSION = '6.1'
+VERSION = '6.3'
 
 # --------------------------------------------------------------------- config
 config.plugins.arabepg = ConfigSubsection()
@@ -436,7 +436,12 @@ MANUAL_HELP = u'''الربط التلقائي يكفي لمعظم القنوات
 - القناة التي دليلها على القمر بلغة أوروبية لا تُربط بمصدر عربي، والعكس.
 - الربط الذي لا يمكن التحقق منه ونسبة تطابق اسمه أقل من 92% لا يُستورد، ويظهر بعلامة [?]
   في "تحتاج مراجعة". اضغط عليه OK ثم "تأكيد الربط الحالي" لو المعاينة صحيحة.
-- الإعدادات ← مستوى الأمان: "أمان عالٍ" يستورد المؤكد فقط، "كل الربط" يلغي هذا التحفظ.'''
+- الإعدادات ← مستوى الأمان: "أمان عالٍ" يستورد المؤكد فقط، "كل الربط" يلغي هذا التحفظ.
+
+دليل قناة أخرى (يدويا):
+- لو قناة ليس لها مصدر، لكن قناة أخرى في باقاتك تعرض نفس البرامج ولها دليل (من القمر أو من البلوجين):
+  القنوات ← اختر القناة ← OK ← "استخدام دليل قناة أخرى من باقاتك" ← اكتب جزءا من الاسم ← اختر القناة.
+  يُنسخ دليلها في كل تحديث. للإلغاء: OK ← "ربط تلقائي ذكي".'''
 
 
 def non_arabic_text():
@@ -884,7 +889,9 @@ class ChannelsScreen(BaseScreen):
         items = []
         if c[2] and c[2] != '-' and not c[4]:
             items.append((T(u'>> تأكيد الربط الحالي: %s' % engine.display_key(c[2])), c[2]))
-        items += [(T(u'>> بحث بالاسم...'), 'search'), (T(u'>> ربط تلقائي ذكي'), 'auto'),
+        items += [(T(u'>> بحث بالاسم...'), 'search'),
+                  (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
+                  (T(u'>> ربط تلقائي ذكي'), 'auto'),
                  (T(u'>> تعطيل البلوجين لهذه القناة'), '-'),
                  (T(u'>> إخفاء دليل القمر الخطأ لهذه القناة'), '!')]
         sats = list(engine.user_satellites(self.services))
@@ -919,6 +926,12 @@ class ChannelsScreen(BaseScreen):
         if not res:
             return
         v = res[1]
+        if v == 'chanpick':
+            from Screens.VirtualKeyBoard import VirtualKeyBoard
+            self.session.openWithCallback(lambda t: t is not None and self.pick_channel(ref, u(t)), VirtualKeyBoard,
+                                          title=T(u'اكتب جزءا من اسم القناة التي تريد دليلها (أو اتركه فارغا)'),
+                                          text='')
+            return
         if v in ('search', 'xmltvid'):
             from Screens.VirtualKeyBoard import VirtualKeyBoard
             if v == 'search':
@@ -940,12 +953,32 @@ class ChannelsScreen(BaseScreen):
             m.pop(ref, None)
         else:
             m[ref] = v
-            if v not in ('-', '!'):
+            if v not in ('-', '!') and not v.startswith('chan:'):
                 engine.learn(name, v, ref)     # same name/service on other satellites/feeds follows
                 if old and old != v:
                     engine.reject(name, old)   # never suggest the wrong one again
         engine.save_mapping(m)
         self.build(ref)
+
+    def pick_channel(self, ref, query):
+        q = engine.norm(query) if query.strip() else u''
+        epg = eEPGCache.getInstance()
+        items = []
+        for r, n in self.services:
+            if r == ref or (q and q not in engine.norm(n)):
+                continue
+            cnt = engine.epg_count(epg, r, 24)
+            if cnt <= 0:
+                continue
+            items.append((T(u'%s  (%s، %d برنامج)' % (n, engine.SAT_TITLES.get(engine.sat_of_ref(r), engine.sat_of_ref(r)),
+                                                      cnt)), u'chan:%s|%s' % (r, n)))
+            if len(items) >= 300:
+                break
+        if not items:
+            self.session.open(MessageBox, T(u'لا توجد قناة بهذا الاسم لها دليل الآن.'), MessageBox.TYPE_INFO, timeout=5)
+            return
+        self.session.openWithCallback(lambda r: r and self.picked(ref, r), ChoiceBox,
+                                      title=T(u'اختر القناة التي سيُنسخ دليلها'), list=items)
 
     def disable(self):
         c = self.cur()

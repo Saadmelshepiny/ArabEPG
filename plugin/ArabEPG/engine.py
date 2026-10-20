@@ -32,7 +32,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 5
+MATCHER_VERSION = 6
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -161,6 +161,8 @@ def display_key(key):
         return u'(معطل)'
     if key.startswith('copy:'):
         return u'منسوخ من نسخة أخرى للقناة'
+    if key.startswith('chan:'):
+        return u'دليل قناة أخرى: %s' % key[5:].partition('|')[2]
     c = catalog_entry(key)
     src = source_of(key)
     if src.startswith('xml:'):
@@ -605,6 +607,8 @@ def resolve(ref, mapping, auto):
     k = mapping.get(ref)
     if k in ('-', '!'):     # '-' plugin off for this channel, '!' also hide the satellite's own (wrong) guide
         return [('-', 0)], True
+    if k and k.startswith('chan:'):     # use the guide of another channel of the receiver (chosen by hand)
+        return [(k, 1.0)], True
     if k and source_of(k).split(':')[0] in SOURCE_ORDER:
         return [(k, 1.0)], True
     return [c for c in (auto.get(ref) or []) if c[0].split(':')[0] in SOURCE_ORDER], False
@@ -1131,7 +1135,7 @@ def name_close(name, key):
 
 
 # --------------------------------------------------------------------- language-independent checks
-AR_FILES = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia')
+AR_FILES = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_na', 'aljazeera')
 EU_FILES = ('it', 'pl', 'gr', 'fr', 'ro', 'ua', 'rs', 'hr', 'ba', 'al', 'bg', 'hu', 'il', 'oe_poland')
 _EU_CHARS = re.compile(u'[Ѐ-ӿͰ-Ͽ֐-׿ąćęłńśźżăâîșțşţőűčšžđřůěýáíéóúöüäß]', re.I)
 _AR_CHARS = re.compile(u'[ء-ي]')
@@ -1454,10 +1458,26 @@ class Updater(object):
         if how == 'service':
             log(u'تم مسح %s من %d قناة' % (why, n))
             return 'one'
+        # keep every other channel's guide (mostly the satellite's own): read it now, put it back after clearing
+        bad_sids = set((epg_triple(r) or (None,))[0] for r in refs)   # the leaked guide sits under these numbers
+        keep = {}
+        for r, _n in getattr(self, 'all_services', ()):
+            if r in refs or (epg_triple(r) or (None,))[0] in bad_sids:
+                continue
+            evs = read_events(self.epgcache, r, self.cfg.get('days', 3))
+            if evs:
+                keep[r] = evs
         try:
             self.epgcache.flushEPG()
-            log(u'تم مسح %s (%d قناة): الصورة لا تمسح قناة واحدة، فمُسح الدليل كله وسيعاد تحميله الآن' % (
-                why, len(refs)))
+            back = 0
+            for r, evs in keep.items():
+                try:
+                    import_events(self.epgcache, [r], evs)
+                    back += 1
+                except Exception:
+                    pass
+            log(u'تم مسح %s (%d قناة): الصورة لا تمسح قناة واحدة، فمُسح الدليل كله ثم أعيد دليل %d قناة أخرى كما كان' % (
+                why, len(refs), back))
             return 'all'
         except Exception as e:
             log(u'تعذر المسح: %s' % e)
@@ -1630,6 +1650,18 @@ class Updater(object):
                                               else None, self.cfg.get('days', 3), load_mapping())
                 except Exception as e:
                     log(u'نسخ الدليل بين نسخ القناة: %s' % e)
+            # channels that take the guide of another channel (chosen by hand)
+            mp = load_mapping()
+            for ref, name in self.services:
+                v = mp.get(ref) or ''
+                if v.startswith('chan:'):
+                    donor, _, dname = v[5:].partition('|')
+                    evs = read_events(self.epgcache, donor, self.cfg.get('days', 3))
+                    if evs:
+                        self.copies[ref] = {'from': donor, 'from_name': dname or donor, 'name': name,
+                                            'bouquet': u'اختيار يدوي', 'events': evs}
+                    else:
+                        log(u'%s: القناة المختارة (%s) ليس لها دليل الآن' % (name, dname))
             self.rich = {}
             if self.cfg['target'] == 'missing':
                 filled = load_state()['filled']
@@ -1674,7 +1706,7 @@ class Updater(object):
                 fk = u(state['filled'].get(ref, {}).get('key', ''))
                 if fk and not fk.startswith('copy:') and fk not in [c[0] for c in cands]:
                     stale.append(ref)
-                if cands and cands[0][0] == '-':
+                if cands and (cands[0][0] == '-' or cands[0][0].startswith('chan:')):
                     continue
                 if not cands:
                     continue

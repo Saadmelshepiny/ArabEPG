@@ -105,6 +105,11 @@ def main():
                     e['names'].append(name)
                 if ch['xmltv'] and not e['xmltv']:
                     e['xmltv'] = ch['xmltv']
+        extra = json.load(open(os.path.join(HERE, 'extra_channels.json'), encoding='utf8')).get(folder, {})
+        for sid, names in extra.items():
+            if sid not in entries:
+                entries[sid] = {'lang': 'ar', 'site_id': sid, 'names': list(names), 'xmltv': ''}
+                order.append(sid)
         primary = set(entries[k]['names'][0].lower() for k in order if entries[k]['names'])
         for key in order:
             e = entries[key]

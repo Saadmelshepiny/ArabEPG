@@ -196,7 +196,7 @@ def extract(gdir, name, spec):
     return chans, n
 
 
-AR_XML = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_eu')
+AR_XML = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_eu', 'ar_from_na', 'aljazeera')
 
 
 def _is_ar_xml(fname):
@@ -325,6 +325,15 @@ def main():
         except Exception as e:
             status['files'][name] = {'ok': False, 'error': str(e)[:300]}
             print('%-14s FAIL %s' % (name, e))
+
+    # files that are only used to pick out Arabic channels are not published themselves
+    for name, d in cfg['xmltv'].items():
+        if d.get('only_extract'):
+            index['files'].pop(name, None)
+            try:
+                os.remove(os.path.join(gdir, name + '.xml.gz'))
+            except OSError:
+                pass
 
     # Many channels in the ready-made Arabic files carry a COPY of another channel's schedule (placeholder data).
     # Linking a channel to such a copy shows a wrong guide, so those channels are taken out of the index.

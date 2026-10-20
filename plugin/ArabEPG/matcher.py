@@ -50,6 +50,8 @@ def base_norm(name):
     s = s.replace(u'&amp;', u'&').replace(u'osntv', u'osn').replace(u'+', u' plus ')
     s = re.sub(u'[\\(\\[].*?[\\)\\]]', u' ', s)
     s = re.sub(u'[_\\-\\.:|/]', u' ', s)
+    s = re.sub(u'^\\s*(19|20)\\d\\d\\s+', u'', s)            # "2023 Alkass 1" (file naming)
+    s = re.sub(u'\\s+(ar|en|fr|ara|eng)\\s*$', u'', s)        # "Alkass 1 AR" (language feed tag)
     s = _STRIP.sub(u' ', s)
     s = _AR_STRIP.sub(u' ', s)
     s = re.sub(u'\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\b',
