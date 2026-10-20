@@ -32,7 +32,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 4
+MATCHER_VERSION = 5
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -581,9 +581,11 @@ def smart_link(services, enabled, force=False, min_score=0.86):
                 cands = confirmed + extra + rest   # the service id beats a name that only looks alike
         cands = [c for c in cands if (n, c[0]) not in rejected]
         lk = learned['alias'].get(n)
-        if lk and ok(lk):
+        if lk and ok(lk) and (not lk.startswith('xml:') or catalog_entry(lk)):
             cands = [(lk, 1.0)] + [c for c in cands if c[0] != lk]
         rk = confirmed_refs.get(ref_key(ref) or '')
+        if rk and rk.startswith('xml:') and not catalog_entry(rk):
+            rk = None       # that channel is no longer offered (e.g. removed by the cloud as a copied schedule)
         if rk and rk not in manual_keys and not name_close(name, rk):
             rk = None       # an old automatic confirmation that does not even look like this channel
         if rk and ok(rk):   # this exact service was confirmed before (by you, by the satellite guide, or the cloud)
@@ -1813,6 +1815,33 @@ class Updater(object):
                 if cfg.get('lang_mode') == 'translate' and not self.cancel:
                     self._translate([j for j in jobs if j.get('translate')], results)
 
+            # 3b. ready-made files often give many small channels a COPY of another channel's schedule:
+            # the same programmes at the same times under different channel names -> not used
+            fps = {}
+            t_now = time.time()
+            for k, evs in results.items():
+                if k.startswith('xml:') and evs:
+                    fp = tuple(sorted((int(e[0]) // 60, u(e[2]).lower()) for e in evs
+                                      if t_now <= e[0] < t_now + 86400))
+                    if len(fp) >= 4:
+                        fps.setdefault(fp, []).append(k)
+            fake = set()
+            for keys in fps.values():
+                if len(keys) < 2:
+                    continue
+                names = [(k, (catalog_entry(k) or {}).get('names', [k])[0]) for k in keys]
+                if any(not name_like(a[1], b[1]) for a in names for b in names):
+                    fake.update(keys)
+            if fake:
+                n_fake = 0
+                for j in jobs:
+                    if j['key'] in fake:
+                        alt = [k for k in j['cands'] if k not in fake and results.get(k)]
+                        j['key'] = alt[0] if alt else None
+                        j['fake'] = not alt
+                        n_fake += 1
+                log(u'جدول منسوخ في ملف المصدر (نفس البرامج لقنوات مختلفة) - لم يُستخدم: %d قناة' % n_fake)
+
             # 4. verify every link against the satellite's own guide (titles AND programme start times)
             verified_pairs, fixed_pairs, rejected = [], [], []
             checked = fixed = shifted = 0
@@ -1883,7 +1912,8 @@ class Updater(object):
             for k, evs in results.items():
                 if evs:
                     backup.put(k, evs)
-            missing = [j for j in jobs if j['key'] is None and not j.get('rejected') and not j.get('held')]
+            missing = [j for j in jobs if j['key'] is None and not j.get('rejected') and not j.get('held')
+                       and not j.get('fake')]
             if missing:
                 s = self.stage('backup', u'النسخة الاحتياطية للقنوات المتعثرة', len(missing), 1)
                 for j in missing:
@@ -1913,6 +1943,7 @@ class Updater(object):
             to_clean = set(r for r in state['filled'] if r in self.conflicts)
             to_clean |= set(r for r, _n, _k in rejected if r in state['filled'])
             to_clean |= set(getattr(self, 'stale', ()))
+            to_clean |= set(j['ref'] for j in jobs if j.get('fake') and j['ref'] in state['filled'])
             for r in to_clean:
                 state['filled'].pop(r, None)
             groups = {}

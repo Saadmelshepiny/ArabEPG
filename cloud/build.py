@@ -196,6 +196,69 @@ def extract(gdir, name, spec):
     return chans, n
 
 
+AR_XML = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_eu')
+
+
+def _is_ar_xml(fname):
+    return any(fname == p or fname.startswith(p) for p in AR_XML)
+
+
+def _norm_name(n):
+    n = re.sub(r'\.[a-z]{2}$', '', (n or '').lower())
+    n = re.sub(r'\[[^\]]*\]|\([^)]*\)', ' ', n)
+    n = re.sub(r'[\W_]+', ' ', n)
+    n = ' '.join(w for w in n.split() if w not in ('hd', 'fhd', 'uhd', 'sd', 'tv', 'channel', 'hq', 'the', '4k'))
+    return n.replace(' ', '')
+
+
+def remove_copied_schedules(gdir, index, hours=24, min_progs=4):
+    now = time.time()
+    fps = {}
+    for fname, f in (index.get('files') or {}).items():
+        path = os.path.join(gdir, fname + '.xml.gz')
+        if not os.path.exists(path):
+            continue
+        names = dict((cid, nm) for cid, nm in f.get('channels') or [])
+        progs = {}
+        for _ev, el in ET.iterparse(open_any(path), events=('end',)):
+            if el.tag == 'programme':
+                st = xtime(el.get('start'))
+                if st and now <= st < now + hours * 3600:
+                    progs.setdefault(el.get('channel'), []).append((st // 60, (el.findtext('title') or '').strip().lower()))
+                el.clear()
+        for cid, p in progs.items():
+            if len(p) >= min_progs:
+                nm = names.get(cid) or [cid]
+                fps.setdefault(tuple(sorted(p)), []).append((fname, cid, _norm_name(nm[0]) or _norm_name(cid)))
+    drop = {}
+    for members in fps.values():
+        if len(members) < 2 or not any(_is_ar_xml(f) for f, _c, _n in members):
+            continue
+        clusters = []
+        for m in members:
+            for cl in clusters:
+                n0 = cl[0][2]
+                if m[2] and n0 and (m[2] == n0 or (len(m[2]) > 3 and m[2] in n0) or (len(n0) > 3 and n0 in m[2])):
+                    cl.append(m)
+                    break
+            else:
+                clusters.append([m])
+        if len(clusters) < 2:
+            continue           # the same channel in several files: a real schedule
+        size = sorted((len(set(f for f, _c, _n in cl)), i) for i, cl in enumerate(clusters))
+        keep = clusters[size[-1][1]] if size[-1][0] > size[-2][0] else []
+        for cl in clusters:
+            if cl is keep:
+                continue
+            for f, cid, _n in cl:
+                if _is_ar_xml(f):
+                    drop.setdefault(f, set()).add(cid)
+    for f, cids in drop.items():
+        ent = index['files'][f]
+        ent['channels'] = [c for c in ent['channels'] if c[0] not in cids]
+    return dict((f, sorted(c)[:50]) for f, c in drop.items())
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--work', default='work')
@@ -262,6 +325,15 @@ def main():
         except Exception as e:
             status['files'][name] = {'ok': False, 'error': str(e)[:300]}
             print('%-14s FAIL %s' % (name, e))
+
+    # Many channels in the ready-made Arabic files carry a COPY of another channel's schedule (placeholder data).
+    # Linking a channel to such a copy shows a wrong guide, so those channels are taken out of the index.
+    try:
+        removed = remove_copied_schedules(gdir, index)
+        status['copied_schedules_removed'] = removed
+        print('copied schedules removed: %d channels' % sum(len(v) for v in removed.values()))
+    except Exception as e:
+        print('copied schedule check failed: %s' % e)
 
     with gzip.open(os.path.join(a.out, 'index.json.gz'), 'wt', encoding='utf-8') as f:
         json.dump(index, f, ensure_ascii=False, separators=(',', ':'))

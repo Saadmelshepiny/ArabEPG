@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources
 from .sources import log, u, PY3
 
-VERSION = '6.0'
+VERSION = '6.1'
 
 # --------------------------------------------------------------------- config
 config.plugins.arabepg = ConfigSubsection()

@@ -1,6 +1,6 @@
 {
- "version": "6.0",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-arabepg_6.0_all.ipk",
+ "version": "6.1",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-arabepg_6.1_all.ipk",
  "date": "2026-10-20",
- "notes": "6.0: كاشف التسرب، زر الدليل خطأ، إخفاء دليل القمر، اختيار الباقات، صحة الدليل، نسخ احتياطي، قنوات عربية من الملفات الأوروبية"
+ "notes": "6.1: كشف الجداول المنسوخة في ملفات المصدر (سبب تكرار نفس الدليل على قنوات مختلفة)"
 }
