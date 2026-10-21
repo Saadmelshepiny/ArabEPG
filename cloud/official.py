@@ -11,6 +11,7 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'plugin'))
+sys.path.insert(0, HERE)
 from SaadEPG import sources  # noqa: E402
 
 GRABBERS = {'lbcgroup.tv': sources.grab_lbci, 'tunisiatv.tn': sources.grab_tunisia, 'trtarabi.com': sources.grab_trt}
@@ -27,6 +28,13 @@ def main():
     cfg = json.load(open(os.path.join(HERE, 'sources.json'), encoding='utf8'))
     os.makedirs(a.work, exist_ok=True)
     for name, d in cfg['grab'].items():
+        if d.get('python') and d['site'] == 'sat.tv':     # whole line-ups per request: its own grabber
+            try:
+                import sattv
+                sattv.grab(os.path.join(HERE, '..', 'iptv-epg', 'sites', 'sat.tv'), a.work, d.get('days', 2))
+            except Exception as e:
+                print('%s: %s' % (name, e))
+            continue
         if not d.get('python') or d['site'] not in GRABBERS:
             continue
         path = os.path.join(HERE, 'channels', d['site'] + '.channels.xml')
