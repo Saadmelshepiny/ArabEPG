@@ -227,6 +227,7 @@ def main():
     langs = [l for l in a.langs.split('+') if l]
     os.makedirs(a.work, exist_ok=True)
     repo = os.environ.get('GITHUB_REPOSITORY', 'Saadmelshepiny/ArabEPG')
+    print('languages: %s, budget %ds, python %s' % ('+'.join(langs), budget, sys.version.split()[0]))
     counts = collect(cfg, langs)
     # titles of every language before the descriptions of any: split the time fairly
     for n, lang in enumerate(langs):
@@ -237,7 +238,12 @@ def main():
             prev = {}
         left = budget - (time.time() - t0)
         deadline = time.time() + max(60, left / (len(langs) - n))
-        d, done = translate_lang(lang, counts[lang], prev, deadline)
+        try:
+            d, done = translate_lang(lang, counts[lang], prev, deadline)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            d, done = prev, 0
         d = prune(d, counts[lang])
         with gzip.open(os.path.join(a.work, 'out_tren_%s.xml' % lang), 'wb', compresslevel=9) as f:
             f.write(json.dumps(d, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))

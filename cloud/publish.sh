@@ -14,7 +14,9 @@ for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('clo
       || rm -f "public/tr/en_${l}.json.gz"
   fi
 done
-python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr
+cat work/out_trlog_*.xml > public/tr/log.txt 2>/dev/null || true
+python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr 2>&1 | tee public/tr/build.txt
+[ "${PIPESTATUS[0]}" = "0" ] || exit 1
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
 cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
