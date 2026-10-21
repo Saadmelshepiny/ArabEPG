@@ -21,6 +21,7 @@ import time
 import xml.etree.ElementTree as ET
 
 SAT_NILESAT, SAT_HOTBIRD = '1', '2'
+HOURS = [str(h) for h in range(0, 24, 2)] + ['0']
 GROUPS = (('ar', SAT_NILESAT, 'ar1'), ('en', SAT_NILESAT, 'en1'), ('en', SAT_HOTBIRD, 'en2'))
 API = 'https://www.sat.tv/wp-content/themes/twentytwenty-child/ajax_chaines.php'
 UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
@@ -78,44 +79,63 @@ def parse(page, day):
     return out
 
 
-def fetch(lang, sat, lineup, day):
+def fetch(lang, sat, lineup, day, hours='0'):
     import urllib.parse
     import urllib.request
-    data = urllib.parse.urlencode({'dateFiltre': day, 'hoursFiltre': '0', 'satLineup': lineup, 'satSatellite': sat,
+    data = urllib.parse.urlencode({'dateFiltre': day, 'hoursFiltre': hours, 'satLineup': lineup, 'satSatellite': sat,
                                    'userDateTime': int(time.time() * 1000), 'userTimezone': 'UTC'}).encode()
     req = urllib.request.Request(API, data=data, headers={
         'User-Agent': UA, 'Cookie': 'pll_language=%s' % lang, 'X-Requested-With': 'XMLHttpRequest',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Referer': 'https://www.sat.tv/'})
-    with urllib.request.urlopen(req, timeout=120) as r:
+    with urllib.request.urlopen(req, timeout=90) as r:
         page = r.read().decode('utf-8', 'replace')
-    print('sat.tv %s %s#%s %s: HTTP %s, %d bytes, %d channel blocks' % (
-        lang, sat, lineup, day, getattr(r, 'status', '?'), len(page), page.count('container-channel-events')))
+    print('sat.tv %s %s#%s %s h%s: HTTP %s, %d bytes, %d channel blocks' % (
+        lang, sat, lineup, day, hours, getattr(r, 'status', '?'), len(page), page.count('container-channel-events')))
     return page
 
 
-def grab(src, work, days=2):
+def grab(src, work, days=2, budget=11 * 60):
     guides = collections.OrderedDict()
+    t0, stats = time.time(), {'ok': 0, 'fail': 0}
     for lang, sat, prefix in GROUPS:
         lineups = cover(src, lang, sat)
-        got = {}
+        got, seen_lu = {}, {}
         for d in range(int(days)):
             day = time.strftime('%Y-%m-%d', time.gmtime(time.time() + d * 86400))
             for lu in lineups:
-                try:
-                    page = fetch(lang, sat, lu, day)
-                except Exception as e:
-                    print('sat.tv %s %s#%s %s: %s' % (lang, sat, lu, day, e))
-                    continue
-                for name, evs in parse(page, day).items():
-                    if d == 0 and name in got and lu != lineups[0]:
-                        continue         # the first line-up that has the channel wins
-                    got.setdefault(name, {})
-                    for e in evs:
-                        got[name][e[0]] = e
-                time.sleep(1)
+                # a whole day of a whole line-up is too heavy for the site (504): ask hour by hour,
+                # then the whole day as a last try; the same programme from two answers counts once
+                pages = 0
+                for hours in HOURS:
+                    page = None
+                    if time.time() - t0 > budget or (stats['fail'] >= 6 and not stats['ok']):
+                        break            # out of time, or the site does not answer at all
+                    for attempt in range(2):
+                        try:
+                            page = fetch(lang, sat, lu, day, hours)
+                            stats['ok'] += 1
+                            break
+                        except Exception as e:
+                            stats['fail'] += 1
+                            print('sat.tv %s %s#%s %s h%s: %s' % (lang, sat, lu, day, hours, e))
+                            time.sleep(5 * (attempt + 1))
+                    if not page:
+                        continue
+                    pages += 1
+                    for name, evs in parse(page, day).items():
+                        if d == 0 and name in got and lu != lineups[0] and name not in seen_lu.get(lu, ()):
+                            continue         # the first line-up that has the channel wins
+                        seen_lu.setdefault(lu, set()).add(name)
+                        got.setdefault(name, {})
+                        for e in evs:
+                            got[name][e[0]] = e
+                    time.sleep(1)
+                if not pages:
+                    print('sat.tv %s %s#%s %s: no answer at all' % (lang, sat, lu, day))
         print('sat.tv %s (satellite %s): %d line-ups, %d channels with programmes' % (lang, sat, len(lineups), len(got)))
         for name, evs in got.items():
             guides['%s.%s' % (prefix, name)] = (name, sorted(evs.values()))
+    print('sat.tv: %d answers, %d failed, %ds' % (stats['ok'], stats['fail'], time.time() - t0))
     out = os.path.join(work, 'out_sat.tv.1.xml')
     fmt = lambda t: time.strftime('%Y%m%d%H%M%S +0000', time.gmtime(t))
     n = 0
