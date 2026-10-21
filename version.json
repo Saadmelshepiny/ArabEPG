@@ -1,6 +1,6 @@
 {
- "version": "1.4",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.4_all.ipk",
- "date": "2026-10-21",
- "notes": "ترجمة دليل القمر للقنوات الأجنبية إلى الإنجليزية (هوت بيرد، يوتلسات 16، أسترا 23.5...)"
+ "version": "1.5",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.5_all.ipk",
+ "date": "2026-10-22",
+ "notes": "إصلاح تجمد الريسيفر عند بدء التحديث، أسماء قنوات إضافية"
 }

@@ -151,7 +151,13 @@
     "arabsat",
     "hotbird"
    ],
-   "title": "الإمارات والخليج"
+   "title": "الإمارات والخليج",
+   "aliases": {
+    "Yas.TV.HD.ae": [
+     "YAS Sports HD",
+     "Yas Sports"
+    ]
+   }
   },
   "sa": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_SA2.xml.gz",
@@ -598,7 +604,13 @@
     "nilesat",
     "arabsat"
    ],
-   "title": "open-epg: السعودية 2"
+   "title": "open-epg: السعودية 2",
+   "aliases": {
+    "Bahrain Sports TV.sa": [
+     "Bahrain Sport 1 HD",
+     "Bahrain Sports 1"
+    ]
+   }
   },
   "oe_saudiarabia3": {
    "url": "https://www.open-epg.com/files/saudiarabia3.xml",

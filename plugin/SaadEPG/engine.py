@@ -118,6 +118,17 @@ def load_state():
     return st
 
 
+_ST = {'sig': None, 'data': None}
+
+
+def state_ro():
+    """the state for screens that only read it (kept in memory until the file changes)"""
+    sig = (_mtime(STATE_FILE), os.path.getsize(STATE_FILE) if os.path.exists(STATE_FILE) else 0)
+    if _ST['sig'] != sig:
+        _ST['sig'], _ST['data'] = sig, load_state()
+    return _ST['data']
+
+
 def save_state(st):
     _save(STATE_FILE, st)
 
@@ -872,42 +883,82 @@ def import_events(epgcache, refs, events):
 
 
 # --------------------------------------------------------------------- backup cache
+TIMES_FILE = os.path.join(DATA_DIR, 'our_times.json')
+
+
+def our_times(key):
+    """(begin, duration) of what the plugin imported for an online channel; without reading the big backup"""
+    if _OT['sig'] != _mtime(TIMES_FILE):
+        _OT['sig'], _OT['data'] = _mtime(TIMES_FILE), _load(TIMES_FILE, None)
+    if _OT['data'] is None:
+        return None
+    return set((b, d) for b, d in _OT['data'].get(key) or [])
+
+
+_OT = {'sig': None, 'data': None}
+
+
 class Backup(object):
-    """last good schedule per online channel, used when every source fails."""
+    """last good schedule per online channel, used when every source fails.
+    One small file per channel source (cache/backup/), read only when needed: the old single big file
+    took seconds to read, and the receiver froze meanwhile."""
 
     def __init__(self):
-        self.path = os.path.join(cache_dir(), 'events.json.gz')
-        self.data = _load(self.path, {})
-        self.dirty = False
+        self.dir = os.path.join(cache_dir(), 'backup')
+        self.data, self.dirty = {}, set()
+        old = os.path.join(cache_dir(), 'events.json.gz')
+        if os.path.exists(old):
+            try:
+                os.remove(old)      # the old big file: the next updates fill the new folder
+            except OSError:
+                pass
+
+    def _path(self, key):
+        import hashlib
+        return os.path.join(self.dir, hashlib.md5(u(key).encode('utf-8')).hexdigest()[:16] + '.json')
+
+    def _all(self, key):
+        if key not in self.data:
+            self.data[key] = _load(self._path(key), [])
+        return self.data[key]
 
     def get(self, key):
         now = time.time()
-        return [tuple(e) for e in self.data.get(key, []) if e[0] + e[1] > now]
+        return [tuple(e) for e in self._all(key) if e[0] + e[1] > now]
 
     def put(self, key, events):
         now = time.time()
-        old = [e for e in self.data.get(key, []) if e[0] + e[1] > now and e[0] < events[0][0]] if events else []
+        old = [e for e in self._all(key) if e[0] + e[1] > now and e[0] < events[0][0]] if events else []
         self.data[key] = old + [[e[0], e[1], e[2], e[3], e[4][:300], e[5]] for e in events]
-        self.dirty = True
+        self.dirty.add(key)
 
     def save(self):
         if not self.dirty:
             return
         now = time.time()
-        for k in list(self.data):
-            self.data[k] = [e for e in self.data[k] if e[0] + e[1] > now]
-            if not self.data[k]:
-                del self.data[k]
+        times = _load(TIMES_FILE, {})
         try:
-            d = os.path.dirname(self.path)
-            if not os.path.isdir(d):
-                os.makedirs(d)
-            raw = json.dumps(self.data, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
-            with gzip.open(self.path + '.tmp', 'wb') as f:
-                f.write(raw)
-            os.rename(self.path + '.tmp', self.path)
+            if not os.path.isdir(self.dir):
+                os.makedirs(self.dir)
+            for k in self.dirty:
+                evs = [e for e in self.data.get(k) or [] if e[0] + e[1] > now]
+                p = self._path(k)
+                if evs:
+                    _save(p, evs)
+                    times[k] = [[int(e[0]), int(e[1])] for e in evs]
+                else:
+                    times.pop(k, None)
+                    if os.path.exists(p):
+                        os.remove(p)
+            for fn in os.listdir(self.dir):          # files of channels not updated for 8 days
+                fp = os.path.join(self.dir, fn)
+                if now - _mtime(fp) > 8 * 86400:
+                    os.remove(fp)
         except Exception as e:
             log(u'تعذر حفظ النسخة الاحتياطية: %s' % e)
+        # only the times, for the link check at the start of every update
+        _save(TIMES_FILE, dict((k, v) for k, v in times.items() if v and v[-1][0] + v[-1][1] > now))
+        self.dirty = set()
 
 
 # --------------------------------------------------------------------- fetching (cloud first, then direct)
@@ -1229,11 +1280,12 @@ def reset_plugin_data():
     st['filled'] = {}
     st.pop('last_stats', None)
     save_state(st)
-    for p in (AUTO_FILE, os.path.join(cache_dir(), 'events.json.gz')):
+    for p in (AUTO_FILE, os.path.join(cache_dir(), 'events.json.gz'), TIMES_FILE):
         try:
             os.remove(p)
         except OSError:
             pass
+    shutil.rmtree(os.path.join(cache_dir(), 'backup'), ignore_errors=True)
 
 
 def _event_at(events, t):
@@ -1823,9 +1875,10 @@ class Updater(object):
                 self.services = [s for s in self.services if s[0] in self.only_refs]
             # what the satellite itself says (without what the plugin imported): used to verify the links
             self.native = {}
-            if self.cfg.get('verify', True):
+            # (not for the quick update of the channel you just opened: it has no guide at all)
+            if self.cfg.get('verify', True) and not self.quiet:
                 filled = load_state()['filled']
-                bk = Backup()
+                bk = None
                 for ref, name in self.services:
                     f = filled.get(ref)
                     ours = None
@@ -1834,7 +1887,11 @@ class Updater(object):
                         if k.startswith('copy:'):
                             continue
                         sh = int(f.get('shift', 0))
-                        ours = set((int(e[0]) + sh, int(e[1])) for e in bk.get(k))
+                        times = our_times(k)
+                        if times is None:      # first run after updating the plugin: the old way, once
+                            bk = bk or Backup()
+                            times = set((int(e[0]), int(e[1])) for e in bk.get(k))
+                        ours = set((b + sh, d) for b, d in times)
                     ev = native_events(self.epgcache, ref, 15, ours, name)
                     if ev:
                         self.native[ref] = ev
@@ -1866,7 +1923,7 @@ class Updater(object):
             # the satellite's own guide of foreign channels, to translate it to English (only channels the plugin
             # does not fill from an online guide; read here because enigma2 objects belong to the main thread)
             self.native_full = {}
-            if self.cfg.get('foreign_lang', 'en') == 'en':
+            if self.cfg.get('foreign_lang', 'en') == 'en' and not self.quiet:
                 filled = load_state()['filled']
                 mp = load_mapping()
                 for ref, _n in self.services:

@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.4'
+VERSION = '1.5'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -1033,7 +1033,7 @@ class ChannelsScreen(BaseScreen):
             return
         ref, name, key, cands, manual = c
         show_picon(self['picon'], find_picon(ref, name))
-        st = engine.load_state()['filled'].get(ref)
+        st = engine.state_ro()['filled'].get(ref)
         lines = [name, u'القمر: %s' % engine.SAT_TITLES.get(engine.sat_of_ref(ref), engine.sat_of_ref(ref))]
         if ref in self.conflicts:
             lines.append(u'تنبيه: رقم خدمة هذه القناة مشترك مع قناة أخرى مختلفة، فالريسيفر لا يفرق بين دليليهما.')

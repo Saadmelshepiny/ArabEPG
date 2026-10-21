@@ -93,13 +93,17 @@
   "Saudi Quran",
   "KSA Quran",
   "Al Quran Al Kareem KSA",
-  "قناة القران الكريم السعودية"
+  "قناة القران الكريم السعودية",
+  "SAUDI CH For Quran",
+  "Saudi Quran HD"
  ],
  "shahid:946942": [
   "Saudi Sunnah",
   "KSA Sunnah",
   "Al Sunnah",
-  "قناة السنة النبوية"
+  "قناة السنة النبوية",
+  "SAUDI CH For Sunnah",
+  "Saudi Sunnah HD"
  ],
  "shahid:409390": [
   "Spacetoon",
@@ -162,7 +166,10 @@
   "Egypt Sat",
   "Al Fadaiya Al Masriya",
   "الفضائية المصرية",
-  "المصرية"
+  "المصرية",
+  "Al Masryia",
+  "Al Masryia HD",
+  "Al Masria"
  ],
  "elcinema:1137": [
   "Al Hayah",
@@ -467,7 +474,9 @@
  "elcinema:1382": [
   "Al Araby 2",
   "Alaraby 2",
-  "العربي 2"
+  "العربي 2",
+  "AL ARABY 2HD",
+  "Al Araby2"
  ],
  "elcinema:1388": [
   "Al Shams",
@@ -547,7 +556,10 @@
  ],
  "osn:9961": [
   "KSA Sports 1",
-  "SSC 1"
+  "SSC 1",
+  "KSA SPORT1 HD",
+  "KSA Sport 1",
+  "KSA Sports1"
  ],
  "osn:9393": [
   "Roya HD"
@@ -684,7 +696,10 @@
  "rotana:446": [
   "Al Resalah",
   "Alresalah",
-  "الرسالة"
+  "الرسالة",
+  "Ressala",
+  "Ressala HD",
+  "Al Ressala"
  ],
  "art:#": [
   "ART Aflam 1",
@@ -790,5 +805,9 @@
   "Tamazight TV",
   "الأمازيغية",
   "تمازيغت"
+ ],
+ "osn:9844": [
+  "AL ARABY 2HD",
+  "Al Araby2"
  ]
 }
