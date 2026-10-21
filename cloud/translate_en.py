@@ -71,39 +71,56 @@ def collect(cfg, langs):
         except Exception as e:
             print('%-12s download failed: %s' % (name, e))
             continue
-        if data[:2] == b'\x1f\x8b':
-            data = gzip.decompress(data)
+        try:
+            if data[:2] == b'\x1f\x8b':
+                data = gzip.decompress(data)
+        except Exception as e:
+            print('%-12s bad gzip: %s' % (name, e))
+            continue
+        if len(data.strip()) < 50:
+            print('%-12s empty file, skipped' % name)
+            continue
         n = 0
-        for _ev, el in ET.iterparse(io.BytesIO(data), events=('end',)):
-            if el.tag != 'programme':
-                if el.tag == 'channel':
-                    el.clear()
-                continue
-            st = xtime(el.get('start'))
-            if st and lo < st < hi:
-                t = el.find('title')
-                if t is not None and t.text:
-                    txt = t.text.strip()[:TITLE_MAX]
-                    l = route(flang, t.get('lang'), txt)
-                    if l in out:
-                        out[l]['t'][txt] += 1
-                        n += 1
-                c = el.find('category')
-                if c is not None and c.text:
-                    txt = c.text.strip()[:60]
-                    l = route(flang, c.get('lang'), txt)
-                    if l in out:
-                        out[l]['t'][txt] += 1
-                if st < dhi:
-                    d = el.find('desc')
-                    if d is not None and d.text:
-                        txt = d.text.strip()[:DESC_MAX]
-                        l = route(flang, d.get('lang'), txt)
-                        if l in out:
-                            out[l]['d'][txt] += 1
-            el.clear()
-        print('%-12s %6d titles for %s' % (name, n, '+'.join(langs)))
+        try:
+            n = _scan(data, flang, out, lo, hi, dhi)
+        except ET.ParseError as e:
+            print('%-12s broken XML (%s): kept what was read' % (name, e))
+            n = -1
+        print('%-12s %6d titles for %s' % (name, max(n, 0), '+'.join(langs)))
     return out
+
+
+def _scan(data, flang, out, lo, hi, dhi):
+    n = 0
+    for _ev, el in ET.iterparse(io.BytesIO(data), events=('end',)):
+        if el.tag != 'programme':
+            if el.tag == 'channel':
+                el.clear()
+            continue
+        st = xtime(el.get('start'))
+        if st and lo < st < hi:
+            t = el.find('title')
+            if t is not None and t.text:
+                txt = t.text.strip()[:TITLE_MAX]
+                l = route(flang, t.get('lang'), txt)
+                if l in out:
+                    out[l]['t'][txt] += 1
+                    n += 1
+            c = el.find('category')
+            if c is not None and c.text:
+                txt = c.text.strip()[:60]
+                l = route(flang, c.get('lang'), txt)
+                if l in out:
+                    out[l]['t'][txt] += 1
+            if st < dhi:
+                d = el.find('desc')
+                if d is not None and d.text:
+                    txt = d.text.strip()[:DESC_MAX]
+                    l = route(flang, d.get('lang'), txt)
+                    if l in out:
+                        out[l]['d'][txt] += 1
+        el.clear()
+    return n
 
 
 # --------------------------------------------------------------------- models
