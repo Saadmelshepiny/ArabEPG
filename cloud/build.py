@@ -355,7 +355,7 @@ def main():
     for name, d, kind in jobs:
         t0 = time.time()
         out_path = os.path.join(gdir, name + '.xml.gz')
-        if d.get('only_grab'):
+        if d.get('only_grab') or d.get('disabled'):
             continue       # raw material for another file (sat.tv -> sattv_ar / sattv_en)
         try:
             fdays = d.get('days', days)

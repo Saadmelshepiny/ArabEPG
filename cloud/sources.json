@@ -130,8 +130,9 @@
    "site": "sat.tv",
    "days": 2,
    "only_grab": true,
-   "_comment": "Eutelsat sat.tv: merged by cloud/sattv.py into the xmltv entries sattv_ar / sattv_en",
-   "python": true
+   "_comment": "Eutelsat sat.tv: its schedule service answered only 504 Gateway Timeout (21/10/2026, whole day and 2-hour slices). Remove \"disabled\" to try again.",
+   "python": true,
+   "disabled": true
   }
  },
  "xmltv": {
@@ -857,7 +858,8 @@
     "nilesat",
     "arabsat"
    ],
-   "title": "sat.tv عربي (يوتلسات 7/8 غرب)"
+   "title": "sat.tv عربي (يوتلسات 7/8 غرب)",
+   "disabled": true
   },
   "sattv_en": {
    "url": "local:work/sattv_en.xml",
@@ -865,7 +867,8 @@
     "hotbird"
    ],
    "title": "sat.tv Hot Bird",
-   "region": "en"
+   "region": "en",
+   "disabled": true
   }
  },
  "extract": {

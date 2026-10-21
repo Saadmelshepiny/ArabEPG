@@ -28,6 +28,8 @@ def main():
     cfg = json.load(open(os.path.join(HERE, 'sources.json'), encoding='utf8'))
     os.makedirs(a.work, exist_ok=True)
     for name, d in cfg['grab'].items():
+        if d.get('disabled'):
+            continue
         if d.get('python') and d['site'] == 'sat.tv':     # whole line-ups per request: its own grabber
             try:
                 import sattv
