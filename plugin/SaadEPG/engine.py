@@ -51,7 +51,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 6
+MATCHER_VERSION = 7
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -581,6 +581,14 @@ def load_auto():
     return out
 
 
+def _home_rank(idx, key, sat):
+    if not key.startswith('xml:'):
+        return 0
+    f = (idx.get('files') or {}).get(key[4:].split('/', 1)[0]) or {}
+    sats = f.get('sat') or []
+    return 0 if sats and sats[0] == sat else 1
+
+
 def smart_link(services, enabled, force=False, min_score=0.86):
     """automatic candidates for every service -> {ref: [(key, score), ...]} (cached)."""
     sats = list(user_satellites(services))
@@ -641,6 +649,8 @@ def smart_link(services, enabled, force=False, min_score=0.86):
                                                if kv[0].split(':')[0] in SOURCE_ORDER else 99))
                 cands = confirmed + extra + rest   # the service id beats a name that only looks alike
         cands = [c for c in cands if (n, c[0]) not in rejected]
+        # equal scores: the guide made for this satellite first (Israeli file before the Ukrainian one on Amos)
+        cands = sorted(cands, key=lambda c: (-round(c[1], 3), _home_rank(idx, c[0], sat)))
         lk = learned['alias'].get(n)
         if lk and ok(lk) and (not lk.startswith('xml:') or catalog_entry(lk)):
             cands = [(lk, 1.0)] + [c for c in cands if c[0] != lk]
@@ -885,8 +895,12 @@ class Fetcher(object):
                 url = self.cfg['cloud_url'] + url
             d = os.path.join(cache_dir(), 'files')
             path = os.path.join(d, fname + '.xml.gz')
-            fresh = os.path.exists(path) and time.time() - _mtime(path) < 6 * 3600 and os.path.getsize(path) > 100
-            if not fresh:   # downloaded files are kept 6 hours: zap updates and re-runs are instant
+            have = os.path.getsize(path) if os.path.exists(path) else 0
+            if f.get('size'):   # the cloud says how big its current file is: a new build = a new download
+                fresh = have == f['size']
+            else:
+                fresh = have > 100 and time.time() - _mtime(path) < 6 * 3600
+            if not fresh:
                 try:
                     if not os.path.isdir(d):
                         os.makedirs(d)
@@ -1784,7 +1798,9 @@ class Updater(object):
             sats = user_satellites(self.services)
             log(u'الأقمار في باقاتك: ' + u'، '.join(u'%s (%d)' % (SAT_TITLES.get(k, k), n)
                                                        for k, n in sorted(sats.items(), key=lambda x: -x[1])))
-            refresh_cloud(cfg['cloud_url'], use_cloud=cfg.get('cloud'), stop=self.stop)
+            # an update you start yourself always looks for a newer cloud build
+            refresh_cloud(cfg['cloud_url'], max_age=600 if cfg.get('manual') else 2 * 3600,
+                          use_cloud=cfg.get('cloud'), stop=self.stop)
             s.done, s.state = 1, 'ok'
 
             # 2. linking
@@ -1899,6 +1915,11 @@ class Updater(object):
                     log(u'%s: %d/%d قناة بها بيانات' % (label, ok, len(ids)))
                     empty = [display_key(src + ':' + c).split(': ', 1)[-1] for c in ids if not got.get(c)]
                     self.health['sources'][label] = [ok, len(ids), empty[:15]]
+                    if not rnd:     # per channel, so partial updates (stages, one channel) add up
+                        items = self.health.setdefault('items', {}).setdefault(SOURCE_NAMES.get(src, src), {})
+                        for c in ids:
+                            items[c] = [1 if got.get(c) else 0, int(t_now),
+                                        display_key(src + ':' + c).split(': ', 1)[-1]]
                     if empty and src != 'xml':
                         log(u'%s بدون بيانات: %s' % (label, u'، '.join(empty[:12])))
 
@@ -2172,6 +2193,17 @@ class Updater(object):
             self.health['leaks'] = dict((k, v) for k, v in (state.get('leak') or {}).items())
             self.health['copied'] = n_copied
             self.health['translated'] = self.stats.get('translated', 0)
+            # keep the results of the last 2 days per channel: the health screen shows the whole picture,
+            # not only the last (maybe partial) update
+            old = (state.get('health') or {}).get('items') or {}
+            for lbl, chans in (self.health.get('items') or {}).items():
+                old.setdefault(lbl, {}).update(chans)
+            limit = time.time() - 2 * 86400
+            items = dict((lbl, dict((c, v) for c, v in chans.items() if v[1] >= limit)) for lbl, chans in old.items())
+            self.health['items'] = dict((k, v) for k, v in items.items() if v)
+            for lbl, chans in self.health['items'].items():
+                okn = sum(1 for v in chans.values() if v[0])
+                self.health['sources'][lbl] = [okn, len(chans), [v[2] for v in chans.values() if not v[0]][:15]]
             state['health'] = self.health
             try:
                 self.epgcache.save()

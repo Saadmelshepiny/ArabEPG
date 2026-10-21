@@ -107,7 +107,7 @@ def tag2(tag, text, en):
     return s
 
 
-def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MAX, lang=None, tr=None):
+def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MAX, lang=None, tr=None, aliases=None):
     """stream-parse XMLTV file(s), keep [now-6h, now+days], write compact gz. -> {id: [names]}
     lang/tr: language of a foreign file and the English dictionaries -> English text added next to the original."""
     tr = tr or {}
@@ -129,7 +129,12 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
                         new = idmap[n]
                         break
             rename[cid] = new
-            chans[new] = names
+            extra = list((aliases or {}).get(cid) or [])
+            for n in names:
+                ln = latin_name(n)
+                if ln and ln not in names + extra:
+                    extra.append(ln)
+            chans[new] = names + [x for x in extra if x not in names]
             el.clear()
         elif el.tag == 'programme':
             cid = rename.get(el.get('channel'), el.get('channel'))
@@ -158,7 +163,7 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
             names = chans.get(cid) or ([catalog_names[cid]] if catalog_names and cid in catalog_names else [cid])
             kept[cid] = names
             f.write('<channel id="%s">%s</channel>\n' % (html.escape(cid), ''.join(
-                '<display-name>%s</display-name>' % html.escape(n) for n in names[:4])))
+                '<display-name>%s</display-name>' % html.escape(n) for n in names[:8])))
         written = 0
         for cid, plist in progs.items():
             seen = set()
@@ -195,6 +200,21 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
 
 
 AR_RE = re.compile('[\u0621-\u064a]')
+_CYR = dict(zip('абвгдезийклмнопрстуфхцъыьэіґ', ['a', 'b', 'v', 'g', 'd', 'e', 'z', 'i', 'y', 'k', 'l', 'm', 'n', 'o',
+                                                'p', 'r', 's', 't', 'u', 'f', 'h', 'ts', 'a', 'y', '', 'e', 'i', 'g']))
+_CYR.update({'ж': 'zh', 'ч': 'ch', 'ш': 'sh', 'щ': 'sht', 'ю': 'yu', 'я': 'ya', 'ё': 'yo', 'є': 'ye', 'ї': 'yi'})
+
+
+def latin_name(n):
+    """Cyrillic channel name -> Latin spelling (БНТ1 -> BNT1), so receiver names in Latin letters match"""
+    if not re.search('[\u0400-\u04ff]', n):
+        return None
+    out = ''
+    for ch in n:
+        lo = ch.lower()
+        t = _CYR.get(lo, ch)
+        out += t.capitalize() if ch != lo and t else t
+    return out
 
 
 def extract(gdir, name, spec):
@@ -338,7 +358,7 @@ def main():
                 if a.skip_download:
                     continue
                 chans, n = repack(open_any(download(d['url'])), out_path, fdays,
-                                  lang=norm_lang(d.get('lang')) or None, tr=tr)
+                                  lang=norm_lang(d.get('lang')) or None, tr=tr, aliases=d.get('aliases'))
             if not chans:
                 raise RuntimeError('empty guide')
             index['files'][name] = {

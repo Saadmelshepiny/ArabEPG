@@ -264,7 +264,50 @@
     "hellas39"
    ],
    "title": "България",
-   "lang": "bg"
+   "lang": "bg",
+   "aliases": {
+    "БНТ1.bg": [
+     "BNT 1",
+     "BNT1"
+    ],
+    "БНТ2.bg": [
+     "BNT 2",
+     "BNT2"
+    ],
+    "БНТ.HD.bg": [
+     "BNT 3",
+     "BNT HD",
+     "BNT3"
+    ],
+    "БНТ.Свят.bg": [
+     "BNT 4",
+     "BNT World",
+     "BNT Svyat",
+     "BNT4"
+    ],
+    "Нова.телевизия.bg": [
+     "Nova TV",
+     "Nova",
+     "Nova Televizia"
+    ],
+    "Диема.bg": [
+     "Diema"
+    ],
+    "Диема.Фемили.bg": [
+     "Diema Family"
+    ],
+    "Нова.Спорт.bg": [
+     "Nova Sport"
+    ],
+    "България.он.еър.bg": [
+     "Bulgaria On Air",
+     "Bulgaria ON AIR"
+    ],
+    "Евроком.НКТВ.bg": [
+     "Eurocom",
+     "Evrokom"
+    ]
+   }
   },
   "hu": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_HU1.xml.gz",
@@ -281,7 +324,106 @@
     "amos"
    ],
    "title": "ישראל",
-   "lang": "he"
+   "lang": "he",
+   "aliases": {
+    "כאן.11.il": [
+     "Kan 11",
+     "Kan 11 HD",
+     "Kan11"
+    ],
+    "ערוץ.11.כאן.שידור.חי.il": [
+     "Kan 11 Live"
+    ],
+    "כאן.חינוכית.il": [
+     "Kan Educational",
+     "Kan Hinuchit",
+     "Kan Edu",
+     "Kan 23"
+    ],
+    "קשת.il": [
+     "Keshet 12",
+     "Keshet",
+     "Channel 12",
+     "Mako 12"
+    ],
+    "ערוץ.12.שידור.חי.il": [
+     "Channel 12 Live"
+    ],
+    "רשת.il": [
+     "Reshet 13",
+     "Reshet",
+     "Channel 13"
+    ],
+    "ערוץ.14.HD.il": [
+     "Channel 14",
+     "Now 14",
+     "Arutz 14",
+     "Now14"
+    ],
+    "ערוץ.הכנסת.il": [
+     "Knesset",
+     "Knesset Channel",
+     "Knesset TV"
+    ],
+    "מכאן.il": [
+     "Makan",
+     "Makan 33",
+     "Kan 33"
+    ],
+    "ערוץ.9.il": [
+     "Channel 9",
+     "Israel 9"
+    ],
+    "עברית.i24.il": [
+     "i24NEWS Hebrew",
+     "i24NEWS HE"
+    ],
+    "ספורט.5.שידור.חי.il": [
+     "Sport 5",
+     "Sport5"
+    ],
+    "ספורט.5.פלוס.il": [
+     "Sport 5 Plus",
+     "Sport 5+"
+    ],
+    "ספורט.5.לייב.il": [
+     "Sport 5 Live"
+    ],
+    "ספורט.5.גולד.il": [
+     "Sport 5 Gold"
+    ],
+    "יורוספורט.1.HD.il": [
+     "Eurosport 1 IL"
+    ],
+    "יורוספורט.2.HD.il": [
+     "Eurosport 2 IL"
+    ],
+    "ערוץ.הידברות.il": [
+     "Hidabroot"
+    ],
+    "ערוץ.TeenNick.il": [
+     "TeenNick"
+    ],
+    "מוסיקה.24.il": [
+     "Music 24"
+    ],
+    "ניקלודיאון.שידור.חי.il": [
+     "Nickelodeon IL"
+    ],
+    "דיסני.il": [
+     "Disney Channel IL"
+    ],
+    "דיסני.ג’וניור.il": [
+     "Disney Junior IL"
+    ],
+    "ערוץ.הילדים.il": [
+     "Kids Channel IL",
+     "Arutz HaYeladim"
+    ],
+    "ערוץ.ויוה.שידור.חי.il": [
+     "Viva"
+    ]
+   }
   },
   "oe_egypt1": {
    "url": "https://www.open-epg.com/files/egypt1.xml",

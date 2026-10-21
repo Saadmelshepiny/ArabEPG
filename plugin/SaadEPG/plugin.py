@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.2'
+VERSION = '1.3'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -384,7 +384,7 @@ class SaadEPGMain(BaseScreen):
         elif a == 'epgfile':
             self.session.open(TextScreen, u'حفظ الدليل', epg_file_text)
         elif a == 'update':
-            start_update()
+            start_update(manual=True)
             self.session.openWithCallback(self.refresh, UpdateScreen)
         elif a == 'nownext':
             self.session.open(NowNextScreen)
@@ -916,9 +916,9 @@ class ChannelsScreen(BaseScreen):
             'up': self.up, 'down': self.down,
             'left': lambda: self.step_bouquet(-1), 'right': lambda: self.step_bouquet(1)}, -1)
         # up/down: channels, left/right: bouquets, CH+/CH-: page, MENU: list of bouquets
-        self['bq_actions'] = ActionMap(['MenuActions', 'ChannelSelectBaseActions', 'InfobarChannelSelection'], {
-            'menu': self.choose_bouquet, 'nextBouquet': self.pgup, 'prevBouquet': self.pgdown,
-            'switchChannelUp': self.pgup, 'switchChannelDown': self.pgdown}, -2)
+        # (InfobarChannelSelection is not used: on many images it maps the up/down keys too -> double jumps)
+        self['bq_actions'] = ActionMap(['MenuActions', 'ChannelSelectBaseActions'], {
+            'menu': self.choose_bouquet, 'nextBouquet': self.pgup, 'prevBouquet': self.pgdown}, -2)
         self.bouquets, self.bq = [], -1
         self.relink = relink
         self.filter = 0
@@ -1195,7 +1195,7 @@ class ChannelsScreen(BaseScreen):
             return
         c = self.cur()
         refs = set([c[0]]) if (res[1] == 'one' and c) else None
-        if start_update(refs, target='all'):
+        if start_update(refs, target='all', manual=True):
             self.session.openWithCallback(lambda *x: self.loaded(self.auto), UpdateScreen)
 
     def preview(self):
@@ -1247,10 +1247,8 @@ class NowNextScreen(BaseScreen):
             'ok': self.zap, 'green': self.zap, 'cancel': self.close, 'yellow': self.toggle, 'blue': self.build,
             'up': lambda: self['list'].up(), 'down': lambda: self['list'].down(),
             'left': lambda: self.step(-1), 'right': lambda: self.step(1)}, -1)
-        self['bq_actions'] = ActionMap(['ChannelSelectBaseActions', 'InfobarChannelSelection'], {
-            'nextBouquet': lambda: self['list'].pageUp(), 'prevBouquet': lambda: self['list'].pageDown(),
-            'switchChannelUp': lambda: self['list'].pageUp(), 'switchChannelDown': lambda: self['list'].pageDown()},
-            -2)
+        self['bq_actions'] = ActionMap(['ChannelSelectBaseActions'], {
+            'nextBouquet': lambda: self['list'].pageUp(), 'prevBouquet': lambda: self['list'].pageDown()}, -2)
         self.only_plugin = False
         self.bouquets, self.bq = [], -1
         self.onLayoutFinish.append(self.load)
