@@ -15,6 +15,7 @@ for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('clo
   fi
 done
 cat work/out_trlog_*.xml > public/tr/log.txt 2>/dev/null || true
+python3 cloud/sattv.py merge work work/sattv_ar.xml work/sattv_en.xml || echo "sat.tv merge skipped"
 python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr 2>&1 | tee public/tr/build.txt
 [ "${PIPESTATUS[0]}" = "0" ] || exit 1
 cp version.json public/ 2>/dev/null || true

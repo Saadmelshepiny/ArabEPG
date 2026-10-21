@@ -37,6 +37,7 @@ if [ "$site" = "translate" ]; then
   exit 0
 fi
 python3 tools/make_catalog.py --iptv iptv-epg --cloud cloud/channels >/dev/null
+[ "$site" = "sat.tv" ] && python3 cloud/sattv.py channels iptv-epg/sites/sat.tv cloud/channels/sat.tv.channels.xml
 list="$work/ch_${site}.${part}.xml"
 python3 cloud/chan_tools.py split "cloud/channels/${site}.channels.xml" "$part" "$parts" "$list"
 read days delay conns <<< "$(python3 cloud/chan_tools.py opts "$site")"

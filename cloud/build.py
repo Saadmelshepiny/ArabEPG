@@ -263,7 +263,7 @@ def extract(gdir, name, spec):
     return chans, n
 
 
-AR_XML = ('ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_eu', 'ar_from_na', 'aljazeera')
+AR_XML = ('sattv_ar', 'ae', 'sa', 'eg', 'bein', 'oe_egypt', 'oe_uae', 'oe_qatar', 'oe_saudi', 'oe_arabia', 'ar_from_eu', 'ar_from_na', 'aljazeera')
 
 
 def _is_ar_xml(fname):
@@ -355,6 +355,8 @@ def main():
     for name, d, kind in jobs:
         t0 = time.time()
         out_path = os.path.join(gdir, name + '.xml.gz')
+        if d.get('only_grab'):
+            continue       # raw material for another file (sat.tv -> sattv_ar / sattv_en)
         try:
             fdays = d.get('days', days)
             if kind == 'grab':
@@ -366,16 +368,24 @@ def main():
                 idmap, cnames = our_ids(d['site'])
                 chans, n = repack([open_any(p) for p in srcs], out_path, fdays, idmap, cnames)
             else:
-                if a.skip_download:
+                if a.skip_download and not d['url'].startswith('local:'):
                     continue
-                chans, n = repack(open_any(download(d['url'])), out_path, fdays,
+                if d['url'].startswith('local:'):       # made in this run (e.g. sat.tv merged by sattv.py)
+                    lp = d['url'][6:]
+                    if not os.path.exists(lp) or os.path.getsize(lp) < 200:
+                        raise RuntimeError('not made in this run')
+                    src = open_any(lp)
+                else:
+                    src = open_any(download(d['url']))
+                chans, n = repack(src, out_path, fdays,
                                   lang=norm_lang(d.get('lang')) or None, tr=tr, aliases=d.get('aliases'))
             if not chans:
                 raise RuntimeError('empty guide')
             index['files'][name] = {
                 'url': 'guides/%s.xml.gz' % name, 'sat': d.get('sat', []), 'title': d.get('title', name),
                 'kind': 'site' if kind == 'grab' else 'xmltv', 'size': os.path.getsize(out_path),
-                'region': 'ar' if (kind == 'grab' or _is_ar_xml(name)) else ('eu' if d.get('lang') else None),
+                'region': d['region'] if 'region' in d else (
+                    'ar' if (kind == 'grab' or _is_ar_xml(name)) else ('eu' if d.get('lang') else None)),
                 'lang': d.get('lang') or ('ar' if (kind == 'grab' or _is_ar_xml(name)) else None),
                 'programmes': n, 'channels': [[cid, names] for cid, names in sorted(chans.items())]}
             status['files'][name] = {'ok': True, 'channels': len(chans), 'programmes': n,

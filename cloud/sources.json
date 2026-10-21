@@ -125,6 +125,14 @@
    ],
    "python": true,
    "days": 1
+  },
+  "sattv": {
+   "site": "sat.tv",
+   "days": 2,
+   "conns": 2,
+   "delay": 500,
+   "only_grab": true,
+   "_comment": "Eutelsat sat.tv: merged by cloud/sattv.py into the xmltv entries sattv_ar / sattv_en"
   }
  },
  "xmltv": {
@@ -843,6 +851,22 @@
    ],
    "title": "Sport Klub",
    "lang": "sr"
+  },
+  "sattv_ar": {
+   "url": "local:work/sattv_ar.xml",
+   "sat": [
+    "nilesat",
+    "arabsat"
+   ],
+   "title": "sat.tv عربي (يوتلسات 7/8 غرب)"
+  },
+  "sattv_en": {
+   "url": "local:work/sattv_en.xml",
+   "sat": [
+    "hotbird"
+   ],
+   "title": "sat.tv Hot Bird",
+   "region": "en"
   }
  },
  "extract": {
