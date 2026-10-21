@@ -4,7 +4,17 @@
 set -e
 python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/SaadEPG/channels.json --cloud cloud/channels
 timeout 15m python3 cloud/official.py --work work || echo "official sources skipped"
-python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json
+# English dictionaries of the foreign guides (made by the "translate" jobs; the previous ones when a job failed)
+mkdir -p public/tr
+for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('cloud/sources.json')).get('translate',{}).get('groups',[]) for x in g.split('+')))"); do
+  if [ -s "work/out_tren_${l}.xml" ]; then
+    mv "work/out_tren_${l}.xml" "public/tr/en_${l}.json.gz"
+  else
+    curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/epg/tr/en_${l}.json.gz" -o "public/tr/en_${l}.json.gz" \
+      || rm -f "public/tr/en_${l}.json.gz"
+  fi
+done
+python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
 cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json

@@ -166,33 +166,42 @@
    "sat": [
     "hotbird"
    ],
-   "title": "Italia"
+   "title": "Italia",
+   "lang": "it"
   },
   "pl": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_PL1.xml.gz",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19"
    ],
-   "title": "Polska"
+   "title": "Polska",
+   "lang": "pl"
   },
   "gr": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_GR1.xml.gz",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "hellas39"
    ],
-   "title": "Ελλάδα"
+   "title": "Ελλάδα",
+   "lang": "el"
   },
   "fr": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_FR1.xml.gz",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19",
+    "eutelsat5w"
    ],
-   "title": "France"
+   "title": "France",
+   "lang": "fr"
   },
   "uk": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_UK1.xml.gz",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra28"
    ],
    "title": "UK / International"
   },
@@ -200,66 +209,79 @@
    "url": "https://epgshare01.online/epgshare01/epg_ripper_RO1.xml.gz",
    "sat": [
     "hotbird",
-    "amos"
+    "amos",
+    "thor"
    ],
-   "title": "România"
+   "title": "România",
+   "lang": "ro"
   },
   "ua": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_UA1.xml.gz",
    "sat": [
     "hotbird",
-    "amos"
+    "amos",
+    "astra48"
    ],
-   "title": "Україна"
+   "title": "Україна",
+   "lang": "uk"
   },
   "rs": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_RS1.xml.gz",
    "sat": [
     "eutelsat16"
    ],
-   "title": "Srbija"
+   "title": "Srbija",
+   "lang": "sr"
   },
   "hr": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_HR1.xml.gz",
    "sat": [
     "eutelsat16"
    ],
-   "title": "Hrvatska"
+   "title": "Hrvatska",
+   "lang": "hr"
   },
   "ba": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_BA1.xml.gz",
    "sat": [
     "eutelsat16"
    ],
-   "title": "Bosna i Hercegovina"
+   "title": "Bosna i Hercegovina",
+   "lang": "bs"
   },
   "al": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_AL1.xml.gz",
    "sat": [
     "eutelsat16"
    ],
-   "title": "Shqipëri"
+   "title": "Shqipëri",
+   "lang": "sq"
   },
   "bg": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_BG1.xml.gz",
    "sat": [
-    "bulgariasat"
+    "bulgariasat",
+    "hellas39"
    ],
-   "title": "България"
+   "title": "България",
+   "lang": "bg"
   },
   "hu": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_HU1.xml.gz",
    "sat": [
-    "amos"
+    "amos",
+    "thor"
    ],
-   "title": "Magyarország"
+   "title": "Magyarország",
+   "lang": "hu"
   },
   "il": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_IL1.xml.gz",
    "sat": [
     "amos"
    ],
-   "title": "ישראל"
+   "title": "ישראל",
+   "lang": "he"
   },
   "oe_egypt1": {
    "url": "https://www.open-epg.com/files/egypt1.xml",
@@ -455,30 +477,38 @@
   "oe_poland": {
    "url": "https://www.open-epg.com/files/poland.xml",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19"
    ],
-   "title": "open-epg: poland"
+   "title": "open-epg: poland",
+   "lang": "pl"
   },
   "oe_poland1": {
    "url": "https://www.open-epg.com/files/poland1.xml",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19"
    ],
-   "title": "open-epg: poland1"
+   "title": "open-epg: poland1",
+   "lang": "pl"
   },
   "oe_poland2": {
    "url": "https://www.open-epg.com/files/poland2.xml",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19"
    ],
-   "title": "open-epg: poland2"
+   "title": "open-epg: poland2",
+   "lang": "pl"
   },
   "oe_polandpremium": {
    "url": "https://www.open-epg.com/files/polandpremium.xml",
    "sat": [
-    "hotbird"
+    "hotbird",
+    "astra19"
    ],
-   "title": "open-epg: polandpremium"
+   "title": "open-epg: polandpremium",
+   "lang": "pl"
   },
   "sa1": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_SA1.xml.gz",
@@ -496,6 +526,181 @@
     "hotbird"
    ],
    "title": "الجزيرة"
+  },
+  "de": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_DE1.xml.gz",
+   "sat": [
+    "astra19",
+    "hotbird"
+   ],
+   "title": "Deutschland",
+   "lang": "de"
+  },
+  "at": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_AT1.xml.gz",
+   "sat": [
+    "astra19"
+   ],
+   "title": "Österreich",
+   "lang": "de"
+  },
+  "ch": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_CH1.xml.gz",
+   "sat": [
+    "astra19",
+    "hotbird"
+   ],
+   "title": "Schweiz",
+   "lang": "de"
+  },
+  "nl": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz",
+   "sat": [
+    "astra23",
+    "astra19"
+   ],
+   "title": "Nederland",
+   "lang": "nl"
+  },
+  "be": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_BE2.xml.gz",
+   "sat": [
+    "astra23",
+    "eutelsat9"
+   ],
+   "title": "België / Belgique",
+   "lang": "nl"
+  },
+  "es": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_ES1.xml.gz",
+   "sat": [
+    "astra19",
+    "hispasat"
+   ],
+   "title": "España",
+   "lang": "es"
+  },
+  "pt": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_PT1.xml.gz",
+   "sat": [
+    "hispasat",
+    "astra19"
+   ],
+   "title": "Portugal",
+   "lang": "pt"
+  },
+  "cz": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_CZ1.xml.gz",
+   "sat": [
+    "astra23"
+   ],
+   "title": "Česko",
+   "lang": "cs"
+  },
+  "sk": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SK1.xml.gz",
+   "sat": [
+    "astra23"
+   ],
+   "title": "Slovensko",
+   "lang": "sk"
+  },
+  "tr": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_TR3.xml.gz",
+   "sat": [
+    "turksat42",
+    "hotbird",
+    "eutelsat7"
+   ],
+   "title": "Türkiye",
+   "lang": "tr"
+  },
+  "tr2": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_TR1.xml.gz",
+   "sat": [
+    "turksat42",
+    "hotbird",
+    "eutelsat7"
+   ],
+   "title": "Türkiye 2",
+   "lang": "tr"
+  },
+  "dk": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_DK1.xml.gz",
+   "sat": [
+    "thor",
+    "astra48"
+   ],
+   "title": "Danmark",
+   "lang": "da"
+  },
+  "no": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_NO1.xml.gz",
+   "sat": [
+    "thor",
+    "astra48"
+   ],
+   "title": "Norge",
+   "lang": "nb"
+  },
+  "se": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SE1.xml.gz",
+   "sat": [
+    "thor",
+    "astra48"
+   ],
+   "title": "Sverige",
+   "lang": "sv"
+  },
+  "fi": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_FI1.xml.gz",
+   "sat": [
+    "thor",
+    "astra48"
+   ],
+   "title": "Suomi",
+   "lang": "fi"
+  },
+  "lt": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_LT1.xml.gz",
+   "sat": [
+    "astra48"
+   ],
+   "title": "Lietuva",
+   "lang": "lt"
+  },
+  "lv": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_LV1.xml.gz",
+   "sat": [
+    "astra48"
+   ],
+   "title": "Latvija",
+   "lang": "lv"
+  },
+  "cy": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_CY1.xml.gz",
+   "sat": [
+    "hellas39",
+    "hotbird"
+   ],
+   "title": "Κύπρος",
+   "lang": "el"
+  },
+  "ie": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_IE1.xml.gz",
+   "sat": [
+    "astra28"
+   ],
+   "title": "Ireland"
+  },
+  "sportklub": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SPORTKLUB1.xml.gz",
+   "sat": [
+    "eutelsat16",
+    "hotbird"
+   ],
+   "title": "Sport Klub",
+   "lang": "sr"
   }
  },
  "extract": {
@@ -628,5 +833,24 @@
    ],
    "title": "قنوات عربية من الملفات الأوروبية"
   }
+ },
+ "translate": {
+  "_comment": "foreign guides -> English, offline (cloud/translate_en.py). One grab job per group; budget = seconds per job.",
+  "budget": 3000,
+  "groups": [
+   "pl",
+   "it+fr",
+   "el+bg",
+   "ro+hu",
+   "uk+ru",
+   "sl+sq",
+   "he+tr",
+   "de",
+   "nl+da",
+   "es+pt",
+   "cs+sk",
+   "nb+sv+fi",
+   "lt+lv"
+  ]
  }
 }

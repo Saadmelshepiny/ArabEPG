@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import gzip
 import json
 import os
+import shutil
 import re
 import threading
 import time
@@ -61,6 +62,19 @@ SATELLITES = (
     ('eutelsat16', u'يوتلسات 16E', ((158, 162),)),
     ('bulgariasat', u'البلغاري 1.9E', ((18, 20),)),
     ('amos', u'آموس 4W', ((3555, 3565),)),
+    ('astra19', u'أسترا 19.2E', ((189, 194),)),
+    ('astra23', u'أسترا 23.5E', ((233, 237),)),
+    ('astra28', u'أسترا 28.2E', ((280, 286),)),
+    ('astra48', u'أسترا 4.8E', ((46, 52),)),
+    ('eutelsat3', u'يوتلسات 3E', ((28, 32),)),
+    ('eutelsat7', u'يوتلسات 7E', ((68, 72),)),
+    ('eutelsat9', u'يوتلسات 9E', ((88, 92),)),
+    ('eutelsat36', u'يوتلسات 36E', ((358, 362),)),
+    ('hellas39', u'هيلاس سات 39E', ((388, 392),)),
+    ('turksat42', u'تركسات 42E', ((418, 422),)),
+    ('thor', u'ثور 0.8W / 1W', ((3588, 3593),)),
+    ('eutelsat5w', u'يوتلسات 5W', ((3548, 3552),)),
+    ('hispasat', u'هيسباسات 30W', ((3298, 3302),)),
 )
 SAT_TITLES = dict((k, t) for k, t, _r in SATELLITES)
 
@@ -558,6 +572,15 @@ def _allow_for(enabled, sat):
     return ok
 
 
+def load_auto():
+    """the cached automatic links -> {ref: [(key, score), ...]}"""
+    out = {}
+    for k, v in _load(AUTO_FILE, {}).items():
+        if k != '_stamp' and isinstance(v, list) and len(v) > 1 and isinstance(v[1], list):
+            out[k] = [tuple(x) for x in v[1] if isinstance(x, list) and len(x) == 2]
+    return out
+
+
 def smart_link(services, enabled, force=False, min_score=0.86):
     """automatic candidates for every service -> {ref: [(key, score), ...]} (cached)."""
     sats = list(user_satellites(services))
@@ -569,8 +592,7 @@ def smart_link(services, enabled, force=False, min_score=0.86):
         idx.get('generated', 0) // 86400, u','.join(sorted(sats)), int(_mtime(LEARN_FILE)), int(min_score * 100))
     stamp += u'|%d' % int(_mtime(LINKED_REFS_FILE))
     stamp += u'|%d' % len(load_refs())
-    if cache.get('_stamp') != stamp:
-        cache = {}
+    # every entry carries its own stamp: an update of a few channels must not throw away the others
     m = matcher(sats)
     refs = load_refs()
     xml_ids = {}
@@ -588,7 +610,7 @@ def smart_link(services, enabled, force=False, min_score=0.86):
     allow_cache = {}
     for ref, name in services:
         hit = cache.get(ref)
-        if hit and hit[0] == name:
+        if hit and hit[0] == name and len(hit) > 2 and hit[2] == stamp:
             out[ref] = [tuple(x) for x in hit[1]]
             continue
         sat = sat_of_ref(ref)
@@ -630,7 +652,7 @@ def smart_link(services, enabled, force=False, min_score=0.86):
         if rk and ok(rk):   # this exact service was confirmed before (by you, by the satellite guide, or the cloud)
             cands = [(rk, 1.0)] + [c for c in cands if c[0] != rk]
         cands = cands[:4]
-        cache[ref] = [name, [list(x) for x in cands]]
+        cache[ref] = [name, [list(x) for x in cands], stamp]
         out[ref] = cands
         changed = True
     if changed:
@@ -1074,18 +1096,43 @@ def backup_dir(existing=False):
 
 
 def backup_all(settings):
-    """settings: {name: value}. -> folder or None"""
+    """settings: {name: value}. The copy before this one is kept in previous/. -> folder or None"""
     d = backup_dir()
     if not d:
         return None
     if not os.path.isdir(d):
         os.makedirs(d)
+    if os.path.exists(os.path.join(d, 'settings.json')):
+        prev = os.path.join(d, 'previous')
+        if not os.path.isdir(prev):
+            os.makedirs(prev)
+        for fn in ('settings.json', 'mapping.json', 'learned.json', 'info.json'):
+            try:
+                shutil.copy2(os.path.join(d, fn), os.path.join(prev, fn))
+            except Exception:
+                pass
     _save(os.path.join(d, 'settings.json'), settings)
     for f in (MAP_FILE, LEARN_FILE):
         if os.path.exists(f):
             _save(os.path.join(d, os.path.basename(f)), _load(f, {}))
     _save(os.path.join(d, 'info.json'), {'t': int(time.time())})
     return d
+
+
+def backup_info():
+    """-> (folder, time of the last backup) or None"""
+    d = backup_dir(existing=True)
+    if not d:
+        return None
+    t = _load(os.path.join(d, 'info.json'), {}).get('t')
+    if not t:
+        t = int(_mtime(os.path.join(d, 'settings.json')))
+    return d, t
+
+
+def fresh_install():
+    """True when this receiver has no Saad EPG data yet (new install or after flashing the image)."""
+    return not any(os.path.exists(p) for p in (MAP_FILE, LEARN_FILE, STATE_FILE))
 
 
 def restore_all():
@@ -1230,6 +1277,9 @@ def key_region(key):
         return 'ar'
     if src == 'xml':
         f = rest.split('/', 1)[0]
+        reg = ((load_index().get('files') or {}).get(f) or {}).get('region')
+        if reg in ('ar', 'eu'):
+            return reg
         if f in AR_FILES or [1 for p in AR_FILES if f.startswith(p + '_') or (p.startswith('oe_') and f.startswith(p))]:
             return 'ar'
         if f in EU_FILES or f.startswith('oe_poland'):

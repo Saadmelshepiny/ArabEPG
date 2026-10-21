@@ -69,10 +69,15 @@ def main():
     parts = DEST.split('/')
     for i in range(2, len(parts) + 1):
         dmembers.append(('/'.join(parts[:i]) + '/', None, 0o755))
-    for fn in sorted(os.listdir(src)):
-        p = os.path.join(src, fn)
-        if os.path.isfile(p) and not fn.endswith(('.pyc', '.pyo')):
-            dmembers.append((DEST + '/' + fn, open(p, 'rb').read(), 0o644))
+    for root, dirs, files in os.walk(src):
+        dirs[:] = sorted(d for d in dirs if d != '__pycache__')
+        rel = os.path.relpath(root, src)
+        base = DEST if rel == '.' else DEST + '/' + rel.replace(os.sep, '/')
+        if rel != '.':
+            dmembers.append((base + '/', None, 0o755))
+        for fn in sorted(files):
+            if not fn.endswith(('.pyc', '.pyo')):
+                dmembers.append((base + '/' + fn, open(os.path.join(root, fn), 'rb').read(), 0o644))
 
     ipk = ar([('debian-binary', b'2.0\n'), ('control.tar.gz', tar_gz(cmembers)), ('data.tar.gz', tar_gz(dmembers))])
     os.makedirs(a.out, exist_ok=True)

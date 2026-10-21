@@ -46,6 +46,9 @@ def main():
             parts = int(d.get('parts', 1))
             for p in range(1, parts + 1):
                 inc.append({'site': d['site'], 'part': p, 'parts': parts})
+        # offline translation of the foreign guides to English runs as extra jobs of the same matrix
+        for g in (CFG.get('translate') or {}).get('groups', []):
+            inc.append({'site': 'translate', 'part': g, 'parts': 1})
         print(json.dumps({'include': inc}, separators=(',', ':')))
     elif cmd == 'opts':
         d = site_cfg(sys.argv[2])

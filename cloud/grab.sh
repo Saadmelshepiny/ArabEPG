@@ -4,6 +4,13 @@
 site="$1"; part="${2:-1}"; parts="${3:-1}"
 root="$(pwd)"
 work="$root/work"; mkdir -p "$work"
+if [ "$site" = "translate" ]; then
+  # foreign guides -> English (offline models). Never fails the build: the previous dictionaries stay in use.
+  python3 -m venv /tmp/trenv && /tmp/trenv/bin/pip install -q ctranslate2 sentencepiece || echo "pip failed"
+  timeout 70m /tmp/trenv/bin/python cloud/translate_en.py --langs "$part" --work "$work" || echo "translation stopped"
+  ls -la "$work"
+  exit 0
+fi
 python3 tools/make_catalog.py --iptv iptv-epg --cloud cloud/channels >/dev/null
 list="$work/ch_${site}.${part}.xml"
 python3 cloud/chan_tools.py split "cloud/channels/${site}.channels.xml" "$part" "$parts" "$list"

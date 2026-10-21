@@ -9,7 +9,7 @@ import re
 import threading
 import time
 
-from enigma import eTimer, getDesktop, eEPGCache, eServiceReference
+from enigma import eTimer, eEPGCache, eServiceReference
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.MenuList import MenuList
@@ -24,10 +24,10 @@ from Screens.Screen import Screen
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 
-from . import engine, sources
+from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.1'
+VERSION = '1.2'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -86,6 +86,9 @@ C.zap_notify = ConfigYesNo(default=True)
 C.migrated = ConfigYesNo(default=False)
 C.bouquets = ConfigText(default='', fixed_size=False)   # names joined by | (empty = all bouquets)
 C.copy_epg = ConfigYesNo(default=True)
+C.auto_backup = ConfigYesNo(default=True)
+C.foreign_lang = ConfigSelection(default='en', choices=[
+    ('en', 'الإنجليزية (ترجمة من السحابة)'), ('orig', 'لغة القناة الأصلية')])
 
 SRC_CFG = (('shahid', C.src_shahid), ('osn', C.src_osn), ('bein', C.src_bein), ('rotana', C.src_rotana),
            ('aljazeera', C.src_aljazeera), ('elcinema', C.src_elcinema), ('beinsports', C.src_beinsports),
@@ -148,9 +151,10 @@ def current_cfg(**over):
         'min_score': int(C.match_level2.value) / 100.0, 'verify': C.verify.value, 'lang_mode': C.lang_mode.value,
         'tr_provider': C.tr_provider.value, 'tr_email': C.tr_email.value.strip(), 'tr_url': C.tr_url.value.strip(),
         'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
-        'bouquets': [x for x in C.bouquets.value.split('|') if x],
+        'bouquets': [x for x in C.bouquets.value.split('|') if x], 'foreign_lang': C.foreign_lang.value,
     }
     cfg.update(over)
+    sources.XML_PREFER_EN = cfg['foreign_lang'] == 'en'
     return cfg
 
 
@@ -186,35 +190,25 @@ class BackgroundJob(object):
 
 
 # --------------------------------------------------------------------- skin helpers
-_F = getDesktop(0).size().width() / 1280.0
-BG, PANEL, ACCENT, TXT, DIM = '#10141c', '#1b2230', '#2f8f5b', '#f0f0f0', '#9aa4b2'
-
-
-def _s(v):
-    return int(v * _F)
+_s = ui.S
+BG, PANEL, ACCENT, TXT, DIM, CELL = ui.BG, ui.PANEL, ui.ACCENT, ui.TXT, ui.DIM, ui.CELL
+Col, Table = ui.Col, ui.Table
 
 
 def skin(w, h, body, title='Saad EPG'):
-    head = ('<eLabel position="0,0" size="%d,%d" backgroundColor="%s" zPosition="-2" />'
-            '<eLabel position="0,0" size="%d,%d" backgroundColor="%s" zPosition="-1" />') % (
-        _s(w), _s(h), BG, _s(w), _s(4), ACCENT)
-    return ('<screen position="center,center" size="%d,%d" title="%s" backgroundColor="%s" flags="wfNoBorder">'
-            '<widget name="title" zPosition="1" position="%d,%d" size="%d,%d" font="Regular;%d" foregroundColor="%s" '
-            'backgroundColor="%s" transparent="1" halign="right" />%s%s</screen>') % (
-        _s(w), _s(h), title, BG, _s(20), _s(12), _s(w - 40), _s(40), _s(28), TXT, BG, head, body)
+    return ui.frame(w, h, body, title)
 
 
 def buttons(y, w):
-    out = ''
-    cols = (('red', '#b22222'), ('green', '#2e8b57'), ('yellow', '#c9a227'), ('blue', '#2b5fb3'))
-    bw = (w - 50) // 4
-    for i, (n, col) in enumerate(cols):
-        x = 10 + i * (bw + 10)
-        out += ('<eLabel position="%d,%d" size="%d,%d" backgroundColor="%s" />'
-                '<widget name="key_%s" zPosition="1" position="%d,%d" size="%d,%d" font="Regular;%d" halign="center" '
-                'valign="center" foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(x), _s(y + 32), _s(bw), _s(4), col, n, _s(x), _s(y), _s(bw), _s(32), _s(19), TXT, BG)
-    return out
+    return ui.buttons(y, w)
+
+
+def text_panel(x, y, w, h, size=19, name='text'):
+    """a scrolling text inside a soft box"""
+    return ui.box(x, y, w, h, PANEL) + (
+        '<widget name="%s" position="%d,%d" size="%d,%d" font="Regular;%d" foregroundColor="%s" '
+        'backgroundColor="%s" transparent="1" zPosition="1" />') % (
+        name, _s(x + 14), _s(y + 10), _s(w - 28), _s(h - 20), _s(size), TXT, PANEL)
 
 
 def set_buttons(scr, red='', green='', yellow='', blue=''):
@@ -280,78 +274,113 @@ def show_picon(widget, path):
 
 
 # --------------------------------------------------------------------- main menu
+MAIN_ITEMS = [
+    (u'تحديث دليل البرامج الآن', 'update', u'جلب الدليل من كل المصادر وحفظه'),
+    (u'القنوات والربط', 'channels', u'مصدر دليل كل قناة حسب الباقات'),
+    (u'الآن وبعده', 'nownext', u'البرنامج الحالي والتالي لكل القنوات'),
+    (u'صحة الدليل', 'health', u'المصادر والقنوات المرفوضة والتنبيهات'),
+    (u'الإعدادات', 'settings', u'المصادر واللغات ومواعيد التحديث'),
+    (u'أدوات متقدمة', 'advanced', u'الباقات، الإحصائيات، النسخ الاحتياطي...'),
+]
+ADVANCED_ITEMS = [
+    (u'اختيار الباقات التي يحدّثها البلوجين', 'bouquets', u'الباقات المفضلة أولا'),
+    (u'إحصائيات الباقات وعدد البرامج', 'stats', u'لكل باقة: قنوات ومربوطة وبرامج'),
+    (u'حفظ الدليل على الهارد (epg.dat)', 'epgfile', u'يبقى الدليل بعد إعادة التشغيل'),
+    (u'إعادة الربط الذكي لكل القنوات', 'relink', u'ربط من جديد بدون الربط اليدوي'),
+    (u'قنوات دليلها غير عربي', 'nonar', u'قنوات عربية لم يوجد لها دليل عربي'),
+    (u'طريقة الربط اليدوي والحماية', 'help', u'شرح خطوة بخطوة'),
+    (u'مسح دليل البلوجين وإعادة تحميله', 'clear', u'بداية نظيفة (الربط اليدوي يبقى)'),
+    (u'اختبار الاتصال بالمصادر والسحابة', 'test', u'هل كل مصدر يعمل الآن؟'),
+    (u'استيراد ملفات EPG (XMLTV)', 'import', u'ملفات تضعها على الهارد'),
+    (u'تصدير الربط المؤكد', 'export', u'لمشاركته عبر السحابة'),
+    (u'نسخ احتياطي الآن', 'backup', u'الإعدادات والربط اليدوي على الهارد'),
+    (u'استرجاع النسخة الاحتياطية', 'restore', u'من الهارد أو الفلاشة'),
+    (u'مسح ذاكرة الترجمة القديمة', 'trclear', u'ترجمة MyMemory المحفوظة'),
+    (u'سجل العمليات', 'log', u'/tmp/SaadEPG.log'),
+    (u'التحقق من تحديث البلوجين', 'selfupdate', u'تثبيت الإصدار الجديد'),
+    (u'حذف الربط اليدوي لكل القنوات', 'reset', u'العودة للربط التلقائي'),
+]
+
+
+def menu_table(width):
+    return Table(width, [Col(u'', width - 380 - 10, 'right'), Col(u'', 370, 'right', 2, 'dim')], row_h=50, font=21,
+                 small=16)
+
+
+class MenuScreen(BaseScreen):
+    """a list of actions: title on the right, a short explanation on the left. closes with the chosen key."""
+
+    def __init__(self, session, title, items):
+        n = min(len(items), 11)
+        h = 76 + n * 50 + 20
+        self.skin = skin(900, h, ui.list_widget('list', 14, 70, 872, n * 50 + 4))
+        BaseScreen.__init__(self, session, title)
+        self.table = menu_table(860)
+        self['list'] = self.table.widget()
+        self['list'].setList([self.table.row(k, [t, d], i) for i, (t, k, d) in enumerate(items)])
+        self['actions'] = ActionMap(['OkCancelActions'], {'ok': self.ok, 'cancel': lambda: self.close(None)}, -1)
+
+    def ok(self):
+        self.close(self['list'].payload())
+
+
 class SaadEPGMain(BaseScreen):
+    CARDS = (u'آخر تحديث', u'قنوات حدّثها البلوجين', u'برامج', u'آخر تجميع للسحابة')
+
     def __init__(self, session):
-        self.skin = skin(820, 600, (
-            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
-            'scrollbarMode="showOnDemand" backgroundColor="%s" foregroundColor="%s" transparent="1" />'
-            '<eLabel position="%d,%d" size="%d,%d" backgroundColor="%s" />'
-            '<widget name="status" zPosition="1" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(20), _s(64), _s(780), _s(380), _s(42), _s(24), BG, TXT,
-            _s(0), _s(452), _s(820), _s(148), PANEL,
-            _s(20), _s(462), _s(780), _s(128), _s(19), DIM, PANEL))
-        BaseScreen.__init__(self, session, u'Saad EPG %s - دليل البرامج' % VERSION)
-        self.menu_items = [
-            (u'تحديث دليل البرامج الآن', 'update'),
-            (u'القنوات والربط', 'channels'),
-            (u'صحة الدليل', 'health'),
-            (u'الإعدادات', 'settings'),
-            (u'أدوات متقدمة ...', 'advanced'),
-        ]
-        self.advanced_items = [
-            (u'الآن وبعده على كل القنوات', 'nownext'),
-            (u'اختيار الباقات التي يحدّثها البلوجين', 'bouquets'),
-            (u'إحصائيات الباقات وعدد البرامج', 'stats'),
-            (u'حفظ الدليل على الهارد (epg.dat)', 'epgfile'),
-            (u'إعادة الربط الذكي لكل القنوات', 'relink'),
-            (u'قنوات دليلها غير عربي', 'nonar'),
-            (u'طريقة الربط اليدوي والحماية من الدليل الخطأ', 'help'),
-            (u'مسح دليل البلوجين وإعادة تحميله', 'clear'),
-            (u'اختبار الاتصال بالمصادر والسحابة', 'test'),
-            (u'استيراد ملفات EPG (XMLTV)', 'import'),
-            (u'تصدير الربط المؤكد (لمشاركته عبر السحابة)', 'export'),
-            (u'نسخ احتياطي للإعدادات والربط اليدوي', 'backup'),
-            (u'استرجاع الإعدادات والربط اليدوي', 'restore'),
-            (u'مسح ذاكرة الترجمة القديمة (MyMemory)', 'trclear'),
-            (u'سجل العمليات', 'log'),
-            (u'التحقق من تحديث البلوجين', 'selfupdate'),
-            (u'حذف الربط اليدوي لكل القنوات', 'reset'),
-        ]
-        self['list'] = MenuList([(T(a), b) for a, b in self.menu_items])
+        self.skin = skin(900, 610, (
+            ui.list_widget('list', 14, 70, 872, 6 * 50 + 4) +
+            ui.stat_cards('card', 4, 20, 386, 860) +
+            ui.box(20, 466, 860, 130) +
+            ui.label('status', 34, 474, 832, 116, 18, DIM, PANEL)))
+        BaseScreen.__init__(self, session, u'Saad EPG  %s' % VERSION)
+        self.menu_items = MAIN_ITEMS
+        self.advanced_items = ADVANCED_ITEMS
+        self.table = menu_table(860)
+        self['list'] = self.table.widget()
+        self['list'].setList([self.table.row(k, [t, d], i) for i, (t, k, d) in enumerate(self.menu_items)])
+        for i, t in enumerate(self.CARDS):
+            self['card%d' % i] = Label('-')
+            self['card%dt' % i] = Label(T(t))
         self['status'] = Label('')
         self['actions'] = ActionMap(['OkCancelActions'], {'ok': self.ok, 'cancel': self.close}, -1)
         self.onShown.append(self.refresh)
 
     def refresh(self, *args):
         st = engine.load_state()
+        s = st.get('last_stats', {})
+        idx = engine.load_index()
+        self['card0'].setText(time.strftime('%H:%M', time.localtime(st['last'])) if st.get('last') else '-')
+        self['card0t'].setText(T(time.strftime(u'آخر تحديث %d/%m', time.localtime(st['last'])) if st.get('last')
+                                 else u'آخر تحديث'))
+        self['card1'].setText(str(s.get('channels', 0)))
+        self['card2'].setText(str(s.get('events', 0)))
+        self['card3'].setText(time.strftime('%H:%M', time.localtime(idx['generated'])) if idx.get('generated') else '-')
         lines = []
         r = engine.Updater.running
         if r and not r.done:
             lines.append(u'جاري التحديث في الخلفية: %d%% - %s' % (r.percent(), r.progress))
-        elif st.get('last'):
-            s = st.get('last_stats', {})
-            lines.append(u'آخر تحديث: %s - %s قناة، %s برنامج' % (
-                time.strftime('%Y-%m-%d %H:%M', time.localtime(st['last'])), s.get('channels', 0), s.get('events', 0)))
-        else:
+        elif not st.get('last'):
             lines.append(u'لم يتم التحديث بعد - اختر "تحديث دليل البرامج الآن"، الربط يتم تلقائيا.')
-        idx = engine.load_index()
-        if C.cloud.value:
-            lines.append(u'السحابة: %s' % (time.strftime('آخر بناء %d/%m %H:%M', time.localtime(idx['generated']))
-                                            if idx.get('generated') else u'لم يتم الاتصال بعد'))
+        times = [u'%02d:%02d' % tuple(c.value) for on, c in ((C.autoupdate, C.update_time), (C.autoupdate2, C.update_time2))
+                 if on.value]
+        if times:
+            lines.append(u'التحديث التلقائي: %s  (%s)' % (u' و '.join(times), u(C.stages.getText())))
+        b = engine.backup_info()
+        if b:
+            lines.append(u'آخر نسخة احتياطية: %s  (%s)' % (time.strftime('%d/%m/%Y', time.localtime(b[1])), b[0]))
         if AutoUpdate.instance and AutoUpdate.instance.new_version:
             lines.append(u'يوجد إصدار جديد من البلوجين: %s' % AutoUpdate.instance.new_version.get('version'))
         self['status'].setText(T(u'\n'.join(lines)))
 
     def ok(self):
-        sel = self['list'].getCurrent()
+        sel = self['list'].payload()
         if sel:
-            self.run(sel[1])
+            self.run(sel)
 
     def run(self, a):
         if a == 'advanced':
-            self.session.openWithCallback(lambda r: r and self.run(r[1]), ChoiceBox, title=T(u'أدوات متقدمة'),
-                                          list=[(T(x), y) for x, y in self.advanced_items])
+            self.session.openWithCallback(lambda r: r and self.run(r), MenuScreen, u'أدوات متقدمة', self.advanced_items)
         elif a == 'epgfile':
             self.session.open(TextScreen, u'حفظ الدليل', epg_file_text)
         elif a == 'update':
@@ -603,6 +632,34 @@ def backup_text():
     return u'تم حفظ الإعدادات والربط اليدوي وما تعلمه البلوجين في:\n%s\n\nبعد تفليش الريسيفر: ثبّت البلوجين ثم اختر "استرجاع".' % d
 
 
+RESTORE_MARK = os.path.join(engine.DATA_DIR, '.restore_checked')
+
+
+def _mark_restore_checked():
+    try:
+        if not os.path.isdir(engine.DATA_DIR):
+            os.makedirs(engine.DATA_DIR)
+        open(RESTORE_MARK, 'w').close()
+    except Exception:
+        pass
+
+
+def auto_restore():
+    """after a new install / flash: take the settings and links back from the hard disk by itself.
+    -> message, None (nothing to do) or 'wait' (no backup found yet: the disk may still be mounting)"""
+    if os.path.exists(RESTORE_MARK):
+        return None
+    if not engine.fresh_install():
+        _mark_restore_checked()
+        return None
+    if not engine.backup_info():
+        return 'wait'
+    msg = restore_text()
+    _mark_restore_checked()
+    log(u'استعادة تلقائية بعد التثبيت: ' + msg.replace(u'\n', u' '))
+    return msg
+
+
 def restore_text():
     d, settings = engine.restore_all()
     if not d:
@@ -649,9 +706,7 @@ def self_update_text():
 
 class InstallScreen(BaseScreen):
     def __init__(self, session, info):
-        self.skin = skin(900, 420, '<widget name="text" position="%d,%d" size="%d,%d" font="Regular;%d" '
-                                   'foregroundColor="%s" backgroundColor="%s" transparent="1" />' % (
-                                       _s(20), _s(64), _s(860), _s(340), _s(20), TXT, BG))
+        self.skin = skin(900, 420, text_panel(16, 70, 868, 336, 20))
         BaseScreen.__init__(self, session, u'تحديث البلوجين')
         self['text'] = ScrollLabel(T(u'جاري تحميل وتثبيت الإصدار %s...' % info.get('version')))
         self['actions'] = ActionMap(['OkCancelActions'], {'ok': self.ok, 'cancel': self.close}, -1)
@@ -755,9 +810,7 @@ class UpdateScreen(BaseScreen):
 # --------------------------------------------------------------------- text / log screens
 class TextScreen(BaseScreen):
     def __init__(self, session, title, fn, after=None):
-        self.skin = skin(1000, 620, '<widget name="text" position="%d,%d" size="%d,%d" font="Regular;%d" '
-                                    'foregroundColor="%s" backgroundColor="%s" transparent="1" />' % (
-                                        _s(20), _s(64), _s(960), _s(540), _s(20), TXT, BG))
+        self.skin = skin(1060, 660, text_panel(16, 70, 1028, 572, 20))
         BaseScreen.__init__(self, session, title)
         self['text'] = ScrollLabel(T(u'انتظر قليلا...'))
         self['actions'] = ActionMap(['OkCancelActions', 'DirectionActions'], {
@@ -786,9 +839,7 @@ class TextScreen(BaseScreen):
 
 class LogScreen(BaseScreen):
     def __init__(self, session):
-        self.skin = skin(1080, 660, '<widget name="text" position="%d,%d" size="%d,%d" font="Regular;%d" '
-                                    'foregroundColor="%s" backgroundColor="%s" transparent="1" />' % (
-                                        _s(20), _s(64), _s(1040), _s(580), _s(18), TXT, BG))
+        self.skin = skin(1120, 680, text_panel(16, 70, 1088, 594, 18))
         BaseScreen.__init__(self, session, u'سجل العمليات  (/tmp/SaadEPG.log)')
         self['text'] = ScrollLabel('')
         self['actions'] = ActionMap(['OkCancelActions', 'DirectionActions'], {
@@ -811,28 +862,51 @@ class LogScreen(BaseScreen):
 
 
 # --------------------------------------------------------------------- channels list
+STATUS_CHIP = {'A': (u'البلوجين', 'accent'), '+': (u'القمر', 'blue'), '?': (u'مراجعة', 'amber')}
+KIND_CHIP = {u'رسمي': 'accent', u'عربي': 'blue', u'ملف': 'violet', u'منسوخ': 'amber'}
+
+
+def channels_table():
+    return Table(790, [Col(u'الدليل', 92, 'center'), Col(u'القناة', 232), Col(u'المصدر', 290),
+                       Col(u'الثقة', 72, 'center', 1), Col(u'النوع', 76, 'center')], row_h=38, font=18, small=15)
+
+
+def channel_cells(epg, name, key, cands, manual, mapped):
+    chip = STATUS_CHIP.get(epg)
+    cells = [{'t': chip[0], 'chip': chip[1]} if chip else {'t': u'—', 'fg': 'dim'}, name]
+    if key and key != '-':
+        sc = cands[0][1] if cands else 0
+        src = engine.display_key(key)
+        src = src.split(u': ', 1)[-1] + u'  ·  ' + src.split(u': ', 1)[0] if u': ' in src else src
+        kind = engine.source_kind(key)
+        cells += [src, {'t': u'يدوي', 'fg': 'violet', 'font': 0} if manual else
+                  {'t': u'%d%%' % int(sc * 100), 'fg': 'accent' if sc >= 0.95 else ('amber' if sc >= 0.88 else 'red')},
+                  {'t': kind, 'chip': KIND_CHIP.get(kind, 'violet')} if kind else u'']
+    else:
+        txt = (u'دليل القمر مخفي' if mapped == '!' else u'معطل') if key == '-' else u'غير مربوطة - OK للاختيار'
+        cells += [{'t': txt, 'fg': 'dim'}, u'', u'']
+    return cells
+
+
 class ChannelsScreen(BaseScreen):
     FILTERS = (('linked', u'المربوطة'), ('review', u'تحتاج مراجعة'), ('unlinked', u'غير المربوطة'),
                ('all', u'كل القنوات'))
 
     def __init__(self, session, relink=False):
+        self.table = channels_table()
         self.skin = skin(1240, 700, (
-            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
-            'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" transparent="1" />'
-            '<eLabel position="%d,%d" size="%d,%d" backgroundColor="%s" />'
-            '<widget name="picon" zPosition="1" position="%d,%d" size="%d,%d" alphatest="blend" />'
-            '<widget name="details" zPosition="1" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />'
-            '<widget name="info" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(10), _s(62), _s(800), _s(540), _s(30), _s(19), TXT, BG,
-            _s(820), _s(62), _s(410), _s(540), PANEL,
-            _s(925), _s(76), _s(200), _s(120),
-            _s(832), _s(206), _s(386), _s(390), _s(18), TXT, PANEL,
-            _s(10), _s(606), _s(1220), _s(30), _s(16), DIM, BG) + buttons(642, 1240))
+            self.table.header(10, 66) + ui.list_widget('list', 10, 102, 800, 494) +
+            ui.box(822, 66, 408, 530) +
+            ui.box(822, 66, 408, 40, ui.HEAD) +
+            ui.label('bouquet', 830, 66, 392, 40, 20, ui.hexc('amber'), ui.HEAD, 'center', 'center') +
+            '<widget name="picon" zPosition="1" position="%d,%d" size="%d,%d" alphatest="blend" />' % (
+                _s(926), _s(114), _s(200), _s(120)) +
+            ui.label('details', 836, 240, 380, 350, 18, TXT, PANEL) +
+            ui.label('info', 10, 602, 1220, 36, 16, DIM, BG, 'right', 'center')) + buttons(646, 1240))
         BaseScreen.__init__(self, session, u'الربط الذكي للقنوات' if relink else u'القنوات وربطها')
-        self['list'] = MenuList([])
+        self['list'] = self.table.widget()
         self['picon'] = Pixmap()
+        self['bouquet'] = Label('')
         self['details'] = Label('')
         self['info'] = Label(T(u'جاري قراءة القنوات وربطها تلقائيا...'))
         set_buttons(self, u'تعطيل/تفعيل', u'تحديث', u'', u'معاينة البرامج')
@@ -934,23 +1008,20 @@ class ChannelsScreen(BaseScreen):
                 continue
             if mode == 'review' and not (linked and not manual and (cands[0][1] < 0.97 or ref in self.held)):
                 continue
-            if linked:
-                how = u'يدوي' if manual else u'%d%%' % int(cands[0][1] * 100)
-                src = u'%s (%s) [%s]' % (engine.display_key(key), how, engine.source_kind(key))
-            else:
-                src = (u'(دليل القمر مخفي)' if mapping.get(ref) == '!' else u'(معطل)') if key == '-' else u'—'
-            rows.append((T(u'[%s] %s  >>  %s' % (self.epg.get(ref, ' '), name, src)),
-                         (ref, name, key, cands, manual)))
+            rows.append(self.table.row((ref, name, key, cands, manual),
+                                       channel_cells(self.epg.get(ref, ' '), name, key, cands, manual,
+                                                     mapping.get(ref)), len(rows)))
         self['list'].setList(rows)
         if keep is not None:
             for i, r in enumerate(rows):
-                if r[1][0] == keep:
+                if r[0][0] == keep:
                     self['list'].moveToIndex(i)
                     break
         self['key_yellow'].setText(T(u'عرض: ' + self.FILTERS[(self.filter + 1) % len(self.FILTERS)][1]))
         where = self.bouquets[self.bq][0] if 0 <= self.bq < len(self.bouquets) else u'كل الباقات'
-        self['info'].setText(T(u'[%s]  يمين/يسار: الباقة  MENU: قائمة الباقات | ' % where + u'كل القنوات: %d | مربوطة: %d | المعروض: %d     '
-                               u'[+] القمر  [A] البلوجين  [?] ينتظر تأكيدك  [ ] لا يوجد' % (len(self.services), n_linked, len(rows))))
+        self['bouquet'].setText(T(u'◀   %s   ▶' % where))
+        self['info'].setText(T(u'يمين/يسار: الباقة   MENU: قائمة الباقات   |   القنوات: %d   مربوطة: %d   المعروض: %d' % (
+            len(shown), n_linked, len(rows))))
         self.side()
 
     def side(self):
@@ -995,8 +1066,7 @@ class ChannelsScreen(BaseScreen):
         self['details'].setText(T(u'\n'.join(lines)))
 
     def cur(self):
-        c = self['list'].getCurrent()
-        return c and c[1]
+        return self['list'].payload()
 
     def next_filter(self):
         self.filter = (self.filter + 1) % len(self.FILTERS)
@@ -1160,21 +1230,46 @@ def preview_text(key):
 # --------------------------------------------------------------------- now / next
 class NowNextScreen(BaseScreen):
     def __init__(self, session):
+        self.table = Table(1206, [Col(u'القناة', 226), Col(u'الآن', 82, 'center', 1, 'blue'),
+                                  Col(u'البرنامج الحالي', 420), Col(u'التالي', 82, 'center', 1, 'blue'),
+                                  Col(u'البرنامج التالي', 376)], row_h=40, font=19)
         self.skin = skin(1240, 700, (
-            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
-            'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" transparent="1" />'
-            '<widget name="info" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(10), _s(62), _s(1220), _s(540), _s(30), _s(19), TXT, BG,
-            _s(10), _s(606), _s(1220), _s(30), _s(16), DIM, BG) + buttons(642, 1240))
+            ui.box(10, 66, 1220, 38, ui.HEAD) +
+            ui.label('bouquet', 20, 66, 1200, 38, 20, ui.hexc('amber'), ui.HEAD, 'center', 'center') +
+            self.table.header(10, 110) + ui.list_widget('list', 10, 146, 1220, 440) +
+            ui.label('info', 10, 600, 1220, 36, 16, DIM, BG, 'right', 'center')) + buttons(646, 1240))
         BaseScreen.__init__(self, session, u'الآن وبعده')
-        self['list'] = MenuList([])
+        self['list'] = self.table.widget()
         self['info'] = Label('')
+        self['bouquet'] = Label('')
         set_buttons(self, u'', u'مشاهدة القناة', u'', u'تحديث القائمة')
-        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions'], {
-            'ok': self.zap, 'green': self.zap, 'cancel': self.close, 'yellow': self.toggle, 'blue': self.build}, -1)
-        self.only_plugin = True
-        self.onLayoutFinish.append(self.build)
+        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions', 'DirectionActions'], {
+            'ok': self.zap, 'green': self.zap, 'cancel': self.close, 'yellow': self.toggle, 'blue': self.build,
+            'up': lambda: self['list'].up(), 'down': lambda: self['list'].down(),
+            'left': lambda: self.step(-1), 'right': lambda: self.step(1)}, -1)
+        self['bq_actions'] = ActionMap(['ChannelSelectBaseActions', 'InfobarChannelSelection'], {
+            'nextBouquet': lambda: self['list'].pageUp(), 'prevBouquet': lambda: self['list'].pageDown(),
+            'switchChannelUp': lambda: self['list'].pageUp(), 'switchChannelDown': lambda: self['list'].pageDown()},
+            -2)
+        self.only_plugin = False
+        self.bouquets, self.bq = [], -1
+        self.onLayoutFinish.append(self.load)
+
+    def load(self):
+        try:
+            bqs = engine.get_bouquets()
+            chosen = [x for x in C.bouquets.value.split('|') if x]
+            self.bouquets = [b for b in bqs if b[0] in chosen] + [b for b in bqs if b[0] not in chosen]
+            if self.bouquets:
+                self.bq = 0
+        except Exception as e:
+            log(u'الباقات: %s' % e)
+        self.build()
+
+    def step(self, d):
+        if self.bouquets:
+            self.bq = (self.bq + 1 + d) % (len(self.bouquets) + 1) - 1
+            self.build()
 
     def toggle(self):
         self.only_plugin = not self.only_plugin
@@ -1185,26 +1280,35 @@ class NowNextScreen(BaseScreen):
         filled = engine.load_state()['filled']
         now = time.time()
         rows = []
-        for ref, name in engine.get_services():
-            if self.only_plugin and ref not in filled:
+        shown = self.bouquets[self.bq][1] if 0 <= self.bq < len(self.bouquets) else engine.get_services()
+        seen = set()
+        for ref, name in shown:
+            if ref in seen or (self.only_plugin and ref not in filled):
                 continue
+            seen.add(ref)
             nw, nx = engine.now_next(epg, ref)
             if not nw:
                 continue
             pct = int(max(0, min(100, (now - nw[1]) * 100.0 / max(1, nw[2]))))
-            txt = u'%-22s  %s  %s (%d%%)' % (name[:22], time.strftime('%H:%M', time.localtime(nw[1])), nw[0][:42], pct)
-            if nx:
-                txt += u'   >>  %s %s' % (time.strftime('%H:%M', time.localtime(nx[1])), nx[0][:30])
-            rows.append((T(txt), ref))
+            left = max(0, int(nw[1] + nw[2] - now) // 60)
+            cells = [{'t': name, 'fg': 'accent' if ref in filled else 'txt'},
+                     time.strftime('%H:%M', time.localtime(nw[1])),
+                     {'t': nw[0], 'pct': pct, 'bar': 'amber' if left <= 10 else 'accent'},
+                     time.strftime('%H:%M', time.localtime(nx[1])) if nx else u'',
+                     {'t': nx[0] if nx else u'', 'fg': 'dim'}]
+            rows.append(self.table.row(ref, cells, len(rows)))
         self['list'].setList(rows)
+        where = self.bouquets[self.bq][0] if 0 <= self.bq < len(self.bouquets) else u'كل الباقات'
+        self['bouquet'].setText(T(u'\u25c0   %s   \u25b6' % where))
         self['key_yellow'].setText(T(u'عرض: كل القنوات' if self.only_plugin else u'عرض: قنوات البلوجين'))
-        self['info'].setText(T(u'%d قناة - OK لمشاهدة القناة' % len(rows)))
+        self['info'].setText(T(u'%d قناة   |   يمين/يسار: الباقة   OK: مشاهدة القناة   |   الأخضر = دليل من البلوجين'
+                               % len(rows)))
 
     def zap(self):
-        c = self['list'].getCurrent()
-        if c:
+        ref = self['list'].payload()
+        if ref:
             try:
-                self.session.nav.playService(eServiceReference(T(c[1])))
+                self.session.nav.playService(eServiceReference(T(ref)))
             except Exception:
                 pass
             self.close()
@@ -1215,21 +1319,21 @@ class BouquetsScreen(BaseScreen):
     """choose the bouquets the plugin updates (none chosen = all)."""
 
     def __init__(self, session):
-        self.skin = skin(900, 640, (
-            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
-            'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" transparent="1" />'
-            '<widget name="info" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(10), _s(62), _s(880), _s(480), _s(34), _s(21), TXT, BG,
-            _s(10), _s(550), _s(880), _s(80), _s(17), DIM, BG))
+        self.table = Table(866, [Col(u'التحديث', 110, 'center'), Col(u'الباقة', 590), Col(u'القنوات', 150, 'center', 1)],
+                           row_h=42, font=20)
+        self.skin = skin(900, 680, (
+            self.table.header(10, 66) + ui.list_widget('list', 10, 102, 880, 462) +
+            ui.label('info', 16, 570, 868, 56, 17, DIM, BG, 'right', 'center')) + buttons(632, 900))
         BaseScreen.__init__(self, session, u'الباقات التي يحدّثها البلوجين')
         self.chosen = set(x for x in C.bouquets.value.split('|') if x)
         self.all = []
-        self['list'] = MenuList([])
-        self['info'] = Label(T(u'OK: اختيار/إلغاء   الأخضر: حفظ   الأصفر: الكل/لا شيء   الخروج: بدون حفظ\n'
-                               u'لو لم تختر أي باقة، يحدّث البلوجين كل الباقات.'))
+        self['list'] = self.table.widget()
+        self['info'] = Label(T(u'OK: اختيار/إلغاء الباقة.  لو لم تختر أي باقة، يحدّث البلوجين كل الباقات.\n'
+                               u'الباقات المختارة تظهر أولا في شاشة القنوات وتُحدَّث أولا.'))
+        set_buttons(self, u'خروج بدون حفظ', u'حفظ', u'الكل / لا شيء', u'')
         self['actions'] = ActionMap(['OkCancelActions', 'ColorActions'], {
-            'ok': self.toggle, 'cancel': self.close, 'green': self.save, 'yellow': self.toggle_all}, -1)
+            'ok': self.toggle, 'cancel': self.close, 'red': self.close, 'green': self.save,
+            'yellow': self.toggle_all}, -1)
         self.onLayoutFinish.append(self.load)
 
     def load(self):
@@ -1243,19 +1347,19 @@ class BouquetsScreen(BaseScreen):
     def build(self, keep=0):
         rows = []
         for b, n in self.all:
-            mark = u'[x]' if (b in self.chosen or not self.chosen) else u'[ ]'
-            rows.append((T(u'%s  %s  (%d قناة)' % (mark, b, n)), b))
+            on = b in self.chosen or not self.chosen
+            rows.append(self.table.row(b, [{'t': u'\u2714' if on else u'\u2014', 'chip': 'accent'} if on
+                                           else {'t': u'\u2014', 'fg': 'dim'}, b, str(n)], len(rows)))
         self['list'].setList(rows)
         if rows:
             self['list'].moveToIndex(min(keep, len(rows) - 1))
 
     def toggle(self):
-        cur = self['list'].getCurrent()
-        if not cur:
+        b = self['list'].payload()
+        if not b:
             return
         if not self.chosen:
             self.chosen = set(b for b, _n in self.all)
-        b = cur[1]
         if b in self.chosen:
             self.chosen.discard(b)
         else:
@@ -1281,16 +1385,23 @@ class BouquetsScreen(BaseScreen):
 
 
 class StatsScreen(BaseScreen):
+    CARDS = (u'قنوات', u'مربوطة', u'حدّثها البلوجين', u'برامج', u'آخر تحديث')
+
     def __init__(self, session):
-        self.skin = skin(1180, 680, (
-            '<widget name="list" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
-            'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" transparent="1" />'
-            '<widget name="info" position="%d,%d" size="%d,%d" font="Regular;%d" halign="right" '
-            'foregroundColor="%s" backgroundColor="%s" transparent="1" />') % (
-            _s(10), _s(62), _s(1160), _s(500), _s(32), _s(20), TXT, BG,
-            _s(10), _s(570), _s(1160), _s(100), _s(17), DIM, BG))
+        self.table = Table(1196, [Col(u'الباقة', 386), Col(u'القنوات', 150, 'center', 1),
+                                  Col(u'مربوطة', 150, 'center', 1, 'blue'),
+                                  Col(u'حدّثها البلوجين', 170, 'center', 1, 'accent'),
+                                  Col(u'البرامج', 170, 'center', 1), Col(u'دليل القمر', 150, 'center', 1, 'dim')],
+                           row_h=40, font=19)
+        self.skin = skin(1240, 700, (
+            self.table.header(10, 66) + ui.list_widget('list', 10, 102, 1220, 404) +
+            ui.stat_cards('card', 5, 10, 516, 1220) +
+            ui.label('info', 16, 594, 1208, 96, 16, DIM, BG, 'right', 'top')))
         BaseScreen.__init__(self, session, u'إحصائيات الباقات')
-        self['list'] = MenuList([])
+        self['list'] = self.table.widget()
+        for i, t in enumerate(self.CARDS):
+            self['card%d' % i] = Label('-')
+            self['card%dt' % i] = Label(T(t))
         self['info'] = Label(T(u'جاري الحساب...'))
         self['actions'] = ActionMap(['OkCancelActions'], {'ok': self.close, 'cancel': self.close}, -1)
         self.onLayoutFinish.append(self.build)
@@ -1298,8 +1409,7 @@ class StatsScreen(BaseScreen):
     def build(self):
         bouquets = engine.get_bouquets()
         state = engine.load_state()
-        auto = engine._load(engine.AUTO_FILE, {})
-        auto = dict((k, [tuple(x) for x in v[1]]) for k, v in auto.items() if k != '_stamp')
+        auto = engine.load_auto()
         mapping = engine.load_mapping()
         epg = eEPGCache.getInstance()
         rich = {}
@@ -1313,20 +1423,27 @@ class StatsScreen(BaseScreen):
         for b in rows:
             for k in tot:
                 tot[k] += b[k] or 0
-            out.append((T(u'%-28s  قنوات %4d | مربوطة %4d | حدّثها البلوجين %4d | برامج %6d | دليل القمر %4d' % (
-                b['name'][:28], b['channels'], b['linked'] or 0, b['updated'], b['events'], b['native'] or 0)), b['name']))
+            ch = b['channels'] or 0
+            cover = ((b['updated'] or 0) + (b['native'] or 0)) * 100 // ch if ch else 0
+            out.append(self.table.row(b['name'], [
+                {'t': b['name'], 'pct': min(100, cover), 'bar': 'accent' if cover >= 60 else 'amber'},
+                str(ch), str(b['linked'] or 0), str(b['updated'] or 0), str(b['events'] or 0),
+                str(b['native'] or 0)], len(out)))
         self['list'].setList(out)
         last = state.get('last')
+        vals = [tot['channels'], tot['linked'], tot['updated'], tot['events']]
+        for i, v in enumerate(vals):
+            self['card%d' % i].setText(str(v))
+        self['card4'].setText(time.strftime('%H:%M', time.localtime(last)) if last else '-')
+        if last:
+            self['card4t'].setText(T(time.strftime(u'آخر تحديث %d/%m', time.localtime(last))))
         srcs = {}
         for f in state.get('filled', {}).values():
             s = engine.display_key(f.get('key', '')).split(':')[0]
             srcs[s] = srcs.get(s, 0) + 1
-        self['info'].setText(T(
-            u'الإجمالي: %d قناة، مربوطة %d، حدّثها البلوجين %d، %d برنامج%s\n'
-            u'حسب المصدر: %s' % (
-                tot['channels'], tot['linked'], tot['updated'], tot['events'],
-                (u' - آخر تحديث %s' % time.strftime('%d/%m %H:%M', time.localtime(last))) if last else u'',
-                u'، '.join(u'%s %d' % kv for kv in sorted(srcs.items(), key=lambda kv: -kv[1])[:8]))))
+        self['info'].setText(T(u'الشريط تحت اسم الباقة = نسبة القنوات التي لها دليل (من البلوجين أو القمر)\n'
+                               u'حسب المصدر:  ' + u'   \u00b7   '.join(
+                                   u'%s %d' % kv for kv in sorted(srcs.items(), key=lambda kv: -kv[1])[:10])))
 
 
 def import_text():
@@ -1349,11 +1466,12 @@ def import_text():
 # --------------------------------------------------------------------- settings
 class SettingsScreen(ConfigListScreen, BaseScreen):
     def __init__(self, session):
-        self.skin = skin(1080, 680, '<widget name="config" position="%d,%d" size="%d,%d" itemHeight="%d" '
-                                    'font="Regular;%d" scrollbarMode="showOnDemand" foregroundColor="%s" '
-                                    'backgroundColor="%s" transparent="1" />' % (
-                                        _s(20), _s(64), _s(1040), _s(560), _s(34), _s(20), TXT, BG)
-                         + buttons(632, 1080))
+        self.skin = skin(1120, 700, (
+            ui.box(10, 66, 1100, 570) +
+            ('<widget name="config" position="%d,%d" size="%d,%d" itemHeight="%d" font="Regular;%d" '
+             'scrollbarMode="showOnDemand" foregroundColor="%s" backgroundColor="%s" backgroundColorSelected="%s" '
+             'foregroundColorSelected="%s" transparent="0" zPosition="1" />') % (
+                _s(20), _s(74), _s(1080), _s(552), _s(40), _s(20), TXT, PANEL, ui.SEL, TXT)) + buttons(646, 1120))
         BaseScreen.__init__(self, session, u'إعدادات Saad EPG')
         lst = [
             getConfigListEntry(T(u'السيرفر السحابي (GitHub) - مصدر رئيسي سريع'), C.cloud),
@@ -1368,6 +1486,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'الوقت بين كل مرحلة'), C.stage_gap),
             getConfigListEntry(T(u'تحديث ذكي عند تشغيل الريسيفر'), C.boot_update),
             getConfigListEntry(T(u'التنبيه بتحديثات البلوجين'), C.check_updates),
+            getConfigListEntry(T(u'نسخة احتياطية أسبوعية تلقائية على الهارد'), C.auto_backup),
+            getConfigListEntry(T(u'لغة دليل القنوات الأجنبية'), C.foreign_lang),
             getConfigListEntry(T(u'لغة الدليل للقنوات العربية'), C.lang_mode),
             getConfigListEntry(T(u'خدمة الترجمة'), C.tr_provider),
             getConfigListEntry(T(u'إيميل MyMemory (يرفع الحد اليومي إلى 50 ألف حرف)'), C.tr_email),
@@ -1442,6 +1562,12 @@ class AutoUpdate(object):
         self.new_version = None
         self.timer = make_timer(self.fire)
         self.vtimer = make_timer(self.check_version)
+        # settings: taken back from the disk after a new install, and copied to it every week
+        self.restore_tries = 0
+        self.rtimer = make_timer(self.try_restore)
+        self.btimer = make_timer(self.weekly_backup)
+        self.try_restore()
+        self.btimer.startLongTimer(900)
         self.schedule(boot=True)
         if C.check_updates.value:
             self.vtimer.startLongTimer(300)
@@ -1456,6 +1582,37 @@ class AutoUpdate(object):
             session.nav.event.append(self.on_service_event)
         except Exception as e:
             print('[SaadEPG] zap watcher not available', e)
+
+    def try_restore(self):
+        try:
+            res = auto_restore()
+        except Exception as e:
+            res = None
+            log(u'الاستعادة التلقائية: %s' % e)
+        if res == 'wait':
+            self.restore_tries += 1
+            if self.restore_tries < 8:          # the disk can take a few minutes to appear
+                self.rtimer.startLongTimer(60)
+            else:
+                _mark_restore_checked()
+            return
+        if res:
+            self.schedule()
+            self._popup(u'Saad EPG: تمت استعادة الإعدادات والربط اليدوي تلقائيا من الهارد', 10)
+
+    def weekly_backup(self):
+        self.btimer.startLongTimer(6 * 3600)
+        if not C.auto_backup.value or engine.fresh_install() or not os.path.exists(RESTORE_MARK):
+            return
+        info = engine.backup_info()
+        if info and time.time() - info[1] < 7 * 86400:
+            return
+        try:
+            d = engine.backup_all(_settings_dict())
+            if d:
+                log(u'نسخة احتياطية أسبوعية تلقائية: %s' % d)
+        except Exception as e:
+            log(u'النسخة الاحتياطية الأسبوعية: %s' % e)
 
     def on_service_event(self, ev):
         if ev == self.ev_start and C.zap_epg.value:
@@ -1485,9 +1642,7 @@ class AutoUpdate(object):
             info = eServiceCenter.getInstance().info(sref)
             name = u(info and info.getName(sref) or '').replace(u'\x86', u'').replace(u'\x87', u'')
             self.zap_seen[ref] = time.time()
-            known = engine.resolve(ref, engine.load_mapping(),
-                                   dict((k, [tuple(x) for x in v[1]]) for k, v in
-                                        engine._load(engine.AUTO_FILE, {}).items() if k != '_stamp'))[0]
+            known = engine.resolve(ref, engine.load_mapping(), engine.load_auto())[0]
             linked = bool(known and known[0][0] != '-') or bool(engine.linked_refs().get(engine.ref_key(ref) or '')) \
                 or bool(engine.load_refs().get(engine.ref_key(ref) or ''))
             if known and known[0][0] == '-':

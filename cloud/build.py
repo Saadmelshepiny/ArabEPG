@@ -12,6 +12,7 @@ Writes to --out:
 """
 import argparse
 import calendar
+import glob
 import gzip
 import html
 import io
@@ -24,6 +25,9 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+import sys  # noqa: E402
+sys.path.insert(0, HERE)
+from tr_common import route, norm_lang, TITLE_MAX, DESC_MAX  # noqa: E402
 UA = 'Mozilla/5.0 (X11; Linux x86_64) ArabEPG-cloud/1.0'
 
 
@@ -80,8 +84,31 @@ def our_ids(site):
     return out, names
 
 
-def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
-    """stream-parse XMLTV file(s), keep [now-6h, now+days], write compact gz. -> {id: [names]}"""
+def load_tr(trdir):
+    """English dictionaries made by translate_en.py: {lang: {original: english}}"""
+    out = {}
+    for p in glob.glob(os.path.join(trdir or '', 'en_*.json.gz')):
+        try:
+            with gzip.open(p, 'rt', encoding='utf-8') as f:
+                out[os.path.basename(p)[3:-8]] = json.load(f)
+        except Exception as e:
+            print('dictionary %s: %s' % (p, e))
+    return out
+
+
+def tag2(tag, text, en):
+    """the original text, then its English translation marked tr="1" (the plugin chooses)"""
+    s = '<%s>%s</%s>' % (tag, html.escape(text), tag)
+    if en and en != text:
+        s += '<%s lang="en" tr="1">%s</%s>' % (tag, html.escape(en), tag)
+    return s
+
+
+def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MAX, lang=None, tr=None):
+    """stream-parse XMLTV file(s), keep [now-6h, now+days], write compact gz. -> {id: [names]}
+    lang/tr: language of a foreign file and the English dictionaries -> English text added next to the original."""
+    tr = tr or {}
+    stats = [0, 0]
     now = time.time()
     lo, hi = now - 6 * 3600, now + days * 86400
     chans, progs = {}, {}
@@ -107,12 +134,14 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
             if st and en and en > lo and st < hi:
                 p = {'start': st, 'stop': en}
                 for tag in ('title', 'sub-title', 'desc'):
-                    v = el.findtext(tag)
-                    if v:
-                        p[tag] = v.strip()[:maxdesc if tag == 'desc' else 200]
-                cats = [c.text.strip() for c in el.findall('category') if c.text]
+                    e = el.find(tag)
+                    if e is not None and e.text and e.text.strip():
+                        p[tag] = e.text.strip()[:maxdesc if tag == 'desc' else TITLE_MAX]
+                        p[tag + '@'] = e.get('lang')
+                cats = [c for c in el.findall('category') if c.text and c.text.strip()]
                 if cats:
-                    p['category'] = cats[0][:60]
+                    p['category'] = cats[0].text.strip()[:60]
+                    p['category@'] = cats[0].get('lang')
                 epn = el.find('episode-num')
                 if epn is not None and epn.text:
                     p['episode-num'] = (epn.get('system') or 'onscreen', epn.text.strip()[:30])
@@ -136,18 +165,29 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=500):
                 seen.add(p['start'])
                 written += 1
                 f.write('<programme start="%s" stop="%s" channel="%s">' % (fmt(p['start']), fmt(p['stop']), html.escape(cid)))
-                f.write('<title>%s</title>' % html.escape(p['title']))
+
+                def en(tag, p=p):
+                    if not lang or not p.get(tag):
+                        return None
+                    l = route(lang, p.get(tag + '@'), p[tag])
+                    return tr.get(l, {}).get(p[tag]) if l else None
+                t_en = en('title')
+                stats[0] += 1
+                stats[1] += 1 if t_en else 0
+                f.write(tag2('title', p['title'], t_en))
                 if p.get('sub-title'):
                     f.write('<sub-title>%s</sub-title>' % html.escape(p['sub-title']))
                 if p.get('desc'):
-                    f.write('<desc>%s</desc>' % html.escape(p['desc']))
+                    f.write(tag2('desc', p['desc'], en('desc')))
                 if p.get('category'):
-                    f.write('<category>%s</category>' % html.escape(p['category']))
+                    f.write(tag2('category', p['category'], en('category')))
                 if p.get('episode-num'):
                     f.write('<episode-num system="%s">%s</episode-num>' % (
                         html.escape(p['episode-num'][0]), html.escape(p['episode-num'][1])))
                 f.write('</programme>\n')
         f.write('</tv>\n')
+    if lang:
+        print('   English titles: %d/%d (%d%%)' % (stats[1], stats[0], stats[1] * 100 // max(1, stats[0])))
     return kept, written
 
 
@@ -265,6 +305,7 @@ def main():
     ap.add_argument('--out', default='public')
     ap.add_argument('--catalog', default='plugin/SaadEPG/channels.json')
     ap.add_argument('--skip-download', action='store_true')
+    ap.add_argument('--tr', default='', help='folder with en_<lang>.json.gz (foreign titles -> English)')
     a = ap.parse_args()
     cfg = json.load(open(os.path.join(HERE, 'sources.json'), encoding='utf8'))
     days = cfg.get('days', 3)
@@ -273,6 +314,9 @@ def main():
     index = {'generated': int(time.time()), 'days': days, 'files': {}}
     status = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'files': {}}
 
+    tr = load_tr(a.tr)
+    if tr:
+        print('English dictionaries: ' + ', '.join('%s %d' % (k, len(v)) for k, v in sorted(tr.items())))
     jobs = [(n, d, 'grab') for n, d in cfg['grab'].items()] + [(n, d, 'xmltv') for n, d in cfg['xmltv'].items()]
     for name, d, kind in jobs:
         t0 = time.time()
@@ -280,7 +324,6 @@ def main():
         try:
             fdays = d.get('days', days)
             if kind == 'grab':
-                import glob
                 srcs = [p for p in sorted(glob.glob(os.path.join(a.work, 'out_%s.*xml' % d['site'])) +
                                           glob.glob(os.path.join(a.work, d['site'] + '.xml*')))
                         if os.path.getsize(p) > 200]
@@ -291,12 +334,15 @@ def main():
             else:
                 if a.skip_download:
                     continue
-                chans, n = repack(open_any(download(d['url'])), out_path, fdays)
+                chans, n = repack(open_any(download(d['url'])), out_path, fdays,
+                                  lang=norm_lang(d.get('lang')) or None, tr=tr)
             if not chans:
                 raise RuntimeError('empty guide')
             index['files'][name] = {
                 'url': 'guides/%s.xml.gz' % name, 'sat': d.get('sat', []), 'title': d.get('title', name),
                 'kind': 'site' if kind == 'grab' else 'xmltv', 'size': os.path.getsize(out_path),
+                'region': 'ar' if (kind == 'grab' or _is_ar_xml(name)) else ('eu' if d.get('lang') else None),
+                'lang': d.get('lang') or ('ar' if (kind == 'grab' or _is_ar_xml(name)) else None),
                 'programmes': n, 'channels': [[cid, names] for cid, names in sorted(chans.items())]}
             status['files'][name] = {'ok': True, 'channels': len(chans), 'programmes': n,
                                      'size_kb': os.path.getsize(out_path) // 1024, 'sec': int(time.time() - t0)}

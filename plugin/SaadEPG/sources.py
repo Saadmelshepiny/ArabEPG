@@ -532,6 +532,21 @@ def _episode(el):
     return u''
 
 
+XML_PREFER_EN = True     # cloud guides of foreign channels carry an English title next to the original one
+
+
+def _pick(el, tag):
+    """<title lang="en" tr="1"> is the cloud's English translation; the other one is the original."""
+    items = el.findall(tag)
+    if not items:
+        return u''
+    if len(items) > 1:
+        want = [x for x in items if (x.get('tr') == '1') == XML_PREFER_EN and x.text]
+        if want:
+            return want[0].text
+    return items[0].text or u''
+
+
 def parse_xmltv_file(path, wanted, days, stop=None, names_only=False):
     """stream-parse an XMLTV file (plain or gz) from disk.
     -> ({channel_id: events}, {channel_id: [display names]})"""
@@ -555,10 +570,10 @@ def parse_xmltv_file(path, wanted, days, stop=None, names_only=False):
                 if wanted is None or cid in wanted:
                     st, en = _xmltv_time(el.get('start')), _xmltv_time(el.get('stop'))
                     if st and lower < (en or st) and st < limit:
-                        title = el.findtext('title') or u''
-                        sub = el.findtext('sub-title') or u''
-                        desc = el.findtext('desc') or u''
-                        cats = u' / '.join(c.text for c in el.findall('category') if c.text)
+                        title = _pick(el, 'title')
+                        sub = _pick(el, 'sub-title')
+                        desc = _pick(el, 'desc')
+                        cats = _pick(el, 'category')
                         epi = _episode(el)
                         short = u' - '.join(x for x in (epi, sub, cats) if x)
                         res.setdefault(cid, []).append(ev(st, (en - st) if en else 0, title, short, desc,
