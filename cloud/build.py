@@ -90,7 +90,10 @@ def load_tr(trdir):
     for p in glob.glob(os.path.join(trdir or '', 'en_*.json.gz')):
         try:
             with gzip.open(p, 'rt', encoding='utf-8') as f:
-                out[os.path.basename(p)[3:-8]] = json.load(f)
+                d = json.load(f)
+            # older dictionaries kept SentencePiece markers (u2581) between words
+            out[os.path.basename(p)[3:-8]] = dict(
+                (k, re.sub(r'\s+', ' ', v.replace('\u2581', ' ')).strip()) for k, v in d.items() if v)
         except Exception as e:
             print('dictionary %s: %s' % (p, e))
     return out

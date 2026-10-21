@@ -14,7 +14,8 @@ if [ "$site" = "translate" ]; then
              /opt/hostedtoolcache/Python/3.13*/x64/bin/python3 python3.12 python3.11 python3.13 python3; do
       command -v "$c" >/dev/null 2>&1 || continue
       rm -rf /tmp/trenv
-      if "$c" -m venv /tmp/trenv && /tmp/trenv/bin/pip install -q ctranslate2 sentencepiece; then
+      if "$c" -m venv /tmp/trenv && /tmp/trenv/bin/pip install -q ctranslate2 sentencepiece sacremoses \
+         && /tmp/trenv/bin/pip install -q --no-deps argostranslate; then
         PY=/tmp/trenv/bin/python; echo "== python: $c ($($PY --version 2>&1))"; break
       fi
       echo "== could not set up with $c"
@@ -24,7 +25,8 @@ if [ "$site" = "translate" ]; then
       curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1
       export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
       rm -rf /tmp/trenv
-      uv venv -q -p 3.12 /tmp/trenv && uv pip install -q -p /tmp/trenv/bin/python ctranslate2 sentencepiece \
+      uv venv -q -p 3.12 /tmp/trenv && uv pip install -q -p /tmp/trenv/bin/python ctranslate2 sentencepiece sacremoses \
+        && uv pip install -q --no-deps -p /tmp/trenv/bin/python argostranslate \
         && PY=/tmp/trenv/bin/python
     fi
     if [ -z "$PY" ]; then echo "== no Python with ctranslate2: translation skipped"; return; fi

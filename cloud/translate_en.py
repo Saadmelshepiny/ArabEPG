@@ -141,25 +141,56 @@ def model_for(lang, root='/tmp/argos'):
         os.makedirs(dest, exist_ok=True)
         zipfile.ZipFile(io.BytesIO(get(url, timeout=900))).extractall(dest)
     mb = glob.glob(os.path.join(dest, '**', 'model.bin'), recursive=True)
-    spm = [p for p in glob.glob(os.path.join(dest, '**', '*.model'), recursive=True) if 'stanza' not in p]
-    if not mb or not spm:
+    if not mb:
         raise RuntimeError('unexpected package layout for %s' % lang)
-    return os.path.dirname(mb[0]), spm[0]
+    pkg = os.path.dirname(os.path.dirname(mb[0]))
+    for kind, fn in (('spm', 'sentencepiece.model'), ('bpe', 'bpe.model')):
+        p = os.path.join(pkg, fn)
+        if os.path.exists(p):
+            return os.path.dirname(mb[0]), kind, p
+    raise RuntimeError('no tokenizer in package %s' % lang)
 
 
 class Model(object):
+    """CTranslate2 model + the package's own tokenizer (SentencePiece, or Moses + BPE like Argos does)"""
+
     def __init__(self, lang):
         import ctranslate2
-        import sentencepiece
-        mdir, spm = model_for(lang)
+        mdir, kind, tok = model_for(lang)
         threads = os.cpu_count() or 2
         self.tr = ctranslate2.Translator(mdir, device='cpu', inter_threads=1, intra_threads=threads)
-        self.sp = sentencepiece.SentencePieceProcessor(model_file=spm)
+        self.kind = kind
+        if kind == 'spm':
+            import sentencepiece
+            self.sp = sentencepiece.SentencePieceProcessor(model_file=tok)
+        else:
+            from sacremoses.normalize import MosesPunctNormalizer
+            from sacremoses.tokenize import MosesDetokenizer, MosesTokenizer
+            from argostranslate.apply_bpe import BPE
+            self.norm, self.tok, self.detok = MosesPunctNormalizer(lang), MosesTokenizer(lang), MosesDetokenizer('en')
+            with open(tok, 'r', encoding='utf-8') as f:
+                self.bpe = BPE(f)
+        print('[%s] model ready (%s)' % (lang, kind))
+
+    def encode(self, t):
+        if self.kind == 'spm':
+            return self.sp.encode(t, out_type=str)[:200]
+        words = ' '.join(self.tok.tokenize(self.norm.normalize(t)))
+        return self.bpe.segment_tokens(words.strip().split(' '))[:200]
+
+    def decode(self, toks):
+        if self.kind == 'spm':           # as Argos: join the pieces, the marker is a space
+            return clean_en(''.join(toks))
+        return self.detok.detokenize(' '.join(toks).replace('@@ ', '').split(' '))
 
     def run(self, texts, beam=2):
-        toks = [self.sp.encode(t, out_type=str)[:200] for t in texts]
-        res = self.tr.translate_batch(toks, beam_size=beam, max_batch_size=64, max_decoding_length=256)
-        return [self.sp.decode(r.hypotheses[0]) for r in res]
+        res = self.tr.translate_batch([self.encode(t) for t in texts], beam_size=beam, max_batch_size=64,
+                                      max_decoding_length=256)
+        return [self.decode(r.hypotheses[0]) for r in res]
+
+
+def clean_en(t):
+    return re.sub(r'\s+', ' ', (t or '').replace('\u2581', ' ')).strip()
 
 
 SENT = re.compile(r'(?<=[.!?…])\s+')
@@ -253,6 +284,7 @@ def main():
                 'https://raw.githubusercontent.com/%s/epg/tr/en_%s.json.gz' % (repo, lang), tries=2)).decode('utf-8'))
         except Exception:
             prev = {}
+        prev = dict((k, clean_en(v)) for k, v in prev.items() if clean_en(v))
         left = budget - (time.time() - t0)
         deadline = time.time() + max(60, left / (len(langs) - n))
         try:
