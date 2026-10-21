@@ -407,6 +407,64 @@ def cloud_xml_entries(user_sats):
     return out
 
 
+# --------------------------------------------------------------------- satellite guide -> English
+LANG_ALIAS = {'gr': 'el', 'sr': 'sl', 'hr': 'sl', 'bs': 'sl', 'me': 'sl', 'no': 'nb', 'cz': 'cs', 'iw': 'he'}
+LANG_EXTRA = {'sl': ('ru',), 'uk': ('ru',)}     # Serbian in Cyrillic, Russian on Ukrainian channels
+_EN_WORDS = re.compile(r'(?i)\b(the|and|of|with|news|live|show|in|to|on|for)\b')
+_NON_ASCII = re.compile(u'[^\x00-\x7f]')
+
+
+def load_title_dicts(base, sats, stop=None):
+    """English title dictionaries made in the cloud, for the languages of the foreign guides on your satellites.
+    -> ({original title: english}, [languages])"""
+    idx = load_index()
+    avail = idx.get('tr') or {}
+    langs = set()
+    for f in (idx.get('files') or {}).values():
+        if f.get('kind') == 'xmltv' and f.get('region') == 'eu' and f.get('lang') and _sat_ok(f, sats):
+            l = LANG_ALIAS.get(f['lang'], f['lang'])
+            langs.add(l)
+            langs.update(LANG_EXTRA.get(l, ()))
+    langs = sorted(l for l in langs if l in avail)
+    d = os.path.join(cache_dir(), 'tr')
+    merged = {}
+    for l in langs:
+        p = os.path.join(d, 't_%s.json.gz' % l)
+        if not os.path.exists(p) or time.time() - _mtime(p) > 20 * 3600:
+            try:
+                if not os.path.isdir(d):
+                    os.makedirs(d)
+                sources.http_download(base + avail[l], p + '.part', timeout=120, stop=stop)
+                os.rename(p + '.part', p)
+            except Exception as e:
+                log(u'قاموس الترجمة %s: %s' % (l, e))
+        for k, v in _load(p, {}).items():
+            merged.setdefault(k, v)
+    return merged, langs
+
+
+def translate_guide(events, d):
+    """satellite events in a foreign language -> (events with English titles, number translated) or (None, 0)
+    when the channel is English already, Arabic, or in a language without a dictionary."""
+    titles = [e[2] for e in events if e[2]]
+    if len(titles) < 3 or text_lang(titles) == 'ar':
+        return None, 0
+    eng = len([t for t in titles if _EN_WORDS.search(t)])
+    accents = len([t for t in titles if _NON_ASCII.search(t)])
+    if eng * 10 >= len(titles) * 3 and accents * 20 < len(titles):
+        return None, 0               # an English channel: leave it alone
+    out, hits = [], 0
+    for e in events:
+        t = (e[2] or u'').strip()
+        en = d.get(t) or d.get(t.rstrip(u'.').strip())
+        sh = d.get((e[3] or u'').strip()) if e[3] else None
+        hits += 1 if en else 0
+        out.append((e[0], e[1], en or e[2], sh or e[3], e[4], e[5]))
+    if not hits or hits * 5 < len(events):
+        return None, 0               # under 20% known titles: not a language we have
+    return out, hits
+
+
 def xml_files_for_sat(sat):
     return set('xml:' + fn for fn, f in (load_index().get('files') or {}).items()
                if f.get('kind') == 'xmltv' and _sat_ok(f, [sat]))
@@ -1517,6 +1575,7 @@ class Updater(object):
         self._pct = 0.0
         self.stats = {'channels': 0, 'events': 0, 'failed': 0, 'backup': 0, 'skipped': 0}
         self.health = {'sources': {}}
+        self.native_full = {}
         self.conflicts = set()
         self.summary = []
 
@@ -1553,6 +1612,37 @@ class Updater(object):
 
     def stop(self):
         return self.cancel
+
+    def _translate_native(self, imported, state, now):
+        cands = dict((r, ev) for r, ev in self.native_full.items() if r not in imported and r not in state['filled'])
+        if not cands:
+            return
+        st = self.stage('trnative', u'ترجمة دليل القمر للقنوات الأجنبية إلى الإنجليزية', len(cands), 2)
+        d, langs = load_title_dicts(self.cfg['cloud_url'], list(user_satellites(self.services)), self.stop)
+        if not d:
+            st.state, st.info = 'skip', u'لا يوجد قاموس بعد'
+            return
+        trn = state.setdefault('tr_native', {})
+        n_ch = n_ev = 0
+        for ref, evs in cands.items():
+            if self.cancel:
+                break
+            st.done += 1
+            out, hits = translate_guide(evs, d)
+            if not out:
+                continue
+            try:
+                import_events(self.epgcache, [ref], out)
+                trn[ref] = {'t': int(now), 'n': hits}
+                n_ch += 1
+                n_ev += hits
+            except Exception as e:
+                log(u'ترجمة دليل القمر %s: %s' % (ref, e))
+        for r in [r for r, v in trn.items() if now - v.get('t', 0) > 7 * 86400]:
+            del trn[r]
+        st.state, st.info = 'ok', u'%d قناة' % n_ch
+        self.stats['tr_native'] = n_ch
+        log(u'ترجمة دليل القمر إلى الإنجليزية (%s): %d قناة، %d برنامج' % (u'، '.join(langs), n_ch, n_ev))
 
     def _flush(self, refs, why):
         """remove the plugin's guide from these services. -> 'one' | 'all' | None
@@ -1773,6 +1863,19 @@ class Updater(object):
                                             'bouquet': u'اختيار يدوي', 'events': evs}
                     else:
                         log(u'%s: القناة المختارة (%s) ليس لها دليل الآن' % (name, dname))
+            # the satellite's own guide of foreign channels, to translate it to English (only channels the plugin
+            # does not fill from an online guide; read here because enigma2 objects belong to the main thread)
+            self.native_full = {}
+            if self.cfg.get('foreign_lang', 'en') == 'en':
+                filled = load_state()['filled']
+                mp = load_mapping()
+                for ref, _n in self.services:
+                    if ref in filled or mp.get(ref) in ('-', '!') or sat_of_ref(ref) in (
+                            'nilesat', 'arabsat', 'iptv', 'terrestrial'):
+                        continue
+                    ev = read_events(self.epgcache, ref, self.cfg.get('days', 3))
+                    if len(ev) >= 3:
+                        self.native_full[ref] = ev
             self.rich = {}
             if self.cfg['target'] == 'missing':
                 filled = load_state()['filled']
@@ -1830,7 +1933,8 @@ class Updater(object):
                     self.stats['skipped'] += 1
                     continue
                 # never give a Polish/Greek/... channel an Arabic guide, or an Arabic channel a European one
-                nl = text_lang([t for _b, _d, t in self.native.get(ref, ())])
+                nl = text_lang([t for _b, _d, t in self.native.get(ref, ())]) or \
+                    ('eu' if ref in (state.get('tr_native') or {}) else None)   # translated by us: was European
                 if nl and not manual:
                     kept = [c for c in cands if not ({nl, key_region(c[0])} == {'ar', 'eu'})]
                     if len(kept) < len(cands):
@@ -2179,6 +2283,11 @@ class Updater(object):
                 if not j['key'] and j['ref'] in copied_refs:
                     self.stats['failed'] -= 1
                     j['copied'] = True
+            if self.native_full and not self.cancel:
+                try:
+                    self._translate_native(imported, state, now)
+                except Exception as e:
+                    log(u'ترجمة دليل القمر: %s' % e)
             hidden = [r for r, v in load_mapping().items() if v == '!' and r in dict(self.all_services)]
             if hidden:
                 n, how = clear_plugin_epg(self.epgcache, hidden)

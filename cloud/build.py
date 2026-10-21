@@ -203,11 +203,15 @@ AR_RE = re.compile('[\u0621-\u064a]')
 _CYR = dict(zip('абвгдезийклмнопрстуфхцъыьэіґ', ['a', 'b', 'v', 'g', 'd', 'e', 'z', 'i', 'y', 'k', 'l', 'm', 'n', 'o',
                                                 'p', 'r', 's', 't', 'u', 'f', 'h', 'ts', 'a', 'y', '', 'e', 'i', 'g']))
 _CYR.update({'ж': 'zh', 'ч': 'ch', 'ш': 'sh', 'щ': 'sht', 'ю': 'yu', 'я': 'ya', 'ё': 'yo', 'є': 'ye', 'ї': 'yi'})
+_CYR.update({'α': 'a', 'β': 'v', 'γ': 'g', 'δ': 'd', 'ε': 'e', 'ζ': 'z', 'η': 'i', 'θ': 'th', 'ι': 'i',
+             'κ': 'k', 'λ': 'l', 'μ': 'm', 'ν': 'n', 'ξ': 'x', 'ο': 'o', 'π': 'p', 'ρ': 'r', 'σ': 's', 'ς': 's',
+             'τ': 't', 'υ': 'y', 'φ': 'f', 'χ': 'ch', 'ψ': 'ps', 'ω': 'o', 'ά': 'a', 'έ': 'e', 'ή': 'i',
+             'ί': 'i', 'ό': 'o', 'ύ': 'y', 'ώ': 'o', 'ϊ': 'i', 'ϋ': 'y', 'ΐ': 'i', 'ΰ': 'y'})
 
 
 def latin_name(n):
-    """Cyrillic channel name -> Latin spelling (БНТ1 -> BNT1), so receiver names in Latin letters match"""
-    if not re.search('[\u0400-\u04ff]', n):
+    """Cyrillic / Greek channel name -> Latin spelling (БНТ1 -> BNT1, ΒΕΡΓΙΝΑ -> VERGINA)"""
+    if not re.search('[\u0400-\u04ff\u0370-\u03ff]', n):
         return None
     out = ''
     for ch in n:
@@ -335,11 +339,18 @@ def main():
     gdir = os.path.join(a.out, 'guides')
     os.makedirs(gdir, exist_ok=True)
     index = {'generated': int(time.time()), 'days': days, 'files': {}}
+    index_tr = {}
     status = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'files': {}}
 
     tr = load_tr(a.tr)
     if tr:
         print('English dictionaries: ' + ', '.join('%s %d' % (k, len(v)) for k, v in sorted(tr.items())))
+        # small title-only dictionaries for the receiver: it translates the satellite's own guide with them
+        for lang, d in tr.items():
+            t = dict((k, v) for k, v in d.items() if len(k) <= 120 and len(v) <= 160 and k != v)
+            with gzip.open(os.path.join(a.tr, 't_%s.json.gz' % lang), 'wt', encoding='utf-8', compresslevel=9) as f:
+                json.dump(t, f, ensure_ascii=False, separators=(',', ':'))
+        index_tr = dict((lang, 'tr/t_%s.json.gz' % lang) for lang in tr)
     jobs = [(n, d, 'grab') for n, d in cfg['grab'].items()] + [(n, d, 'xmltv') for n, d in cfg['xmltv'].items()]
     for name, d, kind in jobs:
         t0 = time.time()
@@ -413,6 +424,7 @@ def main():
     except Exception as e:
         print('copied schedule check failed: %s' % e)
 
+    index['tr'] = index_tr
     with gzip.open(os.path.join(a.out, 'index.json.gz'), 'wt', encoding='utf-8') as f:
         json.dump(index, f, ensure_ascii=False, separators=(',', ':'))
     if os.path.exists(a.catalog):

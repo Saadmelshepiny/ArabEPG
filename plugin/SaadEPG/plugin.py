@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.3'
+VERSION = '1.4'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -553,6 +553,7 @@ def health_text():
     out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
     out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
     out.append(u'عناوين تُرجمت للعربي: %d' % h.get('translated', 0))
+    out.append(u'قنوات أجنبية تُرجم دليل قمرها للإنجليزية: %d' % len(st.get('tr_native') or {}))
     conf = h.get('conflicts') or []
     out.append(u'قنوات رقم خدمتها مشترك مع قناة أخرى (لا يضاف لها دليل): %d' % len(conf))
     if conf:
