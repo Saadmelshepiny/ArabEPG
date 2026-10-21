@@ -87,7 +87,10 @@ def fetch(lang, sat, lineup, day):
         'User-Agent': UA, 'Cookie': 'pll_language=%s' % lang, 'X-Requested-With': 'XMLHttpRequest',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Referer': 'https://www.sat.tv/'})
     with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read().decode('utf-8', 'replace')
+        page = r.read().decode('utf-8', 'replace')
+    print('sat.tv %s %s#%s %s: HTTP %s, %d bytes, %d channel blocks' % (
+        lang, sat, lineup, day, getattr(r, 'status', '?'), len(page), page.count('container-channel-events')))
+    return page
 
 
 def grab(src, work, days=2):

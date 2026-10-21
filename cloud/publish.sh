@@ -3,7 +3,8 @@
 # needs: work/ (grab outputs), iptv-epg/sites (channel lists), ziko/configs (service references)
 set -e
 python3 tools/make_catalog.py --iptv iptv-epg --catalog plugin/SaadEPG/channels.json --cloud cloud/channels
-timeout 15m python3 cloud/official.py --work work || echo "official sources skipped"
+mkdir -p public/tr
+(timeout 15m python3 cloud/official.py --work work || echo "official sources skipped") 2>&1 | tee public/tr/official.txt
 # English dictionaries of the foreign guides (made by the "translate" jobs; the previous ones when a job failed)
 mkdir -p public/tr
 for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('cloud/sources.json')).get('translate',{}).get('groups',[]) for x in g.split('+')))"); do
@@ -15,7 +16,7 @@ for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('clo
   fi
 done
 cat work/out_trlog_*.xml > public/tr/log.txt 2>/dev/null || true
-python3 cloud/sattv.py merge work work/sattv_ar.xml work/sattv_en.xml || echo "sat.tv merge skipped"
+(python3 cloud/sattv.py merge work work/sattv_ar.xml work/sattv_en.xml || echo "sat.tv merge skipped") 2>&1 | tee -a public/tr/official.txt
 python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr 2>&1 | tee public/tr/build.txt
 [ "${PIPESTATUS[0]}" = "0" ] || exit 1
 cp version.json public/ 2>/dev/null || true

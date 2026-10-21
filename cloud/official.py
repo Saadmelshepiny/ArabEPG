@@ -33,6 +33,8 @@ def main():
                 import sattv
                 sattv.grab(os.path.join(HERE, '..', 'iptv-epg', 'sites', 'sat.tv'), a.work, d.get('days', 2))
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 print('%s: %s' % (name, e))
             continue
         if not d.get('python') or d['site'] not in GRABBERS:
