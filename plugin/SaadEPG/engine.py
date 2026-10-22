@@ -104,6 +104,22 @@ def _save(path, obj):
         log('save %s: %s' % (path, e))
 
 
+SHIFT_FILE = os.path.join(DATA_DIR, 'shifts.json')     # hours added to a channel's guide, set by hand
+
+
+def load_shifts():
+    return _load(SHIFT_FILE, {})
+
+
+def set_shift(ref, hours):
+    d = load_shifts()
+    if hours:
+        d[ref] = int(hours)
+    else:
+        d.pop(ref, None)
+    _save(SHIFT_FILE, d)
+
+
 def load_mapping():
     return _load(MAP_FILE, {})
 
@@ -371,21 +387,24 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
         except Exception:
             pass
     if use_cloud:
-        try:   # Arabic translations made in the cloud (no daily limit)
-            tp = cloud_tr_path()
-            if force or time.time() - _mtime(tp) > 12 * 3600:
-                raw = sources.http_get(base + 'tr_ar.json.gz', timeout=90)
-                tr = json.loads(raw.decode('utf-8'))
-                if isinstance(tr, dict) and tr:
-                    d = os.path.dirname(tp)
-                    if not os.path.isdir(d):
-                        os.makedirs(d)
-                    with gzip.open(tp + '.tmp', 'wb') as f:
-                        f.write(json.dumps(tr, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
-                    os.rename(tp + '.tmp', tp)
-                    log(u'السحابة: قاموس ترجمة جاهز (%d عنوان)' % len(tr))
-        except Exception:
-            pass
+        # Arabic made in the cloud: real titles of bilingual sites, machine titles, machine descriptions
+        for kind, name, label in (('', 'tr_ar.json.gz', u'عناوين آلية'), ('real', 'tr_ar_real.json.gz', u'عناوين عربية حقيقية'),
+                                  ('desc', 'tr_ar_desc.json.gz', u'وصف')):
+            try:
+                tp = cloud_tr_path(kind)
+                if force or time.time() - _mtime(tp) > 12 * 3600:
+                    raw = sources.http_get(base + name, timeout=90)
+                    tr = json.loads(raw.decode('utf-8'))
+                    if isinstance(tr, dict) and tr:
+                        d = os.path.dirname(tp)
+                        if not os.path.isdir(d):
+                            os.makedirs(d)
+                        with gzip.open(tp + '.tmp', 'wb') as f:
+                            f.write(json.dumps(tr, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+                        os.rename(tp + '.tmp', tp)
+                        log(u'السحابة: قاموس %s (%d)' % (label, len(tr)))
+            except Exception:
+                pass
         try:
             if force or time.time() - _mtime(LINKED_REFS_FILE) > 24 * 3600:
                 lr = json.loads(sources.http_get(base + 'linked_refs.json', timeout=30).decode('utf-8'))
@@ -397,8 +416,9 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
     return load_index()
 
 
-def cloud_tr_path():
-    return os.path.join(cache_dir(), 'tr_cloud.json.gz')
+def cloud_tr_path(kind=''):
+    """'' machine titles, 'real' real Arabic titles/descriptions, 'desc' machine descriptions"""
+    return os.path.join(cache_dir(), 'tr_cloud%s.json.gz' % (('_' + kind) if kind else ''))
 
 
 def _sat_ok(f, sats):
@@ -1794,20 +1814,23 @@ class Updater(object):
             return
         from .translate import Translator
         cfg = self.cfg
+        mode = cfg.get('ar_tr_mode', 'desc')
         tr = Translator(os.path.join(cache_dir(), 'translations.json.gz'), cfg.get('tr_provider', 'mymemory'),
-                        cfg.get('tr_email', ''), cfg.get('tr_url', ''), cfg.get('tr_key', ''), cloud_tr_path())
+                        cfg.get('tr_email', ''), cfg.get('tr_url', ''), cfg.get('tr_key', ''), cloud_tr_path(),
+                        cloud_tr_path('real'), cloud_tr_path('desc'), mode)
         keys = list(set(j['key'] for j in tjobs if j['key']))
         now = time.time()
         texts = []
         for k in keys:   # nearest programmes first, so today's guide is translated first
             for e in sorted(results.get(k) or [], key=lambda e: e[0]):
                 if e[0] + e[1] > now:
-                    texts.append((e[0], e[2]))
+                    if mode == 'all':        # online translation of titles only when titles are translated
+                        texts.append((e[0], e[2]))
                     if e[3] and len(e[3]) < 80:
                         texts.append((e[0], e[3]))
         texts = [t for _s, t in sorted(texts)]
-        st = self.stage('translate', u'ترجمة الدليل الإنجليزي إلى العربية', 1, 3)
-        added = tr.translate_many(texts, cfg.get('tr_limit', 1500), self.stop)
+        st = self.stage('translate', u'العربي للدليل الإنجليزي (العناوين العربية الحقيقية والوصف)', 1, 3)
+        added = tr.translate_many(texts, cfg.get('tr_limit', 1500), self.stop) if mode != 'none' else 0
         done = 0
         for k in keys:
             results[k], n = tr.apply(results.get(k) or [])
@@ -1816,8 +1839,9 @@ class Updater(object):
         self.stats['translated'] = done
         st.done, st.state = 1, 'ok'
         st.info = u'%d عنوان' % done
-        log(u'الترجمة: %d ترجمة جديدة، %d برنامج أصبح بالعربي (الذاكرة: %d، السحابة: %d)' % (
-            added, done, len(tr.cache), len(tr.cloud)))
+        log(u'العربي للدليل الإنجليزي (%s): %d برنامج | قواميس: عناوين عربية حقيقية %d، وصف %d، عناوين آلية %d، '
+            u'ترجمات أونلاين جديدة %d' % ({'desc': u'الوصف فقط', 'all': u'العنوان والوصف', 'none': u'بدون'}.get(mode, mode),
+                                          done, len(tr.real), len(tr.cdesc), len(tr.cloud), added))
 
     def _repair(self):
         """once after updating from 4.0/4.1: remove guides copied between unnamed services and re-import
@@ -1977,6 +2001,7 @@ class Updater(object):
             now = time.time()
             jobs = []
             arabic_mode = cfg.get('lang_mode', 'ar_only') != 'any'
+            shifts = load_shifts()
             stale = []
             for ref, name in self.services:
                 cands, manual = resolve(ref, mapping, auto)
@@ -2011,6 +2036,8 @@ class Updater(object):
                     keys = [k for k in keys if not k.startswith('xml:')] + [k for k in keys if k.startswith('xml:')]
                 jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None,
                              'scores': scores, 'manual': manual})
+                if shifts.get(ref):           # your own time correction for this channel
+                    jobs[-1]['shift'], jobs[-1]['manual_shift'] = int(shifts[ref]) * 3600, True
             self.stale = stale
             if stale:
                 log(u'قنوات تغيّر ربطها (سيُمسح دليلها القديم): %d' % len(stale))
@@ -2168,7 +2195,7 @@ class Updater(object):
             checked = fixed = shifted = 0
             for j in jobs:
                 nat = self.native.get(j['ref'])
-                if not nat or not j['key']:
+                if not nat or not j['key'] or j.get('manual_shift'):
                     continue
                 verdict, sh, info = check_link(nat, results.get(j['key']))
                 if verdict == 'unknown':
@@ -2178,11 +2205,29 @@ class Updater(object):
                     j['verified'] = True
                     verified_pairs.append((j['ref'], j['key']))
                     continue
-                if verdict == 'offset':   # same schedule, other time zone: keep the online guide as it is
+                if verdict == 'offset':
+                    # same schedule shifted by whole hours. Which side is wrong? Ask a second online source:
+                    # it agrees with the satellite -> the first source is off, its times are corrected;
+                    # it agrees with the first source -> the satellite is off, the source stays as it is.
                     shifted += 1
                     j['verified'] = True
-                    log(u'نفس الجدول مع فرق توقيت (%s) بين دليل القمر و %s: %s - تم الاعتماد على المصدر' % (
-                        info, display_key(j['key']), j['name']))
+                    second = None
+                    for k in j['cands']:
+                        if k != j['key'] and results.get(k):
+                            v2, sh2, _i2 = check_link(nat, results.get(k))
+                            if v2 == 'ok' or (v2 == 'offset' and sh2 == sh):
+                                second = (k, v2)
+                                break
+                    if second and second[1] == 'ok':
+                        j['shift'] = j.get('shift', 0) + sh * 3600
+                        log(u'تصحيح توقيت %s (%s): %s يطابق دليل القمر، فتم تعديل مواعيد %s %+d ساعة' % (
+                            j['name'], info, display_key(second[0]), display_key(j['key']), sh))
+                    elif second:
+                        log(u'فرق توقيت (%s) في دليل القمر نفسه لقناة %s: مصدران متفقان (%s و %s) - تم الاعتماد عليهما' % (
+                            info, j['name'], display_key(j['key']), display_key(second[0])))
+                    else:
+                        log(u'نفس الجدول مع فرق توقيت (%s) بين دليل القمر و %s: %s - تم الاعتماد على المصدر '
+                            u'(يمكنك تصحيح التوقيت يدويا من شاشة القنوات)' % (info, display_key(j['key']), j['name']))
                     continue
                 if j.get('manual'):     # your own choice is kept, but you are told
                     log(u'تنبيه: الربط اليدوي لا يطابق دليل القمر (%s): %s ← %s' % (info, j['name'], display_key(j['key'])))

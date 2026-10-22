@@ -127,16 +127,16 @@ def _scan(data, flang, out, lo, hi, dhi):
 _INDEX = None
 
 
-def model_for(lang, root='/tmp/argos'):
-    """download and unpack the Argos package <lang> -> en. -> (ctranslate2 model dir, sentencepiece file)"""
+def model_for(lang, root='/tmp/argos', to='en'):
+    """download and unpack the Argos package <lang> -> <to>. -> (ctranslate2 model dir, tokenizer kind, file)"""
     global _INDEX
     if _INDEX is None:
         _INDEX = json.loads(get(INDEX).decode('utf-8'))
-    pk = [p for p in _INDEX if p.get('from_code') == lang and p.get('to_code') == 'en']
+    pk = [p for p in _INDEX if p.get('from_code') == lang and p.get('to_code') == to]
     if not pk:
-        raise RuntimeError('no model %s->en' % lang)
+        raise RuntimeError('no model %s->%s' % (lang, to))
     url = [x for x in pk[0].get('links') or [] if x.startswith('http')][0]
-    dest = os.path.join(root, lang)
+    dest = os.path.join(root, lang if to == 'en' else '%s_%s' % (lang, to))
     if not glob.glob(os.path.join(dest, '**', 'model.bin'), recursive=True):
         os.makedirs(dest, exist_ok=True)
         zipfile.ZipFile(io.BytesIO(get(url, timeout=900))).extractall(dest)
@@ -154,9 +154,9 @@ def model_for(lang, root='/tmp/argos'):
 class Model(object):
     """CTranslate2 model + the package's own tokenizer (SentencePiece, or Moses + BPE like Argos does)"""
 
-    def __init__(self, lang):
+    def __init__(self, lang, to='en'):
         import ctranslate2
-        mdir, kind, tok = model_for(lang)
+        mdir, kind, tok = model_for(lang, to=to)
         threads = os.cpu_count() or 2
         self.tr = ctranslate2.Translator(mdir, device='cpu', inter_threads=1, intra_threads=threads)
         self.kind = kind
@@ -167,7 +167,7 @@ class Model(object):
             from sacremoses.normalize import MosesPunctNormalizer
             from sacremoses.tokenize import MosesDetokenizer, MosesTokenizer
             from argostranslate.apply_bpe import BPE
-            self.norm, self.tok, self.detok = MosesPunctNormalizer(lang), MosesTokenizer(lang), MosesDetokenizer('en')
+            self.norm, self.tok, self.detok = MosesPunctNormalizer(lang), MosesTokenizer(lang), MosesDetokenizer(to)
             with open(tok, 'r', encoding='utf-8') as f:
                 self.bpe = BPE(f)
         print('[%s] model ready (%s)' % (lang, kind))

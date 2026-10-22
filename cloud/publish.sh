@@ -24,13 +24,15 @@ timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw 
 cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
 python3 tools/make_refs.py --src ziko/configs --out public/refs.json && gzip -9 -f public/refs.json || true
 
-# English titles of Arabic-region guides -> Arabic (offline translator, no daily limit). Never blocks publishing.
+# Arabic for the English guides of Arabic channels: real titles learned from bilingual sites, then machine
+# translation of the rest and of the descriptions. Never blocks publishing.
 if [ "${TRANSLATE:-1}" = "1" ]; then
   pip install -q argostranslate || echo "argostranslate not installed"
-  curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/epg/tr_ar.json.gz" -o prev_tr.json.gz || true
-  timeout 40m python3 cloud/translate_cloud.py --guides public/guides --prev prev_tr.json.gz \
-      --out public/tr_ar.json.gz --budget 1800 || echo "translation skipped"
-  [ -f public/tr_ar.json.gz ] || cp prev_tr.json.gz public/tr_ar.json.gz 2>/dev/null || true
+  timeout 40m python3 cloud/translate_cloud.py --guides public/guides --tr public/tr --out-dir public \
+      --budget 1800 2>&1 | tee -a public/tr/build.txt || echo "translation skipped"
+  for f in tr_ar.json.gz tr_ar_desc.json.gz tr_ar_real.json.gz; do
+    [ -s "public/$f" ] || curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/epg/$f" -o "public/$f" || true
+  done
 fi
 
 cd public

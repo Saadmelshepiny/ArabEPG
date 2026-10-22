@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.6'
+VERSION = '1.7'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -72,7 +72,7 @@ C.verify = ConfigYesNo(default=True)
 C.link_mode = ConfigSelection(default='normal', choices=[
     ('safe', 'أمان عالٍ: المؤكد فقط'), ('normal', 'متوازن (موصى به)'), ('all', 'كل الربط (بدون تحفظ)')])
 C.lang_mode = ConfigSelection(default='ar_only', choices=[
-    ('ar_only', 'عربي فقط (من مصادر عربية موثوقة)'), ('translate', 'عربي + ترجمة الإنجليزي إلى العربية'),
+    ('ar_only', 'عربي فقط (من مصادر عربية موثوقة)'), ('translate', 'عربي، وإن لم يوجد فالإنجليزي مع العربي المتاح'),
     ('ar_first', 'عربي أولا ثم إنجليزي'), ('any', 'أي لغة')])
 C.tr_provider = ConfigSelection(default='mymemory', choices=[('cloud', 'السحابة فقط (بلا حدود)'),
                                                             ('mymemory', 'السحابة ثم MyMemory'),
@@ -87,6 +87,9 @@ C.migrated = ConfigYesNo(default=False)
 C.bouquets = ConfigText(default='', fixed_size=False)   # names joined by | (empty = all bouquets)
 C.copy_epg = ConfigYesNo(default=True)
 C.auto_backup = ConfigYesNo(default=True)
+C.ar_tr_mode = ConfigSelection(default='desc', choices=[
+    ('desc', 'الوصف فقط - العنوان كما هو (أو العربي الرسمي)'),
+    ('all', 'العنوان والوصف (العنوان الأصلي يظهر في التفاصيل)'), ('none', 'بدون ترجمة')])
 C.foreign_lang = ConfigSelection(default='en', choices=[
     ('en', 'الإنجليزية (ترجمة من السحابة)'), ('orig', 'لغة القناة الأصلية')])
 
@@ -152,6 +155,7 @@ def current_cfg(**over):
         'tr_provider': C.tr_provider.value, 'tr_email': C.tr_email.value.strip(), 'tr_url': C.tr_url.value.strip(),
         'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
         'bouquets': [x for x in C.bouquets.value.split('|') if x], 'foreign_lang': C.foreign_lang.value,
+        'ar_tr_mode': C.ar_tr_mode.value,
     }
     cfg.update(over)
     sources.XML_PREFER_EN = cfg['foreign_lang'] == 'en'
@@ -531,6 +535,29 @@ def non_arabic_text():
             u'"عربي + ترجمة الإنجليزي إلى العربية" أو "عربي أولا ثم إنجليزي".\n\n' % len(names)) + u'\n'.join(names)
 
 
+def receiver_time_text():
+    """the receiver's clock and time zone: every guide is shown in this time"""
+    try:
+        now = time.time()
+        dst = time.localtime(now).tm_isdst > 0
+        off = -(time.altzone if dst else time.timezone) // 60
+        tz = u(os.environ.get('TZ') or u'')
+        if not tz:
+            try:
+                lt = os.path.realpath('/etc/localtime')
+                tz = u(lt.split('/zoneinfo/', 1)[1]) if '/zoneinfo/' in lt else u''
+            except Exception:
+                tz = u''
+        txt = u'ساعة الريسيفر: %s  (UTC%+d:%02d%s%s)' % (
+            time.strftime('%H:%M %d/%m', time.localtime(now)), off // 60, abs(off) % 60,
+            u'، توقيت صيفي' if dst else u'', (u'، ' + tz) if tz else u'')
+        if C.country.value == 'EG' and off not in (120, 180):
+            txt += u'\nتنبيه: ساعة الريسيفر ليست بتوقيت مصر - اضبط المنطقة الزمنية (القاهرة) من إعدادات الريسيفر'
+        return txt
+    except Exception as e:
+        return u'ساعة الريسيفر: %s' % e
+
+
 def health_text():
     st = engine.load_state()
     h = st.get('health') or {}
@@ -543,6 +570,7 @@ def health_text():
     if idx.get('generated'):
         out.append(u'آخر تجميع للسحابة: %s (%d ملف)' % (
             time.strftime('%d/%m %H:%M', time.localtime(idx['generated'])), len(idx.get('files') or {})))
+    out.append(receiver_time_text())
     out.append(u'')
     out.append(u'المصادر (قنوات بها بيانات / المطلوبة):')
     for label, v in sorted((h.get('sources') or {}).items()):
@@ -552,7 +580,7 @@ def health_text():
     out.append(u'رُفض لعدم مطابقة دليل القمر: %d' % h.get('rejected', 0))
     out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
     out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
-    out.append(u'عناوين تُرجمت للعربي: %d' % h.get('translated', 0))
+    out.append(u'برامج إنجليزية صار لها عربي (عنوان حقيقي أو وصف): %d' % h.get('translated', 0))
     out.append(u'قنوات أجنبية تُرجم دليل قمرها للإنجليزية: %d' % len(st.get('tr_native') or {}))
     conf = h.get('conflicts') or []
     out.append(u'قنوات رقم خدمتها مشترك مع قناة أخرى (لا يضاف لها دليل): %d' % len(conf))
@@ -1050,6 +1078,11 @@ class ChannelsScreen(BaseScreen):
         if st and u(st.get('key', '')).startswith('copy:'):
             lines.append(u'')
             lines.append(u'الدليل منسوخ من: %s (نفس الباقة)' % st.get('from_name', ''))
+        sh = engine.load_shifts().get(ref)
+        if sh:
+            lines.append(u'تصحيح توقيت يدوي: %+d ساعة' % sh)
+        elif st and st.get('shift'):
+            lines.append(u'تصحيح توقيت تلقائي: %+d ساعة' % (int(st['shift']) // 3600))
         if st:
             lines.append(u'')
             lines.append(u'آخر تحديث: %s' % time.strftime('%d/%m %H:%M', time.localtime(st.get('t', 0))))
@@ -1084,6 +1117,8 @@ class ChannelsScreen(BaseScreen):
         items = []
         if c[2] and c[2] != '-' and not c[4]:
             items.append((T(u'>> تأكيد الربط الحالي: %s' % engine.display_key(c[2])), c[2]))
+        sh = engine.load_shifts().get(ref, 0)
+        items += [(T(u'>> تصحيح توقيت دليل هذه القناة%s...' % ((u' (الآن %+d ساعة)' % sh) if sh else u'')), 'shift')]
         items += [(T(u'>> بحث بالاسم...'), 'search'),
                   (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
                   (T(u'>> ربط تلقائي ذكي'), 'auto'),
@@ -1121,6 +1156,12 @@ class ChannelsScreen(BaseScreen):
         if not res:
             return
         v = res[1]
+        if v == 'shift':
+            choices = [(T(u'بدون تصحيح'), 0)] + [(T(u'%+d ساعة' % h), h) for h in (1, -1, 2, -2, 3, -3)]
+            self.session.openWithCallback(lambda r: r is not None and self._set_shift(ref, r[1]), ChoiceBox,
+                                          title=T(u'البرامج تظهر قبل موعدها: اختر سالب. تظهر بعد موعدها: اختر موجب.'),
+                                          list=choices)
+            return
         if v == 'chanpick':
             from Screens.VirtualKeyBoard import VirtualKeyBoard
             self.session.openWithCallback(lambda t: t is not None and self.pick_channel(ref, u(t)), VirtualKeyBoard,
@@ -1153,6 +1194,13 @@ class ChannelsScreen(BaseScreen):
                 if old and old != v:
                     engine.reject(name, old)   # never suggest the wrong one again
         engine.save_mapping(m)
+        self.build(ref)
+
+    def _set_shift(self, ref, hours):
+        engine.set_shift(ref, hours)
+        self.session.openWithCallback(lambda yes: yes and self._update_choice((None, 'one')), MessageBox,
+                                      T(u'تم حفظ تصحيح التوقيت (%+d ساعة). تحديث هذه القناة الآن؟' % hours),
+                                      MessageBox.TYPE_YESNO)
         self.build(ref)
 
     def pick_channel(self, ref, query):
@@ -1488,6 +1536,7 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'نسخة احتياطية أسبوعية تلقائية على الهارد'), C.auto_backup),
             getConfigListEntry(T(u'لغة دليل القنوات الأجنبية'), C.foreign_lang),
             getConfigListEntry(T(u'لغة الدليل للقنوات العربية'), C.lang_mode),
+            getConfigListEntry(T(u'ترجمة الدليل الإنجليزي للقنوات العربية'), C.ar_tr_mode),
             getConfigListEntry(T(u'خدمة الترجمة'), C.tr_provider),
             getConfigListEntry(T(u'إيميل MyMemory (يرفع الحد اليومي إلى 50 ألف حرف)'), C.tr_email),
             getConfigListEntry(T(u'رابط سيرفر LibreTranslate'), C.tr_url),

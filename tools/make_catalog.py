@@ -18,9 +18,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # site folder in iptv-org/epg  ->  our short source name
 SITES = [
     ('shahid.mbc.net', 'shahid', ['ar', 'en']),
-    ('osn.com', 'osn', ['en', 'ar']),
+    ('osn.com', 'osn', ['ar', 'en']),
     ('elcinema.com', 'elcinema', ['ar', 'en']),
-    ('bein.com', 'bein', ['en', 'ar']),
+    ('bein.com', 'bein', ['ar', 'en']),
     ('beinsports.com', 'beinsports', ['mena-ar']),
     ('rotana.net', 'rotana', ['ar', 'en']),
     ('aljazeera.com', 'aljazeera', [None]),
@@ -32,6 +32,9 @@ SITES = [
     ('tunisiatv.tn', 'tunisia', [None]),
     ('trtarabi.com', 'trt', [None]),
 ]
+# sites that give the same programme in Arabic and in English: the cloud also grabs the English copy
+# (channel id + '.en', not published) to learn the real Arabic title of English titles
+TWIN_EN = ('shahid.mbc.net', 'osn.com', 'bein.com', 'rotana.net')
 # sat.tv: satellite 1 lineup 33 = Eutelsat/Nilesat 7-8W (MENA), satellite 2 lineup 55 = Hotbird 13E
 SATV_LINEUPS = ('1#33#', '2#55#')
 
@@ -133,6 +136,8 @@ def main():
                 e['names'] = ['%s %s' % (src, key)]
             catalog.append({'src': src, 'id': key, 'names': e['names']})
             cloud.setdefault(folder, []).append((e, '%s.%s' % (src, key)))
+            if folder in TWIN_EN and e['lang'] == 'ar':
+                cloud[folder].append((dict(e, lang='en'), '%s.%s.en' % (src, key)))
 
     if a.catalog:
         json.dump(catalog, open(a.catalog, 'w', encoding='utf8'), ensure_ascii=False, separators=(',', ':'))

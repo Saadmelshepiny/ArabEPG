@@ -29,8 +29,26 @@ _SERVICE_MSG = re.compile(u'(INVALID EMAIL|MYMEMORY|QUERY LENGTH LIMIT|PLEASE SE
                           u'TOO MANY REQUESTS|INVALID LANGUAGE PAIR|AUTHENTICATION|USAGE LIMITS)', re.I)
 
 
+# Arabic names written in Latin letters ("Bedon Sabeq Enthar", "Al A'a'edon", "3esh Sabahak"): a machine
+# translation of them is nonsense, so they stay as written unless the real Arabic title is known.
+_FRANCO_WORD = re.compile(u"(?i)\\b(al|el|wal|wel|wa|we|bel|fel|lel|ya|abu|abo|om|umm|bent|bint|ibn|ben|ahl|"
+                          u"masr|misr|hekayat|hikayat|mosalsal|mosalsalat|aflam|sabeq|bedon|bidun|enta|enty|ana|"
+                          u"ahla|habibi|sahra|leila|layali|zaman|baba|mama|ostaz|sheikh|haga|kalam|nas|beit|bait|"
+                          u"hob|alb|eid|ramadan|el3|wl)\\b")
+_FRANCO_SIGN = re.compile(u"[a-z]'[a-z]|[a-z][2357][a-z]|\\b[2357][a-z]|(aa|ee|oo)[a-z]*(kh|gh|sh|dh|th)", re.I)
+
+
+def franco(text):
+    t = u(text or u'')
+    return bool(_FRANCO_SIGN.search(t)) or len(_FRANCO_WORD.findall(t)) >= 1
+
+
 class Translator(object):
-    def __init__(self, cache_path, provider='mymemory', email='', libre_url='', libre_key='', cloud_path=None):
+    """real Arabic titles (learned from bilingual sites) first; machine translation of descriptions, and of
+    titles only when asked (mode 'all'); mode 'none' leaves the English guide as it is."""
+
+    def __init__(self, cache_path, provider='mymemory', email='', libre_url='', libre_key='', cloud_path=None,
+                 real_path=None, desc_path=None, mode='desc'):
         self.path = cache_path
         self.provider = provider
         email = re.sub(u'[\\s\u200b-\u200f\u202a-\u202e]+', u'', u(email or u'')).lower()
@@ -49,13 +67,10 @@ class Translator(object):
                 self.cache = json.loads(f.read().decode('utf-8'))
         except Exception:
             self.cache = {}
-        self.cloud = {}
-        if cloud_path:     # ready translations from the cloud (made by GitHub Actions, no daily limit)
-            try:
-                with gzip.open(cloud_path, 'rb') as f:
-                    self.cloud = json.loads(f.read().decode('utf-8'))
-            except Exception:
-                self.cloud = {}
+        self.mode = mode
+        self.cloud = self._read(cloud_path)       # machine titles from the cloud (no daily limit)
+        self.real = self._read(real_path)         # real Arabic titles/descriptions of bilingual sites
+        self.cdesc = self._read(desc_path)        # machine descriptions from the cloud
         # drop anything that is not a real Arabic translation (e.g. "INVALID EMAIL PROVIDED" from 4.0/4.1)
         bad = [k for k, v in self.cache.items() if not self.good(v)]
         for k in bad:
@@ -63,6 +78,17 @@ class Translator(object):
         if bad:
             self.dirty = True
             log(u'الترجمة: تم حذف %d ترجمة غير صحيحة من الذاكرة' % len(bad))
+
+    @staticmethod
+    def _read(path):
+        if not path:
+            return {}
+        try:
+            with gzip.open(path, 'rb') as f:
+                d = json.loads(f.read().decode('utf-8'))
+            return d if isinstance(d, dict) else {}
+        except Exception:
+            return {}
 
     @staticmethod
     def good(text):
@@ -128,7 +154,8 @@ class Translator(object):
         seen = set()
         for t in texts:
             t = u(t).strip()
-            if t and t not in seen and t not in self.cache and not self.good(self.cloud.get(t)) and self.needs(t):
+            if t and t not in seen and t not in self.cache and not self.good(self.cloud.get(t)) and self.needs(t) \
+                    and t not in self.real and not franco(t):
                 seen.add(t)
                 todo.append(t)
         todo = todo[:limit]
@@ -184,16 +211,36 @@ class Translator(object):
         return added[0]
 
     def apply(self, events, with_short=True):
-        """replace English titles with their cached Arabic translation (original kept in the description)."""
+        """-> (events with Arabic where it is known, number of programmes changed)
+        title: the real Arabic one; else (mode 'all' only) a machine translation, the original kept in the details;
+        Arabic names in Latin letters stay as written. description: real Arabic, else machine translation."""
         out, n = [], 0
         for e in events:
             title, short, desc = e[2], e[3], e[4]
-            ar = self.get(title) if self.needs(title) else None
-            if ar and self.good(ar):
-                desc = (u'%s\n(%s)' % (desc, title)) if desc else u'(%s)' % title
-                title = ar
-                n += 1
-            if with_short and short and self.needs(short) and self.good(self.get(short)):
-                short = self.get(short)
+            changed = False
+            if self.mode == 'none':
+                out.append(tuple(e))
+                continue
+            t = u(title).strip()
+            if self.needs(t):
+                ar = self.real.get(t)
+                if ar:
+                    title, changed = ar, True
+                elif self.mode == 'all' and not franco(t):
+                    ar = self.get(t)
+                    if ar and self.good(ar):
+                        desc = (u'%s\n(%s)' % (desc, t)) if desc else u'(%s)' % t
+                        title, changed = ar, True
+            if with_short and short and self.needs(short):
+                ar = self.real.get(u(short).strip()) or self.get(short)
+                if ar and self.good(ar):
+                    short = ar
+            d = u(desc or u'').strip()
+            if d and self.needs(d):
+                key = d[:500]
+                ar = self.real.get(key) or self.cdesc.get(key)
+                if ar and self.good(ar):
+                    desc, changed = ar, True
+            n += 1 if changed else 0
             out.append((e[0], e[1], title, short, desc, e[5]))
         return out, n

@@ -107,6 +107,41 @@ def tag2(tag, text, en):
     return s
 
 
+def title_pairs(paths):
+    """the English copy (channel id + '.en') next to the Arabic guide of the same site: the same channel at the same
+    time -> {english title or description: real Arabic one}, taken when most occurrences agree."""
+    ar, en = {}, {}
+    for p in paths:
+        try:
+            for _ev, el in ET.iterparse(open_any(p), events=('end',)):
+                if el.tag == 'programme':
+                    cid, st = el.get('channel') or '', el.get('start', '')[:12]
+                    rec = (el.findtext('title') or '').strip(), (el.findtext('desc') or '').strip()[:DESC_MAX]
+                    if cid.endswith('.en'):
+                        en.setdefault(cid[:-3], {})[st] = rec
+                    else:
+                        ar.setdefault(cid, {})[st] = rec
+                    el.clear()
+        except ET.ParseError as e:
+            print('pairs: %s: %s' % (p, e))
+    votes = {}
+    for cid, progs in en.items():
+        for st, (et, ed) in progs.items():
+            a = ar.get(cid, {}).get(st)
+            if not a:
+                continue
+            for e_txt, a_txt in ((et, a[0]), (ed, a[1])):
+                if e_txt and a_txt and AR_RE.search(a_txt) and not AR_RE.search(e_txt) and e_txt != a_txt:
+                    votes.setdefault(e_txt, {})
+                    votes[e_txt][a_txt] = votes[e_txt].get(a_txt, 0) + 1
+    out = {}
+    for e_txt, c in votes.items():
+        best = max(c.items(), key=lambda kv: kv[1])
+        if best[1] * 2 > sum(c.values()):
+            out[e_txt] = best[0]
+    return out
+
+
 def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MAX, lang=None, tr=None, aliases=None):
     """stream-parse XMLTV file(s), keep [now-6h, now+days], write compact gz. -> {id: [names]}
     lang/tr: language of a foreign file and the English dictionaries -> English text added next to the original."""
@@ -138,6 +173,9 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
             el.clear()
         elif el.tag == 'programme':
             cid = rename.get(el.get('channel'), el.get('channel'))
+            if (cid or '').endswith('.en'):        # English twin: only for title_pairs, not published
+                el.clear()
+                continue
             st, en = xtime(el.get('start')), xtime(el.get('stop'))
             if st and en and en > lo and st < hi:
                 p = {'start': st, 'stop': en}
@@ -342,6 +380,7 @@ def main():
     index_tr = {}
     status = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'files': {}}
 
+    pairs = {}
     tr = load_tr(a.tr)
     if tr:
         print('English dictionaries: ' + ', '.join('%s %d' % (k, len(v)) for k, v in sorted(tr.items())))
@@ -367,6 +406,11 @@ def main():
                     raise RuntimeError('no grab output')
                 idmap, cnames = our_ids(d['site'])
                 chans, n = repack([open_any(p) for p in srcs], out_path, fdays, idmap, cnames)
+                chans = dict((c, nm) for c, nm in chans.items() if not c.endswith('.en'))
+                if a.tr and any(c.endswith('.en') for c in cnames):
+                    pr = title_pairs(srcs)
+                    pairs.update(pr)
+                    print('   real Arabic titles/descriptions from the English copy: %d' % len(pr))
             else:
                 if a.skip_download and not d['url'].startswith('local:'):
                     continue
@@ -434,6 +478,10 @@ def main():
     except Exception as e:
         print('copied schedule check failed: %s' % e)
 
+    if a.tr and pairs:
+        with gzip.open(os.path.join(a.tr, 'pairs_ar.json.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:
+            json.dump(pairs, f, ensure_ascii=False, separators=(',', ':'))
+        print('real Arabic titles/descriptions (pairs_ar): %d' % len(pairs))
     index['tr'] = index_tr
     with gzip.open(os.path.join(a.out, 'index.json.gz'), 'wt', encoding='utf-8') as f:
         json.dump(index, f, ensure_ascii=False, separators=(',', ':'))
