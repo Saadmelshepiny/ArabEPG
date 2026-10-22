@@ -188,6 +188,9 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
                 if cats:
                     p['category'] = cats[0].text.strip()[:60]
                     p['category@'] = cats[0].get('lang')
+                ic = el.find('icon')
+                if idmap is not None and ic is not None and (ic.get('src') or '').startswith('http'):
+                    p['icon'] = ic.get('src')[:300]
                 epn = el.find('episode-num')
                 if epn is not None and epn.text:
                     p['episode-num'] = (epn.get('system') or 'onscreen', epn.text.strip()[:30])
@@ -230,6 +233,8 @@ def repack(srcs, out_path, days, idmap=None, catalog_names=None, maxdesc=DESC_MA
                 if p.get('episode-num'):
                     f.write('<episode-num system="%s">%s</episode-num>' % (
                         html.escape(p['episode-num'][0]), html.escape(p['episode-num'][1])))
+                if p.get('icon'):
+                    f.write('<icon src="%s"/>' % html.escape(p['icon']))
                 f.write('</programme>\n')
         f.write('</tv>\n')
     if lang:
@@ -564,6 +569,26 @@ def main():
         print('copied schedules removed: %d channels' % sum(len(v) for v in removed.values()))
     except Exception as e:
         print('copied schedule check failed: %s' % e)
+
+    # the golden guide (one merged schedule per Arabic channel) and what is made from it
+    try:
+        import gold
+        catalog = json.load(open(a.catalog, encoding='utf8')) if os.path.exists(a.catalog) else []
+        gdata, members = gold.build(gdir, index, catalog, days)
+        status['files']['gold'] = {'ok': True, 'channels': len(index['files']['gold']['channels']),
+                                   'members': len(members), 'size_kb': index['files']['gold']['size'] // 1024}
+        try:
+            import extras
+            extras.build(gdata, index, a.out, days)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print('extras failed: %s' % e)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        status['files']['gold'] = {'ok': False, 'error': str(e)[:300]}
+        print('gold failed: %s' % e)
 
     if a.tr and pairs:
         with gzip.open(os.path.join(a.tr, 'pairs_ar.json.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:

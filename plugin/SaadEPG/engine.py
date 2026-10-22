@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import gzip
 import json
 import os
+import pickle
 import shutil
 import re
 import threading
@@ -227,7 +228,7 @@ def source_kind(key):
     if src in ('copy', 'chan'):
         return u'منسوخ'
     if src == 'xml':
-        return u'ملف'
+        return u'ذهبي' if u(key).startswith(u'xml:gold/') else u'ملف'
     return u''
 
 
@@ -405,6 +406,14 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
                         log(u'السحابة: قاموس %s (%d)' % (label, len(tr)))
             except Exception:
                 pass
+        for name in EXTRAS:      # sports centre and cinema tonight (made in the cloud every few hours)
+            try:
+                if force or time.time() - _mtime(extras_path(name)) > 2 * 3600:
+                    d = json.loads(sources.http_get(base + name + '.json.gz', timeout=60).decode('utf-8'))
+                    if isinstance(d, dict) and d.get('generated'):
+                        _save(extras_path(name), d)
+            except Exception:
+                pass
         try:
             if force or time.time() - _mtime(LINKED_REFS_FILE) > 24 * 3600:
                 lr = json.loads(sources.http_get(base + 'linked_refs.json', timeout=30).decode('utf-8'))
@@ -414,6 +423,22 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
             pass
     refresh_local(set((cloud.get('files') or {}) if use_cloud else ()), stop, force)
     return load_index()
+
+
+def gold_members():
+    """{plugin key of a source channel: golden channel id} from the cloud index"""
+    return (load_index().get('gold') or {}).get('members') or {}
+
+
+EXTRAS = ('matches', 'films')
+
+
+def extras_path(name):
+    return os.path.join(DATA_DIR, '%s.json' % name)
+
+
+def load_extras(name):
+    return _load(extras_path(name), {})
 
 
 def cloud_tr_path(kind=''):
@@ -1213,6 +1238,76 @@ def clear_plugin_epg(epgcache, refs, everything=False):
     return done, 'service'
 
 
+# --------------------------------------------------------------------- lock: the plugin's guide stays
+# The satellite sends two things: its schedule (EIT), which overwrote the imported guide in the cache, and the
+# now/next of the channel being watched, which the infobar shows before the cache. Channels filled by the
+# plugin are put in the receiver's own EIT blacklist (/etc/enigma2/blacklist.eit, read by enigma2 itself),
+# and the infobar is told to take now/next from the cache for them (see plugin.patch_now_next).
+EIT_BLACKLIST = '/etc/enigma2/blacklist.eit'
+EIT_OURS = os.path.join(DATA_DIR, 'eit_locked.json')
+LOCK = {'refs': None, 'dirty': False, 'on': True, 'ok': None}
+
+
+def locked_refs():
+    if LOCK['refs'] is None:
+        LOCK['refs'] = set(_load(EIT_OURS, [])) if LOCK['on'] else set()
+    return LOCK['refs']
+
+
+def is_locked(ref):
+    return bool(ref) and LOCK['on'] and clean_ref(ref) in locked_refs()
+
+
+def lock_wanted(state, now=None):
+    """channels whose guide comes from the plugin and still runs for a while"""
+    now = now or time.time()
+    return sorted(r for r, f in (state.get('filled') or {}).items()
+                  if f.get('until', 0) > now + 3600 and f.get('n', 1))
+
+
+def eit_lock(refs, enabled=True):
+    """write our channels into blacklist.eit (lines written by others stay). -> number locked"""
+    ours_old = set(_load(EIT_OURS, []))
+    try:
+        with open(EIT_BLACKLIST) as f:
+            lines = [u(x.strip()) for x in f.read().splitlines()]
+    except (IOError, OSError):
+        lines = []
+    others = [x for x in lines if x and x not in ours_old]
+    want = sorted(set(clean_ref(r) for r in refs if clean_ref(r))) if enabled else []
+    keep = set(others)
+    new = others + [r for r in want if r not in keep]
+    LOCK['on'] = enabled
+    LOCK['refs'] = set(want)
+    if new != [x for x in lines if x]:
+        try:
+            tmp = EIT_BLACKLIST + '.tmp'
+            with open(tmp, 'wb') as f:
+                f.write((u'\n'.join(new) + (u'\n' if new else u'')).encode('utf-8'))
+            os.rename(tmp, EIT_BLACKLIST)
+            LOCK['dirty'] = True
+        except Exception as e:
+            log(u'تثبيت الدليل: تعذرت كتابة %s (%s)' % (EIT_BLACKLIST, e))
+    _save(EIT_OURS, want)
+    return len(want)
+
+
+def eit_reload():
+    """main thread: enigma2 reads blacklist.eit again. -> True / False (image without this function)"""
+    LOCK['dirty'] = False
+    try:
+        from enigma import eEPGCache
+        e = eEPGCache.getInstance()
+        if hasattr(e, 'reloadEITConfig'):
+            e.reloadEITConfig(getattr(eEPGCache, 'BLACKLIST', 2))
+            LOCK['ok'] = True
+            return True
+    except Exception as ex:
+        log(u'تثبيت الدليل: %s' % ex)
+    LOCK['ok'] = False
+    return False
+
+
 def export_linked_refs(path='/tmp/linked_refs.json'):
     """all confirmed links by service reference (manual + verified), ready to upload to the cloud repo."""
     out = dict(load_learned()['refs'])
@@ -1306,6 +1401,7 @@ def reset_plugin_data():
         except OSError:
             pass
     shutil.rmtree(os.path.join(cache_dir(), 'backup'), ignore_errors=True)
+    eit_lock([], LOCK['on'])        # the satellite may fill these channels again until the next update
 
 
 def _event_at(events, t):
@@ -1632,6 +1728,22 @@ class Stage(object):
         return 1.0 if self.state in ('ok', 'fail', 'skip') else min(1.0, float(self.done) / self.total)
 
 
+WORK_DIR = '/tmp/SaadEPG_job'
+
+
+def worker_python():
+    """the python of the image, to run worker.py beside enigma2 (None: work in a thread as before)"""
+    import sys
+    names = ('python3',) if PY3 else ('python2', 'python')
+    for d in ('/usr/bin', '/bin', '/usr/local/bin'):
+        for n in names:
+            p = os.path.join(d, n)
+            if os.access(p, os.X_OK):
+                return p
+    exe = getattr(sys, 'executable', '') or ''
+    return exe if 'python' in os.path.basename(exe) else None
+
+
 class Updater(object):
     running = None
 
@@ -1875,6 +1987,7 @@ class Updater(object):
 
     # ---- start (main thread: enigma2 objects only)
     def start(self):
+        """main thread: only what needs enigma2's service lists. Everything else runs in the background."""
         if Updater.running and not Updater.running.done:
             log(u'تحديث آخر قيد التشغيل بالفعل')
             return False
@@ -1886,88 +1999,7 @@ class Updater(object):
         try:
             from enigma import eEPGCache
             self.epgcache = eEPGCache.getInstance()
-            if self.only_refs is None:
-                self._repair()
             self.all_bouquets = get_bouquets()
-            self.all_services = get_services(self.all_bouquets) + [x for x in self.extra]
-            self.conflicts = triple_conflicts(self.all_services)
-            for r, v in (load_state().get('leak') or {}).items():
-                if time.time() - v.get('t', 0) < 30 * 86400:
-                    self.conflicts.add(r)
-            wanted = self.cfg.get('bouquets') or []
-            self.bouquets = [b for b in self.all_bouquets if not wanted or b[0] in wanted]
-            self.services = get_services(self.bouquets)
-            known = set(r for r, _n in self.services)
-            for r, n in self.extra:            # e.g. a channel being watched that is in no bouquet
-                if r not in known:
-                    self.services.append((r, n))
-            if self.only_refs is not None:
-                self.services = [s for s in self.services if s[0] in self.only_refs]
-            # what the satellite itself says (without what the plugin imported): used to verify the links
-            self.native = {}
-            # (not for the quick update of the channel you just opened: it has no guide at all)
-            if self.cfg.get('verify', True) and not self.quiet:
-                filled = load_state()['filled']
-                bk = None
-                for ref, name in self.services:
-                    f = filled.get(ref)
-                    ours = None
-                    if f:
-                        k = u(f.get('key', ''))
-                        if k.startswith('copy:'):
-                            continue
-                        sh = int(f.get('shift', 0))
-                        times = our_times(k)
-                        if times is None:      # first run after updating the plugin: the old way, once
-                            bk = bk or Backup()
-                            times = set((int(e[0]), int(e[1])) for e in bk.get(k))
-                        ours = set((b + sh, d) for b, d in times)
-                    ev = native_events(self.epgcache, ref, 15, ours, name)
-                    if ev:
-                        self.native[ref] = ev
-                bk = None
-            self.present = {}
-            if self.cfg.get('smart'):
-                for r in load_state()['filled']:
-                    self.present[r] = epg_count(self.epgcache, r, 24) > 0
-            self.copies = {}
-            if self.cfg.get('copy_epg', True):
-                try:
-                    self.copies = find_copies(self.epgcache, self.bouquets,
-                                              set(r for r, _n in self.services) if self.only_refs is not None
-                                              else None, self.cfg.get('days', 3), load_mapping())
-                except Exception as e:
-                    log(u'نسخ الدليل بين نسخ القناة: %s' % e)
-            # channels that take the guide of another channel (chosen by hand)
-            mp = load_mapping()
-            for ref, name in self.services:
-                v = mp.get(ref) or ''
-                if v.startswith('chan:'):
-                    donor, _, dname = v[5:].partition('|')
-                    evs = read_events(self.epgcache, donor, self.cfg.get('days', 3))
-                    if evs:
-                        self.copies[ref] = {'from': donor, 'from_name': dname or donor, 'name': name,
-                                            'bouquet': u'اختيار يدوي', 'events': evs}
-                    else:
-                        log(u'%s: القناة المختارة (%s) ليس لها دليل الآن' % (name, dname))
-            # the satellite's own guide of foreign channels, to translate it to English (only channels the plugin
-            # does not fill from an online guide; read here because enigma2 objects belong to the main thread)
-            # which channels' own satellite guide may be translated to English (read later, in the thread)
-            self.native_full = {}
-            if self.cfg.get('foreign_lang', 'en') == 'en' and not self.quiet:
-                filled = load_state()['filled']
-                mp = load_mapping()
-                for ref, _n in self.services:
-                    if ref in filled or mp.get(ref) in ('-', '!') or sat_of_ref(ref) in (
-                            'nilesat', 'arabsat', 'iptv', 'terrestrial'):
-                        continue
-                    self.native_full[ref] = None
-            self.rich = {}
-            if self.cfg['target'] == 'missing':
-                filled = load_state()['filled']
-                for ref, _n in self.services:
-                    if ref not in filled:
-                        self.rich[ref] = epg_count(self.epgcache, ref) >= 4
         except Exception as e:
             log(u'خطأ في قراءة القنوات: %s' % e)
             return False
@@ -1977,7 +2009,204 @@ class Updater(object):
         t.start()
         return True
 
+    def _prepare(self):
+        """(update thread) channels, what the satellite says, copies between channels..."""
+        st = self.stage('read', u'قراءة القنوات ودليل القمر', 1, 1)
+        self._prepare_inner()
+        st.done, st.state = 1, 'ok'
+
+    def _prepare_inner(self):
+        if self.only_refs is None:
+            self._repair()
+        self.all_services = get_services(self.all_bouquets) + [x for x in self.extra]
+        self.conflicts = triple_conflicts(self.all_services)
+        for r, v in (load_state().get('leak') or {}).items():
+            if time.time() - v.get('t', 0) < 30 * 86400:
+                self.conflicts.add(r)
+        wanted = self.cfg.get('bouquets') or []
+        self.bouquets = [b for b in self.all_bouquets if not wanted or b[0] in wanted]
+        self.services = get_services(self.bouquets)
+        known = set(r for r, _n in self.services)
+        for r, n in self.extra:            # e.g. a channel being watched that is in no bouquet
+            if r not in known:
+                self.services.append((r, n))
+        if self.only_refs is not None:
+            self.services = [s for s in self.services if s[0] in self.only_refs]
+        # what the satellite itself says (without what the plugin imported): used to verify the links
+        self.native = {}
+        # (not for the quick update of the channel you just opened: it has no guide at all)
+        if self.cfg.get('verify', True) and not self.quiet:
+            filled = load_state()['filled']
+            bk = None
+            for ref, name in self.services:
+                f = filled.get(ref)
+                ours = None
+                if f:
+                    k = u(f.get('key', ''))
+                    if k.startswith('copy:'):
+                        continue
+                    sh = int(f.get('shift', 0))
+                    times = our_times(k)
+                    if times is None:      # first run after updating the plugin: the old way, once
+                        bk = bk or Backup()
+                        times = set((int(e[0]), int(e[1])) for e in bk.get(k))
+                    ours = set((b + sh, d) for b, d in times)
+                ev = native_events(self.epgcache, ref, 15, ours, name)
+                if ev:
+                    self.native[ref] = ev
+            bk = None
+        self.present = {}
+        if self.cfg.get('smart'):
+            for r in load_state()['filled']:
+                self.present[r] = epg_count(self.epgcache, r, 24) > 0
+        self.copies = {}
+        if self.cfg.get('copy_epg', True):
+            try:
+                self.copies = find_copies(self.epgcache, self.bouquets,
+                                          set(r for r, _n in self.services) if self.only_refs is not None
+                                          else None, self.cfg.get('days', 3), load_mapping())
+            except Exception as e:
+                log(u'نسخ الدليل بين نسخ القناة: %s' % e)
+        # channels that take the guide of another channel (chosen by hand)
+        mp = load_mapping()
+        for ref, name in self.services:
+            v = mp.get(ref) or ''
+            if v.startswith('chan:'):
+                donor, _, dname = v[5:].partition('|')
+                evs = read_events(self.epgcache, donor, self.cfg.get('days', 3))
+                if evs:
+                    self.copies[ref] = {'from': donor, 'from_name': dname or donor, 'name': name,
+                                        'bouquet': u'اختيار يدوي', 'events': evs}
+                else:
+                    log(u'%s: القناة المختارة (%s) ليس لها دليل الآن' % (name, dname))
+        # the satellite's own guide of foreign channels, to translate it to English (only channels the plugin
+        # does not fill from an online guide; read here because enigma2 objects belong to the main thread)
+        # which channels' own satellite guide may be translated to English (read later, in the thread)
+        self.native_full = {}
+        if self.cfg.get('foreign_lang', 'en') == 'en' and not self.quiet:
+            filled = load_state()['filled']
+            mp = load_mapping()
+            for ref, _n in self.services:
+                if ref in filled or mp.get(ref) in ('-', '!') or sat_of_ref(ref) in (
+                        'nilesat', 'arabsat', 'iptv', 'terrestrial'):
+                    continue
+                self.native_full[ref] = None
+        self.rich = {}
+        if self.cfg['target'] == 'missing':
+            filled = load_state()['filled']
+            for ref, _n in self.services:
+                if ref not in filled:
+                    self.rich[ref] = epg_count(self.epgcache, ref) >= 4
+
     def _run(self):
+        try:
+            self._prepare()
+            ctx = None
+            if self.cfg.get('worker', True) and not self.cancel:
+                ctx = self._compute_in_process()
+            if ctx is None and not self.cancel:
+                ctx = self._compute()
+            if ctx is not None:
+                self._apply(ctx)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            log(u'خطأ عام: %s' % e)
+            self.summary = [u'خطأ: %s' % e]
+        finally:
+            for s in self.stages:
+                if s.state == 'run':
+                    s.state = 'ok' if not self.cancel else 'skip'
+            self.done = True
+
+    # ---- steps 1-5 in a separate process: the receiver's interface never waits for this work
+    def _compute_in_process(self):
+        py = worker_python()
+        if not py:
+            return None
+        d = WORK_DIR
+        try:
+            if not os.path.isdir(d):
+                os.makedirs(d)
+            for fn in ('progress.json', 'result.pkl', 'cancel', 'err.txt'):
+                try:
+                    os.remove(os.path.join(d, fn))
+                except OSError:
+                    pass
+            job = {'cfg': self.cfg, 'services': self.services, 'native': self.native, 'rich': self.rich,
+                   'present': self.present, 'quiet': self.quiet}
+            with open(os.path.join(d, 'job.pkl'), 'wb') as f:
+                pickle.dump(job, f, 2)
+            import subprocess
+            with open(os.devnull, 'rb') as dn, open(os.path.join(d, 'err.txt'), 'wb') as err:
+                proc = subprocess.Popen([py, os.path.join(PLUGIN_DIR, 'worker.py'), d], stdin=dn, stdout=err,
+                                        stderr=err, close_fds=True)
+        except Exception as e:
+            log(u'تعذر تشغيل العملية المنفصلة (%s) - يكمل البلوجين بالطريقة العادية' % e)
+            return None
+        seen = [0]
+        asked = False
+        while proc.poll() is None:
+            time.sleep(0.5)
+            if self.cancel and not asked:
+                asked = True
+                open(os.path.join(d, 'cancel'), 'w').close()
+            self._progress_from(d, seen)
+        self._progress_from(d, seen)
+        out = os.path.join(d, 'result.pkl')
+        if proc.returncode != 0 or not os.path.exists(out):
+            try:
+                with open(os.path.join(d, 'err.txt'), 'rb') as f:
+                    tail = u(f.read()[-600:].decode('utf-8', 'replace'))
+            except Exception:
+                tail = u''
+            log(u'العملية المنفصلة توقفت (%s) - يكمل البلوجين بالطريقة العادية: %s' % (proc.returncode, tail))
+            return None
+        try:
+            with open(out, 'rb') as f:
+                ctx = pickle.load(f)
+                results = {}
+                n = 0
+                while True:
+                    item = pickle.load(f)        # one channel at a time: never a long pause
+                    if item is None:
+                        break
+                    results[item[0]] = item[1]
+                    n += 1
+                    if n % 25 == 0:
+                        time.sleep(0.001)
+            ctx['results'] = results
+            self.stats.update(ctx.pop('stats', {}))
+            self.health.update(ctx.pop('health', {}))
+            self.offline = ctx.pop('offline', False)
+            return ctx
+        except Exception as e:
+            log(u'نتيجة العملية المنفصلة غير مقروءة (%s) - يكمل البلوجين بالطريقة العادية' % e)
+            return None
+
+    def _progress_from(self, d, seen):
+        try:
+            with open(os.path.join(d, 'progress.json'), 'rb') as f:
+                pr = json.loads(f.read().decode('utf-8'))
+        except Exception:
+            return
+        have = dict((s.id, s) for s in self.stages)
+        for sid, label, total, done, state, info, weight in pr.get('stages') or []:
+            s = have.get(sid)
+            if s is None:
+                s = Stage(sid, label, total, weight)
+                self.stages.append(s)
+            s.label, s.total, s.done, s.state, s.info = label, total, done, state, info
+        lines = pr.get('log') or []
+        new = pr.get('nlog', 0) - seen[0]
+        if new > 0:
+            sources.LOG.extend(lines[-new:])
+            del sources.LOG[:-400]
+            seen[0] = pr.get('nlog', 0)
+
+    def _compute(self):
+        """steps 1-5: cloud, linking, fetching, translation, checks, backup. No enigma2 objects in here:
+        normally it runs in its own process (worker.py), so the receiver never waits for it."""
         backup = None
         fetcher = None
         try:
@@ -2002,6 +2231,7 @@ class Updater(object):
             jobs = []
             arabic_mode = cfg.get('lang_mode', 'ar_only') != 'any'
             shifts = load_shifts()
+            gold = gold_members() if cfg.get('gold', True) else {}
             stale = []
             for ref, name in self.services:
                 cands, manual = resolve(ref, mapping, auto)
@@ -2034,6 +2264,12 @@ class Updater(object):
                 arabic = arabic_mode and _is_arabic_channel(ref, name, keys)
                 if arabic:   # official Arabic sites first, mixed-language files last
                     keys = [k for k in keys if not k.startswith('xml:')] + [k for k in keys if k.startswith('xml:')]
+                if gold and not manual:   # the golden guide of this channel (all its sources merged) comes first
+                    gk = [(gold[k], scores.get(k, 0.0)) for k in keys if k in gold]
+                    if gk:
+                        g = u'xml:gold/' + gk[0][0]
+                        keys = [g] + [k for k in keys if k != g]
+                        scores[g] = max(sc for x, sc in gk if x == gk[0][0])
                 jobs.append({'ref': ref, 'name': name, 'cands': keys, 'key': None, 'arabic': arabic, 'alt': None,
                              'scores': scores, 'manual': manual})
                 if shifts.get(ref):           # your own time correction for this channel
@@ -2141,7 +2377,7 @@ class Updater(object):
                                 continue
                             # official channel sites are trusted as they are; other files must be Arabic
                             if j['arabic'] and k.split(':')[0] not in ARABIC_SOURCES and \
-                                    sources.arabic_ratio(evs) < 0.6:
+                                    not k.startswith('xml:gold/') and sources.arabic_ratio(evs) < 0.6:
                                 j['alt'] = j['alt'] or k     # data exists, but not in Arabic
                                 continue
                             j['key'] = k
@@ -2286,7 +2522,7 @@ class Updater(object):
                     for k in j['cands']:
                         evs = backup.get(k)
                         if evs and j['arabic'] and k.split(':')[0] not in ARABIC_SOURCES and \
-                                sources.arabic_ratio(evs) < 0.6:
+                                not k.startswith('xml:gold/') and sources.arabic_ratio(evs) < 0.6:
                             continue
                         if evs:
                             j['key'], j['backup'] = k, True
@@ -2297,168 +2533,9 @@ class Updater(object):
                 s.state = 'ok'
                 if self.stats['backup']:
                     log(u'تم استخدام النسخة الاحتياطية لـ %d قناة' % self.stats['backup'])
-
-            # 6. import (clean-up first, then a leak check afterwards)
-            now = int(time.time())
-            blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts]
-            for j in blocked:
-                j['key'], j['conflict'] = None, True
-            if blocked:
-                log(u'لم يُستورد دليل %d قناة لأن رقم خدمتها مشترك مع قناة أخرى مختلفة (كان الدليل سيظهر على '
-                    u'القناتين معًا): %s' % (len(blocked), u'، '.join(j['name'] for j in blocked[:10])))
-            to_clean = set(r for r in state['filled'] if r in self.conflicts)
-            to_clean |= set(r for r, _n, _k in rejected if r in state['filled'])
-            to_clean |= set(getattr(self, 'stale', ()))
-            to_clean |= set(j['ref'] for j in jobs if j.get('fake') and j['ref'] in state['filled'])
-            for r in to_clean:
-                state['filled'].pop(r, None)
-            groups = {}
-            for j in jobs:
-                if j['key']:
-                    groups.setdefault((j['key'], j.get('shift', 0)), []).append(j['ref'])
-                elif not j.get('rejected') and not j.get('held') and not j.get('conflict'):
-                    self.stats['failed'] += 1
-            got_guide = set(r for refs in groups.values() for r in refs)
-            copies = [(t, c) for t, c in self.copies.items() if t not in got_guide and t not in self.conflicts]
-            if to_clean and self._flush(to_clean, u'دليل خطأ أو قديم'):
-                to_clean = set()
-
-            def do_import(exclude, quiet=False):
-                done = {}
-                st = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
-                for (key, shift), refs in groups.items():
-                    if self.cancel:
-                        break
-                    refs = [r for r in refs if r not in exclude]
-                    evs = results.get(key) or []
-                    if shift:
-                        evs = [(e[0] + shift,) + tuple(e[1:]) for e in evs]
-                    if refs and evs:
-                        try:
-                            n = import_events(self.epgcache, refs, evs)
-                            until = max(e[0] + e[1] for e in evs)
-                            for r in refs:
-                                done[r] = evs
-                                state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
-                                if shift:
-                                    state['filled'][r]['shift'] = shift
-                        except Exception as e:
-                            log(u'فشل الاستيراد %s: %s' % (key, e))
-                    st.done += 1
-                st.state = 'ok'
-                if copies and not self.cancel:
-                    st = self.stage('copy', u'نسخ الدليل من نسخة أخرى لنفس القناة', len(copies), 1)
-                    for t, c in copies:
-                        if t in exclude:
-                            continue
-                        try:
-                            n = import_events(self.epgcache, [t], c['events'])
-                            done[t] = c['events']
-                            state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'],
-                                                  'name': c['name'], 't': now,
-                                                  'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
-                            if not quiet:
-                                log(u'نسخ الدليل: %s ← %s (%s، %d برنامج)' % (c['name'], c['from_name'],
-                                                                         c['bouquet'], n))
-                        except Exception as e:
-                            log(u'فشل نسخ دليل %s: %s' % (c['name'], e))
-                        st.done += 1
-                    st.state = 'ok'
-                return done
-
-            imported = do_import(set())
-            # 6b. leak check: a guide must not show up on another channel (receivers that keep the guide
-            # per service number show it on every channel with the same number)
-            if not self.cancel:
-                leaks = self._find_leaks(imported)
-                if leaks:
-                    for src, victims in leaks.items():
-                        state['filled'].pop(src, None)
-                        state.setdefault('leak', {})[src] = {'t': now, 'victims': victims[:5]}
-                    if self._flush(set(leaks), u'دليل تسرب لقنوات أخرى') == 'all':
-                        imported = do_import(set(leaks), quiet=True)
-                    for src in leaks:
-                        imported.pop(src, None)
-            self.stats['channels'] = len(imported)
-            self.stats['events'] = sum(len(v) for v in imported.values())
-            n_copied = len([1 for t, _c in copies if t in imported])
-            if n_copied:
-                log(u'نسخ الدليل من نسخة أخرى لنفس القناة: %d قناة' % n_copied)
-            self.stats['copied'] = n_copied
-            copied_refs = set(t for t, _c in copies if t in imported)
-            for j in jobs:
-                if not j['key'] and j['ref'] in copied_refs:
-                    self.stats['failed'] -= 1
-                    j['copied'] = True
-            if self.native_full and not self.cancel:
-                try:
-                    self._translate_native(imported, state, now)
-                except Exception as e:
-                    log(u'ترجمة دليل القمر: %s' % e)
-            hidden = [r for r, v in load_mapping().items() if v == '!' and r in dict(self.all_services)]
-            if hidden:
-                n, how = clear_plugin_epg(self.epgcache, hidden)
-                if how:
-                    log(u'تم إخفاء دليل القمر الخطأ من %d قناة' % n)
-                else:
-                    log(u'إخفاء دليل القمر: هذه الصورة لا تسمح بمسح دليل قناة واحدة')
-            self.stats['conflicts'] = len(blocked)
-            self.health['held'] = len(held)
-            self.health['rejected'] = len(rejected)
-            self.health['conflicts'] = [j['name'] for j in blocked][:60]
-            self.health['leaks'] = dict((k, v) for k, v in (state.get('leak') or {}).items())
-            self.health['copied'] = n_copied
-            self.health['translated'] = self.stats.get('translated', 0)
-            # keep the results of the last 2 days per channel: the health screen shows the whole picture,
-            # not only the last (maybe partial) update
-            old = (state.get('health') or {}).get('items') or {}
-            for lbl, chans in (self.health.get('items') or {}).items():
-                old.setdefault(lbl, {}).update(chans)
-            limit = time.time() - 2 * 86400
-            items = dict((lbl, dict((c, v) for c, v in chans.items() if v[1] >= limit)) for lbl, chans in old.items())
-            self.health['items'] = dict((k, v) for k, v in items.items() if v)
-            for lbl, chans in self.health['items'].items():
-                okn = sum(1 for v in chans.values() if v[0])
-                self.health['sources'][lbl] = [okn, len(chans), [v[2] for v in chans.values() if not v[0]][:15]]
-            state['health'] = self.health
-            try:
-                self.epgcache.save()
-            except Exception:
-                pass
-            state['last'] = now
-            state['last_stats'] = self.stats
-            state['non_arabic'] = [j['name'] for j in jobs if j.get('non_arabic')][:300]
-            n_learn = learn_refs(verified_pairs + [(r, k) for r, k in fixed_pairs])
-            if n_learn:
-                log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
-            save_state(state)
-            failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied') and not j.get('rejected')
-                            and not j.get('held') and not j.get('conflict')]
-            self.summary = [
-                u'تم تحديث %d قناة (%d برنامج) خلال %d ثانية' % (
-                    self.stats['channels'], self.stats['events'], time.time() - self.started),
-                u'من النسخة الاحتياطية: %d | لم تُحدَّث: %d | تخطي (حديثة): %d' % (
-                    self.stats['backup'], self.stats['failed'], self.stats['skipped'])]
-            if rejected or held:
-                self.summary.append(u'للأمان: رُفض %d ربط لا يطابق دليل القمر، و %d ربط غير مؤكد ينتظر مراجعتك' % (
-                    len(rejected), len(held)))
-            if n_copied:
-                self.summary.append(u'نُسخ الدليل من نسخة أخرى لنفس القناة (نفس الباقة): %d قناة' % n_copied)
-            bq = sorted([b for b in bouquet_stats(self.bouquets, state) if b['events']],
-                        key=lambda b: -b['events'])
-            if bq:
-                self.summary.append(u'البرامج لكل باقة: ' + u'، '.join(
-                    u'%s %d' % (b['name'], b['events']) for b in bq[:8]) + (u' ...' if len(bq) > 8 else u''))
-            if failed_names:
-                self.summary.append(u'بدون بيانات: ' + u'، '.join(failed_names[:15]) +
-                                    (u' ...' if len(failed_names) > 15 else u''))
-            for line in self.summary:
-                log(line)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            log(u'خطأ عام: %s' % e)
-            self.summary = [u'خطأ: %s' % e]
+            return {'jobs': jobs, 'results': dict((j['key'], results.get(j['key'])) for j in jobs if j['key']),
+                    'rejected': rejected, 'held': [j['ref'] for j in held], 'verified_pairs': verified_pairs,
+                    'fixed_pairs': fixed_pairs, 'review': state.get('review') or {}, 'stale': self.stale}
         finally:
             try:
                 if backup:
@@ -2467,11 +2544,180 @@ class Updater(object):
                 pass
             if fetcher:
                 fetcher.cleanup()
-            for s in self.stages:
-                if s.state == 'run':
-                    s.state = 'ok' if not self.cancel else 'skip'
-            self.done = True
 
+    def _apply(self, ctx):
+        """step 6 and after (update thread): import into the receiver, leak check, lock, state."""
+        cfg = self.cfg
+        jobs, results = ctx['jobs'], ctx['results']
+        rejected, verified_pairs, fixed_pairs = ctx['rejected'], ctx['verified_pairs'], ctx['fixed_pairs']
+        held_refs = set(ctx['held'])
+        held = [j for j in jobs if j['ref'] in held_refs]
+        self.stale = ctx.get('stale') or []
+        state = load_state()
+        state['review'] = ctx.get('review') or {}
+        # 6. import (clean-up first, then a leak check afterwards)
+        now = int(time.time())
+        blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts]
+        for j in blocked:
+            j['key'], j['conflict'] = None, True
+        if blocked:
+            log(u'لم يُستورد دليل %d قناة لأن رقم خدمتها مشترك مع قناة أخرى مختلفة (كان الدليل سيظهر على '
+                u'القناتين معًا): %s' % (len(blocked), u'، '.join(j['name'] for j in blocked[:10])))
+        to_clean = set(r for r in state['filled'] if r in self.conflicts)
+        to_clean |= set(r for r, _n, _k in rejected if r in state['filled'])
+        to_clean |= set(getattr(self, 'stale', ()))
+        to_clean |= set(j['ref'] for j in jobs if j.get('fake') and j['ref'] in state['filled'])
+        for r in to_clean:
+            state['filled'].pop(r, None)
+        groups = {}
+        for j in jobs:
+            if j['key']:
+                groups.setdefault((j['key'], j.get('shift', 0)), []).append(j['ref'])
+            elif not j.get('rejected') and not j.get('held') and not j.get('conflict'):
+                self.stats['failed'] += 1
+        got_guide = set(r for refs in groups.values() for r in refs)
+        copies = [(t, c) for t, c in self.copies.items() if t not in got_guide and t not in self.conflicts]
+        if to_clean and self._flush(to_clean, u'دليل خطأ أو قديم'):
+            to_clean = set()
+
+        def do_import(exclude, quiet=False):
+            done = {}
+            st = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
+            for (key, shift), refs in groups.items():
+                if self.cancel:
+                    break
+                refs = [r for r in refs if r not in exclude]
+                evs = results.get(key) or []
+                if shift:
+                    evs = [(e[0] + shift,) + tuple(e[1:]) for e in evs]
+                if refs and evs:
+                    try:
+                        n = import_events(self.epgcache, refs, evs)
+                        until = max(e[0] + e[1] for e in evs)
+                        for r in refs:
+                            done[r] = evs
+                            state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
+                            if shift:
+                                state['filled'][r]['shift'] = shift
+                    except Exception as e:
+                        log(u'فشل الاستيراد %s: %s' % (key, e))
+                st.done += 1
+            st.state = 'ok'
+            if copies and not self.cancel:
+                st = self.stage('copy', u'نسخ الدليل من نسخة أخرى لنفس القناة', len(copies), 1)
+                for t, c in copies:
+                    if t in exclude:
+                        continue
+                    try:
+                        n = import_events(self.epgcache, [t], c['events'])
+                        done[t] = c['events']
+                        state['filled'][t] = {'key': u'copy:' + c['from'], 'from_name': c['from_name'],
+                                              'name': c['name'], 't': now,
+                                              'n': n, 'until': max(e[0] + e[1] for e in c['events'])}
+                        if not quiet:
+                            log(u'نسخ الدليل: %s ← %s (%s، %d برنامج)' % (c['name'], c['from_name'],
+                                                                     c['bouquet'], n))
+                    except Exception as e:
+                        log(u'فشل نسخ دليل %s: %s' % (c['name'], e))
+                    st.done += 1
+                st.state = 'ok'
+            return done
+
+        imported = do_import(set())
+        # 6b. leak check: a guide must not show up on another channel (receivers that keep the guide
+        # per service number show it on every channel with the same number)
+        if not self.cancel:
+            leaks = self._find_leaks(imported)
+            if leaks:
+                for src, victims in leaks.items():
+                    state['filled'].pop(src, None)
+                    state.setdefault('leak', {})[src] = {'t': now, 'victims': victims[:5]}
+                if self._flush(set(leaks), u'دليل تسرب لقنوات أخرى') == 'all':
+                    imported = do_import(set(leaks), quiet=True)
+                for src in leaks:
+                    imported.pop(src, None)
+        self.stats['channels'] = len(imported)
+        self.stats['events'] = sum(len(v) for v in imported.values())
+        n_copied = len([1 for t, _c in copies if t in imported])
+        if n_copied:
+            log(u'نسخ الدليل من نسخة أخرى لنفس القناة: %d قناة' % n_copied)
+        self.stats['copied'] = n_copied
+        copied_refs = set(t for t, _c in copies if t in imported)
+        for j in jobs:
+            if not j['key'] and j['ref'] in copied_refs:
+                self.stats['failed'] -= 1
+                j['copied'] = True
+        if self.native_full and not self.cancel:
+            try:
+                self._translate_native(imported, state, now)
+            except Exception as e:
+                log(u'ترجمة دليل القمر: %s' % e)
+        hidden = [r for r, v in load_mapping().items() if v == '!' and r in dict(self.all_services)]
+        if hidden:
+            n, how = clear_plugin_epg(self.epgcache, hidden)
+            if how:
+                log(u'تم إخفاء دليل القمر الخطأ من %d قناة' % n)
+            else:
+                log(u'إخفاء دليل القمر: هذه الصورة لا تسمح بمسح دليل قناة واحدة')
+        self.stats['conflicts'] = len(blocked)
+        self.health['held'] = len(held)
+        self.health['rejected'] = len(rejected)
+        self.health['conflicts'] = [j['name'] for j in blocked][:60]
+        self.health['leaks'] = dict((k, v) for k, v in (state.get('leak') or {}).items())
+        self.health['copied'] = n_copied
+        self.health['translated'] = self.stats.get('translated', 0)
+        # keep the results of the last 2 days per channel: the health screen shows the whole picture,
+        # not only the last (maybe partial) update
+        old = (state.get('health') or {}).get('items') or {}
+        for lbl, chans in (self.health.get('items') or {}).items():
+            old.setdefault(lbl, {}).update(chans)
+        limit = time.time() - 2 * 86400
+        items = dict((lbl, dict((c, v) for c, v in chans.items() if v[1] >= limit)) for lbl, chans in old.items())
+        self.health['items'] = dict((k, v) for k, v in items.items() if v)
+        for lbl, chans in self.health['items'].items():
+            okn = sum(1 for v in chans.values() if v[0])
+            self.health['sources'][lbl] = [okn, len(chans), [v[2] for v in chans.values() if not v[0]][:15]]
+        state['health'] = self.health
+        try:
+            self.epgcache.save()
+        except Exception:
+            pass
+        state['last'] = now
+        state['last_stats'] = self.stats
+        try:
+            n_lock = eit_lock(lock_wanted(state), cfg.get('lock', True))
+            self.health['locked'] = n_lock
+            if cfg.get('lock', True):
+                log(u'تثبيت دليل البلوجين (لا يكتب القمر فوقه): %d قناة' % n_lock)
+        except Exception as e:
+            log(u'تثبيت الدليل: %s' % e)
+        state['non_arabic'] = [j['name'] for j in jobs if j.get('non_arabic')][:300]
+        n_learn = learn_refs(verified_pairs + [(r, k) for r, k in fixed_pairs])
+        if n_learn:
+            log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
+        save_state(state)
+        failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied') and not j.get('rejected')
+                        and not j.get('held') and not j.get('conflict')]
+        self.summary = [
+            u'تم تحديث %d قناة (%d برنامج) خلال %d ثانية' % (
+                self.stats['channels'], self.stats['events'], time.time() - self.started),
+            u'من النسخة الاحتياطية: %d | لم تُحدَّث: %d | تخطي (حديثة): %d' % (
+                self.stats['backup'], self.stats['failed'], self.stats['skipped'])]
+        if rejected or held:
+            self.summary.append(u'للأمان: رُفض %d ربط لا يطابق دليل القمر، و %d ربط غير مؤكد ينتظر مراجعتك' % (
+                len(rejected), len(held)))
+        if n_copied:
+            self.summary.append(u'نُسخ الدليل من نسخة أخرى لنفس القناة (نفس الباقة): %d قناة' % n_copied)
+        bq = sorted([b for b in bouquet_stats(self.bouquets, state) if b['events']],
+                    key=lambda b: -b['events'])
+        if bq:
+            self.summary.append(u'البرامج لكل باقة: ' + u'، '.join(
+                u'%s %d' % (b['name'], b['events']) for b in bq[:8]) + (u' ...' if len(bq) > 8 else u''))
+        if failed_names:
+            self.summary.append(u'بدون بيانات: ' + u'، '.join(failed_names[:15]) +
+                                (u' ...' if len(failed_names) > 15 else u''))
+        for line in self.summary:
+            log(line)
 
 # --------------------------------------------------------------------- helpers for screens
 def fetch_preview(key, cfg):

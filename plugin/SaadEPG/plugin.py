@@ -90,6 +90,8 @@ C.auto_backup = ConfigYesNo(default=True)
 C.ar_tr_mode = ConfigSelection(default='desc', choices=[
     ('desc', 'الوصف فقط - العنوان كما هو (أو العربي الرسمي)'),
     ('all', 'العنوان والوصف (العنوان الأصلي يظهر في التفاصيل)'), ('none', 'بدون ترجمة')])
+C.lock_epg = ConfigYesNo(default=True)
+C.gold = ConfigYesNo(default=True)
 C.foreign_lang = ConfigSelection(default='en', choices=[
     ('en', 'الإنجليزية (ترجمة من السحابة)'), ('orig', 'لغة القناة الأصلية')])
 
@@ -155,7 +157,7 @@ def current_cfg(**over):
         'tr_provider': C.tr_provider.value, 'tr_email': C.tr_email.value.strip(), 'tr_url': C.tr_url.value.strip(),
         'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
         'bouquets': [x for x in C.bouquets.value.split('|') if x], 'foreign_lang': C.foreign_lang.value,
-        'ar_tr_mode': C.ar_tr_mode.value,
+        'ar_tr_mode': C.ar_tr_mode.value, 'lock': C.lock_epg.value, 'gold': C.gold.value,
     }
     cfg.update(over)
     sources.XML_PREFER_EN = cfg['foreign_lang'] == 'en'
@@ -577,6 +579,12 @@ def health_text():
         ok, total, empty = v[0], v[1], v[2]
         out.append(u'  %s: %d/%d%s' % (label, ok, total, (u'  - بدون بيانات: ' + u'، '.join(empty)) if empty else u''))
     out.append(u'')
+    if C.lock_epg.value:
+        ok = engine.LOCK.get('ok')
+        out.append(u'قنوات دليلها مثبت (القمر لا يكتب فوقه): %d%s' % (
+            len(engine.locked_refs()), u'' if ok is not False else u'  - هذه الصورة لا تدعم التثبيت'))
+    else:
+        out.append(u'تثبيت دليل البلوجين: متوقف من الإعدادات')
     out.append(u'رُفض لعدم مطابقة دليل القمر: %d' % h.get('rejected', 0))
     out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
     out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
@@ -892,7 +900,7 @@ class LogScreen(BaseScreen):
 
 # --------------------------------------------------------------------- channels list
 STATUS_CHIP = {'A': (u'البلوجين', 'accent'), '+': (u'القمر', 'blue'), '?': (u'مراجعة', 'amber')}
-KIND_CHIP = {u'رسمي': 'accent', u'عربي': 'blue', u'ملف': 'violet', u'منسوخ': 'amber'}
+KIND_CHIP = {u'رسمي': 'accent', u'عربي': 'blue', u'ملف': 'violet', u'منسوخ': 'amber', u'ذهبي': 'amber'}
 
 
 def channels_table():
@@ -1525,6 +1533,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'رابط السحابة'), C.cloud_url),
             getConfigListEntry(T(u'القنوات التي يتم تحديثها'), C.target),
             getConfigListEntry(T(u'عدد الأيام'), C.days),
+            getConfigListEntry(T(u'تثبيت دليل البلوجين (لا يظهر دليل القمر فوقه)'), C.lock_epg),
+            getConfigListEntry(T(u'الدليل الذهبي (كل مصادر القناة في جدول واحد)'), C.gold),
             getConfigListEntry(T(u'تحديث تلقائي يومي'), C.autoupdate),
             getConfigListEntry(T(u'وقت التحديث اليومي'), C.update_time),
             getConfigListEntry(T(u'تحديث تلقائي ثان'), C.autoupdate2),
@@ -1592,6 +1602,9 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
         configfile.save()
         if AutoUpdate.instance:
             AutoUpdate.instance.schedule()
+        if bool(engine.LOCK['on']) != bool(C.lock_epg.value):
+            engine.eit_lock(engine.lock_wanted(engine.load_state()), C.lock_epg.value)
+            engine.eit_reload()
         self.close(True)
 
     def cancel(self):
@@ -1624,12 +1637,19 @@ class AutoUpdate(object):
         self.zap_seen = {}
         self.zap_job = None
         self.zap_watch = make_timer(self.zap_finished)
+        # the update thread wrote blacklist.eit: enigma2 reads it again on the main thread
+        self.lock_timer = make_timer(self.apply_lock)
+        self.lock_timer.start(3000, False)
         try:
             from enigma import iPlayableService
             self.ev_start = iPlayableService.evStart
             session.nav.event.append(self.on_service_event)
         except Exception as e:
             print('[SaadEPG] zap watcher not available', e)
+
+    def apply_lock(self):
+        if engine.LOCK['dirty']:
+            engine.eit_reload()
 
     def try_restore(self):
         try:
@@ -1690,12 +1710,26 @@ class AutoUpdate(object):
             info = eServiceCenter.getInstance().info(sref)
             name = u(info and info.getName(sref) or '').replace(u'\x86', u'').replace(u'\x87', u'')
             self.zap_seen[ref] = time.time()
-            known = engine.resolve(ref, engine.load_mapping(), engine.load_auto())[0]
-            linked = bool(known and known[0][0] != '-') or bool(engine.linked_refs().get(engine.ref_key(ref) or '')) \
-                or bool(engine.load_refs().get(engine.ref_key(ref) or ''))
+
+            def decide():      # reading the link files can take a moment: not on the main thread
+                known = engine.resolve(ref, engine.load_mapping(), engine.load_auto())[0]
+                linked = bool(known and known[0][0] != '-') or \
+                    bool(engine.linked_refs().get(engine.ref_key(ref) or '')) or \
+                    bool(engine.load_refs().get(engine.ref_key(ref) or ''))
+                return known, linked
+            self._zap_decide = BackgroundJob(decide, lambda res: self._zap_go(ref, name, res))
+        except Exception as e:
+            print('[SaadEPG] zap check error', e)
+
+    def _zap_go(self, ref, name, res):
+        try:
+            if isinstance(res, Exception):
+                return
+            known, linked = res
             if known and known[0][0] == '-':
-                if engine.load_mapping().get(ref) == '!':
-                    engine.clear_plugin_epg(epg, [ref])
+                return
+            r = engine.Updater.running
+            if r and not r.done:
                 return
             job = engine.Updater(current_cfg(target='all', smart=False), set([ref]), [(ref, name)], quiet=True)
             if job.start():
@@ -1808,6 +1842,74 @@ class AutoUpdate(object):
         self.vtimer.startLongTimer(24 * 3600)
 
 
+# --------------------------------------------------------------------- the infobar shows the plugin's now/next
+def _cache_event(ref, nownext):
+    try:
+        return eEPGCache.getInstance().lookupEventTime(eServiceReference(T(ref)), -1, 1 if nownext else 0)
+    except Exception:
+        return None
+
+
+def _playing_ref(navcore):
+    try:
+        sref = navcore.getCurrentlyPlayingServiceReference()
+        return sref and sref.toString()
+    except Exception:
+        return None
+
+
+def patch_now_next():
+    """enigma2 shows the now/next sent with the picture (the satellite's, often in another language) before
+    the guide in the cache. For channels the plugin fills, the cache (the plugin's guide) is shown first."""
+    done = []
+    try:
+        from Components.Sources import EventInfo as EI
+        cls = EI.EventInfo
+        if not getattr(cls, '_saadepg', False):
+            old = cls.event.fget
+
+            def event(self, old=old):
+                try:
+                    svc = getattr(self, '_EventInfo__service', None)
+                    ref = svc.toString() if isinstance(svc, eServiceReference) else _playing_ref(self.navcore)
+                    if ref and engine.is_locked(ref):
+                        ev = _cache_event(ref, self.now_or_next)
+                        if ev:
+                            return ev
+                except Exception:
+                    pass
+                return old(self)
+            cls.event = property(event)
+            cls._saadepg = True
+            done.append('EventInfo')
+    except Exception as e:
+        print('[SaadEPG] now/next patch (EventInfo):', e)
+    try:
+        from Screens import InfoBarGenerics as IB
+        for name in dir(IB):
+            cls = getattr(IB, name)
+            if not isinstance(cls, type) or 'getNowNext' not in cls.__dict__ or cls.__dict__.get('_saadepg'):
+                continue
+            old = cls.__dict__['getNowNext']
+
+            def getNowNext(self, old=old):
+                old(self)
+                try:
+                    ref = _playing_ref(self.session.nav)
+                    if ref and engine.is_locked(ref):
+                        evs = [e for e in (_cache_event(ref, 0), _cache_event(ref, 1)) if e]
+                        if evs:
+                            self.epglist = evs
+                except Exception:
+                    pass
+            cls.getNowNext = getNowNext
+            cls._saadepg = True
+            done.append(name)
+    except Exception as e:
+        print('[SaadEPG] now/next patch (InfoBar):', e)
+    return done
+
+
 # --------------------------------------------------------------------- entry points
 def main(session, **kwargs):
     _migrate_old_settings()
@@ -1859,6 +1961,12 @@ def sessionstart(reason, session=None, **kwargs):
     if reason == 0 and session is not None:
         _migrate_old_settings()
     if reason == 0 and session is not None and AutoUpdate.instance is None:
+        engine.LOCK['on'] = C.lock_epg.value
+        try:
+            patched = patch_now_next()
+            log(u'تثبيت الآن/التالي في شريط المعلومات: %s' % (u'، '.join(patched) or u'غير متاح'))
+        except Exception as e:
+            print('[SaadEPG] patch error', e)
         try:
             AutoUpdate(session)
         except Exception as e:
