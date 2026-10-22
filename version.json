@@ -1,6 +1,6 @@
 {
- "version": "1.5",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.5_all.ipk",
+ "version": "1.6",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.6_all.ipk",
  "date": "2026-10-22",
- "notes": "إصلاح تجمد الريسيفر عند بدء التحديث، أسماء قنوات إضافية"
+ "notes": "إزالة تجميد بداية التحديث"
 }

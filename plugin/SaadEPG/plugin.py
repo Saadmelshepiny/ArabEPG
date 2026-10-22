@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, sources, ui
 from .sources import log, u, PY3
 
-VERSION = '1.5'
+VERSION = '1.6'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()

@@ -59,8 +59,21 @@ def base_norm(name):
     return re.sub(u'\\s+', u' ', s).strip()
 
 
+_NORM = {}
+
+
 def norm(name):
-    """compact key used for exact matching (kept compatible with v1 mappings)."""
+    """compact key used for exact matching (kept compatible with v1 mappings). Remembered: the same names
+    come back thousands of times and this runs on the receiver's slow processor."""
+    r = _NORM.get(name)
+    if r is None:
+        if len(_NORM) > 60000:
+            _NORM.clear()
+        r = _NORM[name] = _norm(name)
+    return r
+
+
+def _norm(name):
     s = re.sub(u'[^0-9a-zء-ي]', u'', base_norm(name))
     s = re.sub(u'^(al|el)(?=[a-z]{3})', u'', s)
     s = re.sub(u'^ال(?=..)', u'', s) if re.match(u'^ال...', s) else s

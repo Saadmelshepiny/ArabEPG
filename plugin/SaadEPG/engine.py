@@ -1375,7 +1375,7 @@ def native_events(epgcache, ref, hours=15, ours=None, name=None):
             continue
         if not t or d <= 0 or d >= 12 * 3600 or (ours and (b, d) in ours):
             continue
-        if nn and norm(t) == nn:
+        if nn and len(t) < len(name) + 12 and norm(t) == nn:   # a title that is only the channel name
             continue
         out.append((b, d, t))
     return out
@@ -1669,6 +1669,12 @@ class Updater(object):
         cands = dict((r, ev) for r, ev in self.native_full.items() if r not in imported and r not in state['filled'])
         if not cands:
             return
+        for r in list(cands):
+            ev = read_events(self.epgcache, r, self.cfg.get('days', 3))
+            if len(ev) >= 3:
+                cands[r] = ev
+            else:
+                del cands[r]
         st = self.stage('trnative', u'ترجمة دليل القمر للقنوات الأجنبية إلى الإنجليزية', len(cands), 2)
         d, langs = load_title_dicts(self.cfg['cloud_url'], list(user_satellites(self.services)), self.stop)
         if not d:
@@ -1922,6 +1928,7 @@ class Updater(object):
                         log(u'%s: القناة المختارة (%s) ليس لها دليل الآن' % (name, dname))
             # the satellite's own guide of foreign channels, to translate it to English (only channels the plugin
             # does not fill from an online guide; read here because enigma2 objects belong to the main thread)
+            # which channels' own satellite guide may be translated to English (read later, in the thread)
             self.native_full = {}
             if self.cfg.get('foreign_lang', 'en') == 'en' and not self.quiet:
                 filled = load_state()['filled']
@@ -1930,9 +1937,7 @@ class Updater(object):
                     if ref in filled or mp.get(ref) in ('-', '!') or sat_of_ref(ref) in (
                             'nilesat', 'arabsat', 'iptv', 'terrestrial'):
                         continue
-                    ev = read_events(self.epgcache, ref, self.cfg.get('days', 3))
-                    if len(ev) >= 3:
-                        self.native_full[ref] = ev
+                    self.native_full[ref] = None
             self.rich = {}
             if self.cfg['target'] == 'missing':
                 filled = load_state()['filled']
