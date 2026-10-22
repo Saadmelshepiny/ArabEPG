@@ -7,7 +7,7 @@ They are recognised by their names (the plugin's own matcher) AND confirmed by t
   - times and titles: the best member (official Arabic site, Arabic titles, longest coverage)
   - holes in its schedule: filled from the other members
   - missing / short descriptions: taken from the same programme in another member
-  - English title: the Arabic title of the same programme in another member when there is one
+  - titles stay exactly as the channel's own source writes them (no translated names)
 Result: guides/gold.xml.gz + index['gold'] = {'members': {plugin key: gold channel id}}: the plugin
 uses the golden channel instead of any of its members.
 
@@ -223,14 +223,6 @@ def merge(members, now, hi):
             ds = sorted((x.get('desc', '') for x in same), key=lambda d: (bool(AR.search(d)) == bool(AR.search(e['title'])), len(d)))
             if ds and len(ds[-1]) > len(e.get('desc', '')):
                 e['desc'] = ds[-1]
-        if not AR.search(e['title']):
-            ar = [x['title'] for x in same if AR.search(x['title'])]
-            if ar:
-                e['orig'] = e['title']
-                e['title'] = ar[0]
-                ad = [x.get('desc', '') for x in same if AR.search(x.get('desc', ''))]
-                if ad and len(ad[0]) > 20:
-                    e['desc'] = ad[0]
         for k in ('cat', 'icon', 'ep', 'sub'):
             if not e.get(k):
                 for x in same:
@@ -320,8 +312,6 @@ def build(gdir, index, catalog, days=3, data=None, log=print):
                 n_ev += 1
                 n_ar += 1 if e.get('orig') else 0
                 desc = e.get('desc', '')
-                if e.get('orig'):
-                    desc = (desc + '\n' if desc else '') + '(%s)' % e['orig']
                 f.write('<programme start="%s" stop="%s" channel="%s"><title>%s</title>' % (
                     fmt(e['start']), fmt(e['stop']), gid, html.escape(e['title'])))
                 if e.get('sub'):

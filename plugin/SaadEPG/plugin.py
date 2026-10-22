@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.0'
+VERSION = '2.1'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -91,6 +91,7 @@ C.ar_tr_mode = ConfigSelection(default='desc', choices=[
     ('desc', 'الوصف فقط - العنوان كما هو (أو العربي الرسمي)'),
     ('all', 'العنوان والوصف (العنوان الأصلي يظهر في التفاصيل)'), ('none', 'بدون ترجمة')])
 C.lock_epg = ConfigYesNo(default=True)
+C.translate = ConfigYesNo(default=False)
 C.gold = ConfigYesNo(default=True)
 C.web = ConfigYesNo(default=True)
 C.web_port = ConfigSelection(default='8899', choices=[('8899', '8899'), ('8898', '8898'), ('8090', '8090'), ('9090', '9090')])
@@ -161,6 +162,11 @@ def current_cfg(**over):
         'bouquets': [x for x in C.bouquets.value.split('|') if x], 'foreign_lang': C.foreign_lang.value,
         'ar_tr_mode': C.ar_tr_mode.value, 'lock': C.lock_epg.value, 'gold': C.gold.value,
     }
+    if not C.translate.value:      # no translation at all: every title and description as the channel wrote it
+        cfg['ar_tr_mode'] = 'none'
+        cfg['foreign_lang'] = 'orig'
+        if cfg['lang_mode'] == 'translate':
+            cfg['lang_mode'] = 'ar_first'
     cfg.update(over)
     sources.XML_PREFER_EN = cfg['foreign_lang'] == 'en'
     return cfg
@@ -1572,7 +1578,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'تحديث ذكي عند تشغيل الريسيفر'), C.boot_update),
             getConfigListEntry(T(u'التنبيه بتحديثات البلوجين'), C.check_updates),
             getConfigListEntry(T(u'نسخة احتياطية أسبوعية تلقائية على الهارد'), C.auto_backup),
-            getConfigListEntry(T(u'لغة دليل القنوات الأجنبية'), C.foreign_lang),
+            getConfigListEntry(T(u'ترجمة الدليل (إيقافها = الأسماء كما تكتبها القناة)'), C.translate),
+            getConfigListEntry(T(u'لغة دليل القنوات الأجنبية (عند تشغيل الترجمة)'), C.foreign_lang),
             getConfigListEntry(T(u'لغة الدليل للقنوات العربية'), C.lang_mode),
             getConfigListEntry(T(u'ترجمة الدليل الإنجليزي للقنوات العربية'), C.ar_tr_mode),
             getConfigListEntry(T(u'خدمة الترجمة'), C.tr_provider),
@@ -1607,6 +1614,7 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'توقيت مواعيد السينما.كوم'), C.elcinema_tz),
         ]
         ConfigListScreen.__init__(self, lst, session=session)
+        self._tr_before = C.translate.value
         set_buttons(self, u'إلغاء', u'حفظ')
         self['setupActions'] = ActionMap(['SetupActions', 'ColorActions'], {
             'green': self.save, 'save': self.save, 'red': self.cancel, 'cancel': self.cancel, 'ok': self.ok}, -2)
@@ -1636,6 +1644,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             web.start(self.session, int(C.web_port.value))
         else:
             web.stop()
+        if self._tr_before != C.translate.value:     # translation switched: import every guide again now
+            start_update(target='all', manual=True)
         if bool(engine.LOCK['on']) != bool(C.lock_epg.value):
             engine.eit_lock(engine.lock_wanted(engine.load_state()), C.lock_epg.value)
             engine.eit_reload()

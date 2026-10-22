@@ -2647,6 +2647,16 @@ class Updater(object):
             if not j['key'] and j['ref'] in copied_refs:
                 self.stats['failed'] -= 1
                 j['copied'] = True
+        if cfg.get('foreign_lang', 'en') != 'en' and state.get('tr_native') and not self.cancel:
+            # translation switched off: the satellite guides translated earlier go, the satellite sends its own again
+            refs = list(state['tr_native'])
+            try:
+                n, how = clear_plugin_epg(self.epgcache, refs)
+                if how:
+                    log(u'إيقاف الترجمة: مُسح دليل القمر المترجم من %d قناة (يعود دليل القمر الأصلي)' % n)
+            except Exception as e:
+                log(u'إيقاف الترجمة: %s' % e)
+            state['tr_native'] = {}
         if self.native_full and not self.cancel:
             try:
                 self._translate_native(imported, state, now)
