@@ -629,7 +629,6 @@
  ],
  "bein:sports#1": [
   "beIN Sports 1",
-  "beIN Sports",
   "بي ان سبورت 1"
  ],
  "bein:sports#10": [
@@ -637,9 +636,12 @@
   "بي ان سبورت الاخبارية"
  ],
  "bein:sports#11": [
+  "beIN Sports",
   "beIN Sports HD",
   "beIN Sports Open",
-  "beIN Sports FTA"
+  "beIN Sports FTA",
+  "بي ان سبورت",
+  "بي ان سبورت المفتوحة"
  ],
  "bein:sports#2": [
   "beIN Sports 2",

@@ -316,6 +316,87 @@ def _norm_name(n):
     return n.replace(' ', '')
 
 
+TIME_ANCHORS = ('oe_egypt1', 'oe_egypt2', 'oe_saudiarabia1', 'oe_saudiarabia2', 'oe_saudiarabia3',
+                'oe_saudiarabia4', 'oe_uae1', 'oe_qatar1', 'ar_osn', 'ar_shahid', 'ar_beinsports')
+_PROG = re.compile(r'<programme start="([^"]+)" stop="([^"]+)" channel="([^"]+)"><title[^>]*>([^<]*)</title>')
+
+
+def _tnorm(t):
+    return re.sub(u'[^0-9a-zء-ي]', '', html.unescape(t).lower())
+
+
+def _read_titles(path):
+    ch = {}
+    with gzip.open(path, 'rt', encoding='utf-8') as f:
+        for m in _PROG.finditer(f.read()):
+            t = _tnorm(m.group(4))
+            st = xtime(m.group(1))
+            if len(t) >= 4 and st:
+                ch.setdefault(m.group(3), {})[st] = t
+    return ch
+
+
+def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
+    """Some sites publish local time but the grabber reads it as another zone (elCinema: Cairo time read as
+    UTC; rotana.net: UTC read as Riyadh...). Every Arabic file is compared with the anchor files (they agree
+    with each other and with real kick-off times): the same programme title on two channels at a constant
+    distance of whole hours. A file whose channels agree on one shift is moved back to real time."""
+    files = dict((n, f) for n, f in (index.get('files') or {}).items() if f.get('region') == 'ar')
+    data = {}
+    for n in files:
+        try:
+            data[n] = _read_titles(os.path.join(gdir, n + '.xml.gz'))
+        except Exception as e:
+            log('time check: %s unreadable (%s)' % (n, e))
+    anc = [n for n in anchors if n in data]
+    occ = {}
+    for n in anc:
+        for cid, ev in data[n].items():
+            for st, t in ev.items():
+                occ.setdefault(t, []).append((n, cid, st))
+    fixes = {}
+    for n, chans in data.items():
+        if n in anc:
+            continue
+        votes = {}
+        for cid, ev in chans.items():
+            pair = {}
+            for st, t in ev.items():
+                o = occ.get(t)
+                if not o or len(o) > 40:          # news, "Live" ... say nothing
+                    continue
+                for an, acid, ast in o:
+                    d = st - ast
+                    if d % 1800 == 0 and abs(d) <= 6 * 3600:
+                        k = (an, acid, d)
+                        pair[k] = pair.get(k, 0) + 1
+            if not pair:
+                continue
+            (_an, _acid, d), hits = max(pair.items(), key=lambda kv: kv[1])
+            if hits >= 4:
+                votes[d] = votes.get(d, 0) + 1
+        tot = sum(votes.values())
+        if tot < 3:
+            continue
+        d, v = max(votes.items(), key=lambda kv: kv[1])
+        if d and v >= 3 and v >= 0.7 * tot:
+            fixes[n] = (-d, v, tot)
+    for n, (sh, v, tot) in sorted(fixes.items()):
+        path = os.path.join(gdir, n + '.xml.gz')
+
+        def mv(m):
+            return '<programme start="%s" stop="%s"' % (fmt(xtime(m.group(1)) + sh), fmt(xtime(m.group(2)) + sh))
+        with gzip.open(path, 'rt', encoding='utf-8') as f:
+            s = f.read()
+        s = re.sub(r'<programme start="([^"]+)" stop="([^"]+)"', mv, s)
+        with gzip.open(path, 'wt', encoding='utf-8', compresslevel=9) as f:
+            f.write(s)
+        index['files'][n]['size'] = os.path.getsize(path)
+        index['files'][n]['time_fix'] = sh
+        log('time fixed: %-16s %+.1f h  (%d of %d channels agree)' % (n, sh / 3600.0, v, tot))
+    return dict((n, sh // 60) for n, (sh, _v, _t) in fixes.items())
+
+
 def remove_copied_schedules(gdir, index, hours=24, min_progs=4):
     now = time.time()
     fps = {}
@@ -468,6 +549,12 @@ def main():
                 os.remove(os.path.join(gdir, name + '.xml.gz'))
             except OSError:
                 pass
+
+    # sites that publish their schedule in the wrong time zone are moved back to real (UTC) time
+    try:
+        status['time_fixed_min'] = fix_time_offsets(gdir, index)
+    except Exception as e:
+        print('time check failed: %s' % e)
 
     # Many channels in the ready-made Arabic files carry a COPY of another channel's schedule (placeholder data).
     # Linking a channel to such a copy shows a wrong guide, so those channels are taken out of the index.
