@@ -109,11 +109,12 @@ def matches(data, index, members, real, machine, now):
         if not sport and not re.search(r'(?i)(league|cup|دوري|كأس|كاس|championship|liga|serie a|bundesliga|ligue|'
                                        r'premier|match|مباراة)', t + ' ' + e.get('cat', '')):
             return None
-        a, b = m.group('a').strip(), m.group('b').strip()
-        if len(a) > 40 or len(b) > 40:
+        a, b, comp = m.group('a').strip(), m.group('b').strip(), (m.group('comp') or '').strip()
+        if ':' in a:                     # "الدوري الإيطالي:بولونيا × إنتر ميلان"
+            comp, a = (comp or a.split(':', 1)[0].strip()), a.split(':', 1)[1].strip()
+        if len(a) > 40 or len(b) > 40 or not a or not b:
             return None
-        return {'title': t, 'home': a, 'away': b, 'comp': (m.group('comp') or '').strip(), 'cat': e.get('cat', ''),
-                'live': bool(LIVE.search(t))}
+        return {'title': t, 'home': a, 'away': b, 'comp': comp, 'cat': e.get('cat', ''), 'live': bool(LIVE.search(t))}
     air = _airings(data, index, members, now - 6 * 3600, now + 48 * 3600, accept)
     # the same match on several channels (same teams, same time) -> one entry
     groups = {}
@@ -141,9 +142,18 @@ def matches(data, index, members, real, machine, now):
                 continue
             en = x.get('en') or x['title']
             ar = x['title'] if AR.search(x['title']) else (real.get(en) or machine.get(en))
+            ah, aa, ac = x['home'], x['away'], x['comp']
+            if ar and AR.search(ar) and not AR.search(ah):
+                ma = VS.match(ar)
+                if ma:
+                    ah, aa = ma.group('a').strip(), ma.group('b').strip()
+                    ac = (ma.group('comp') or '').strip() or ac
+                    if ':' in ah:
+                        ac, ah = ah.split(':', 1)[0].strip(), ah.split(':', 1)[1].strip()
             out.append({'tk': tk, 'start': x['start'], 'stop': x['stop'], 'title': en,
                         'ar': ar if ar and AR.search(ar) else None, 'home': x['home'], 'away': x['away'],
-                        'comp': x['comp'], 'live': x['live'], 'first': x['start'] <= first + 3600,
+                        'ar_home': ah if AR.search(ah) else None, 'ar_away': aa if AR.search(aa) else None,
+                        'comp': x['comp'], 'ar_comp': ac if AR.search(ac or '') else None, 'live': x['live'], 'first': x['start'] <= first + 3600,
                         'keys': x['keys'], 'channels': list(x['names'])})
     for o in out:
         o.pop('tk', None)

@@ -1,5 +1,19 @@
 #!/bin/sh
 if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
   rm -rf /usr/lib/enigma2/python/Plugins/Extensions/SaadEPG
+  # give the channels the plugin locked back to the satellite's own guide
+  if [ -f /etc/enigma2/SaadEPG/eit_locked.json ] && [ -f /etc/enigma2/blacklist.eit ]; then
+    for py in python3 python; do
+      if command -v $py >/dev/null 2>&1; then
+        $py - <<'PY' && break
+import json
+ours = set(json.load(open('/etc/enigma2/SaadEPG/eit_locked.json')))
+lines = [l.strip() for l in open('/etc/enigma2/blacklist.eit') if l.strip() and l.strip() not in ours]
+open('/etc/enigma2/blacklist.eit', 'w').write(''.join(l + '\n' for l in lines))
+open('/etc/enigma2/SaadEPG/eit_locked.json', 'w').write('[]')
+PY
+      fi
+    done
+  fi
 fi
 exit 0

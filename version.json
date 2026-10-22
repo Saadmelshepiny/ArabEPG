@@ -1,6 +1,6 @@
 {
- "version": "1.7",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_1.7_all.ipk",
+ "version": "2.0",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.0_all.ipk",
  "date": "2026-10-22",
- "notes": "عناوين عربية حقيقية، ترجمة الوصف فقط، OSN و beIN بالعربي، تصحيح فرق التوقيت"
+ "notes": "دليل مثبت لا يكتب القمر فوقه، بدون تعليق للريسيفر، الدليل الذهبي، الدليل الكامل، مركز المباريات، سينما الليلة، مسلسلاتي، خريطة المسلسلات، صفحة الموبايل"
 }

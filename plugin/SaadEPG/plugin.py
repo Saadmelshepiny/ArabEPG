@@ -24,10 +24,10 @@ from Screens.Screen import Screen
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 
-from . import engine, sources, ui
+from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '1.7'
+VERSION = '2.0'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -92,6 +92,8 @@ C.ar_tr_mode = ConfigSelection(default='desc', choices=[
     ('all', 'العنوان والوصف (العنوان الأصلي يظهر في التفاصيل)'), ('none', 'بدون ترجمة')])
 C.lock_epg = ConfigYesNo(default=True)
 C.gold = ConfigYesNo(default=True)
+C.web = ConfigYesNo(default=True)
+C.web_port = ConfigSelection(default='8899', choices=[('8899', '8899'), ('8898', '8898'), ('8090', '8090'), ('9090', '9090')])
 C.foreign_lang = ConfigSelection(default='en', choices=[
     ('en', 'الإنجليزية (ترجمة من السحابة)'), ('orig', 'لغة القناة الأصلية')])
 
@@ -281,9 +283,14 @@ def show_picon(widget, path):
 
 # --------------------------------------------------------------------- main menu
 MAIN_ITEMS = [
+    (u'الدليل الكامل', 'grid', u'شبكة البرامج لكل القنوات بالألوان'),
+    (u'الآن وبعده', 'nownext', u'البرنامج الحالي والتالي لكل القنوات'),
+    (u'مركز المباريات', 'matches', u'مباريات اليوم وغدا على قنواتك'),
+    (u'سينما الليلة', 'cinema', u'أفلام الليلة على قنواتك وقنوات تختارها'),
+    (u'مسلسلاتي', 'series', u'متابعة وتذكير وتسجيل تلقائي'),
+    (u'خريطة المسلسلات', 'smap', u'المسلسلات اليومية ومواعيد الإعادة'),
     (u'تحديث دليل البرامج الآن', 'update', u'جلب الدليل من كل المصادر وحفظه'),
     (u'القنوات والربط', 'channels', u'مصدر دليل كل قناة حسب الباقات'),
-    (u'الآن وبعده', 'nownext', u'البرنامج الحالي والتالي لكل القنوات'),
     (u'صحة الدليل', 'health', u'المصادر والقنوات المرفوضة والتنبيهات'),
     (u'الإعدادات', 'settings', u'المصادر واللغات ومواعيد التحديث'),
     (u'أدوات متقدمة', 'advanced', u'الباقات، الإحصائيات، النسخ الاحتياطي...'),
@@ -334,13 +341,14 @@ class SaadEPGMain(BaseScreen):
     CARDS = (u'آخر تحديث', u'قنوات حدّثها البلوجين', u'برامج', u'آخر تجميع للسحابة')
 
     def __init__(self, session):
-        self.skin = skin(900, 610, (
-            ui.list_widget('list', 14, 70, 872, 6 * 50 + 4) +
-            ui.stat_cards('card', 4, 20, 386, 860) +
-            ui.box(20, 466, 860, 130) +
-            ui.label('status', 34, 474, 832, 116, 18, DIM, PANEL)))
+        self.skin = skin(900, 712, (
+            ui.list_widget('list', 14, 68, 872, 8 * 50 + 4) +
+            ui.stat_cards('card', 4, 20, 480, 860) +
+            ui.box(20, 558, 860, 140) +
+            ui.label('status', 34, 564, 832, 128, 17, DIM, PANEL)))
         BaseScreen.__init__(self, session, u'Saad EPG  %s' % VERSION)
-        self.menu_items = MAIN_ITEMS
+        self.menu_items = [(u'خريطة مسلسلات رمضان', k, d) if k == 'smap' and features.ramadan_now() else (t, k, d)
+                           for t, k, d in MAIN_ITEMS]
         self.advanced_items = ADVANCED_ITEMS
         self.table = menu_table(860)
         self['list'] = self.table.widget()
@@ -372,6 +380,8 @@ class SaadEPGMain(BaseScreen):
                  if on.value]
         if times:
             lines.append(u'التحديث التلقائي: %s  (%s)' % (u' و '.join(times), u(C.stages.getText())))
+        if C.web.value and web.STATE.get('port'):
+            lines.append(u'صفحة الموبايل: %s' % web.address(int(C.web_port.value)))
         b = engine.backup_info()
         if b:
             lines.append(u'آخر نسخة احتياطية: %s  (%s)' % (time.strftime('%d/%m/%Y', time.localtime(b[1])), b[0]))
@@ -385,7 +395,23 @@ class SaadEPGMain(BaseScreen):
             self.run(sel)
 
     def run(self, a):
-        if a == 'advanced':
+        if a == 'grid':
+            ref = None
+            try:
+                sref = self.session.nav.getCurrentlyPlayingServiceReference()
+                ref = engine.clean_ref(sref.toString()) if sref else None
+            except Exception:
+                pass
+            self.session.open(views.GridScreen, ref, [x for x in C.bouquets.value.split('|') if x])
+        elif a == 'matches':
+            self.session.open(views.MatchesScreen)
+        elif a == 'cinema':
+            self.session.open(views.CinemaScreen)
+        elif a == 'series':
+            self.session.open(views.SeriesScreen)
+        elif a == 'smap':
+            self.session.open(views.SeriesMapScreen)
+        elif a == 'advanced':
             self.session.openWithCallback(lambda r: r and self.run(r), MenuScreen, u'أدوات متقدمة', self.advanced_items)
         elif a == 'epgfile':
             self.session.open(TextScreen, u'حفظ الدليل', epg_file_text)
@@ -1535,6 +1561,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'عدد الأيام'), C.days),
             getConfigListEntry(T(u'تثبيت دليل البلوجين (لا يظهر دليل القمر فوقه)'), C.lock_epg),
             getConfigListEntry(T(u'الدليل الذهبي (كل مصادر القناة في جدول واحد)'), C.gold),
+            getConfigListEntry(T(u'صفحة الموبايل (%s)' % web.address(int(C.web_port.value))), C.web),
+            getConfigListEntry(T(u'منفذ صفحة الموبايل'), C.web_port),
             getConfigListEntry(T(u'تحديث تلقائي يومي'), C.autoupdate),
             getConfigListEntry(T(u'وقت التحديث اليومي'), C.update_time),
             getConfigListEntry(T(u'تحديث تلقائي ثان'), C.autoupdate2),
@@ -1602,6 +1630,12 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
         configfile.save()
         if AutoUpdate.instance:
             AutoUpdate.instance.schedule()
+        if C.web.value:
+            if web.STATE.get('port') and str(getattr(web.STATE['port'], 'port', '')) not in ('', C.web_port.value):
+                web.stop()
+            web.start(self.session, int(C.web_port.value))
+        else:
+            web.stop()
         if bool(engine.LOCK['on']) != bool(C.lock_epg.value):
             engine.eit_lock(engine.lock_wanted(engine.load_state()), C.lock_epg.value)
             engine.eit_reload()
@@ -1640,12 +1674,26 @@ class AutoUpdate(object):
         # the update thread wrote blacklist.eit: enigma2 reads it again on the main thread
         self.lock_timer = make_timer(self.apply_lock)
         self.lock_timer.start(3000, False)
+        # followed series: reminders / recordings for the coming days (every 3 hours)
+        self.series_timer = make_timer(self.series)
+        self.series_timer.startLongTimer(300)
+        if C.web.value:
+            web.start(session, int(C.web_port.value))
         try:
             from enigma import iPlayableService
             self.ev_start = iPlayableService.evStart
             session.nav.event.append(self.on_service_event)
         except Exception as e:
             print('[SaadEPG] zap watcher not available', e)
+
+    def series(self):
+        self.series_timer.startLongTimer(3 * 3600)
+        try:
+            n = features.schedule_series(self.session, eEPGCache.getInstance(), engine.get_services())
+            if n:
+                self._popup(u'Saad EPG: أُضيف %d تذكير/تسجيل لمسلسلاتك' % n, 6)
+        except Exception as e:
+            log(u'مسلسلاتي: %s' % e)
 
     def apply_lock(self):
         if engine.LOCK['dirty']:
@@ -1916,6 +1964,20 @@ def main(session, **kwargs):
     session.open(SaadEPGMain)
 
 
+def grid(session, **kwargs):
+    ref = None
+    try:
+        sref = session.nav.getCurrentlyPlayingServiceReference()
+        ref = engine.clean_ref(sref.toString()) if sref else None
+    except Exception:
+        pass
+    session.open(views.GridScreen, ref, [x for x in C.bouquets.value.split('|') if x])
+
+
+def matches(session, **kwargs):
+    session.open(views.MatchesScreen)
+
+
 def nownext(session, **kwargs):
     session.open(NowNextScreen)
 
@@ -1980,6 +2042,10 @@ def Plugins(**kwargs):
         PluginDescriptor(name=name, description=desc, where=PluginDescriptor.WHERE_PLUGINMENU,
                          icon='plugin.png', fnc=main),
         PluginDescriptor(name=name, description=desc, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
+        PluginDescriptor(name=T(u'Saad EPG - الدليل الكامل'), description=desc,
+                         where=PluginDescriptor.WHERE_EVENTINFO, fnc=grid),
+        PluginDescriptor(name=T(u'Saad EPG - مركز المباريات'), description=desc,
+                         where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=matches),
         PluginDescriptor(name=T(u'Saad EPG - الآن وبعده'), description=desc,
                          where=PluginDescriptor.WHERE_EVENTINFO, fnc=nownext),
         PluginDescriptor(name=T(u'Saad EPG - الدليل خطأ لهذه القناة'), description=desc,
