@@ -893,26 +893,6 @@
    "title": "sat.tv Hot Bird",
    "region": "en",
    "disabled": true
-  },
-  "ca2": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_CA2.xml.gz",
-   "only_extract": true,
-   "title": "Canada"
-  },
-  "us2": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_US2.xml.gz",
-   "only_extract": true,
-   "title": "USA"
-  },
-  "distrotv": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_DISTROTV1.xml.gz",
-   "only_extract": true,
-   "title": "DistroTV"
-  },
-  "us_locals": {
-   "url": "https://epgshare01.online/epgshare01/epg_ripper_US_LOCALS1.xml.gz",
-   "only_extract": true,
-   "title": "USA locals"
   }
  },
  "extract": {
@@ -1059,87 +1039,6 @@
     "arabsat"
    ],
    "title": "قنوات عربية من الملفات الأوروبية"
-  },
-  "ar_from_na": {
-   "from": [
-    "ca2",
-    "us2",
-    "distrotv",
-    "us_locals"
-   ],
-   "names": [
-    "Al Mayadeen",
-    "Melody Aflam",
-    "Melody Drama",
-    "Melody Hits",
-    "Melody Classic",
-    "Al Manar",
-    "Al Ahly",
-    "Zamalek",
-    "ON Time Sport",
-    "Toyor Al Janah",
-    "Karameesh",
-    "Iqraa",
-    "Al Majd",
-    "Al Hayah",
-    "Al Nahar TV",
-    "Sada El Balad",
-    "Rotana Cinema",
-    "Rotana Drama",
-    "Rotana Classic",
-    "Rotana Khalijia",
-    "MBC 1",
-    "MBC Masr",
-    "MBC Drama",
-    "Al Jazeera Mubasher",
-    "Al Ghad",
-    "Libya",
-    "Yemen",
-    "Suhail",
-    "Al Alam",
-    "RT Arabic",
-    "Rusiya",
-    "DW Arabia",
-    "Lana TV",
-    "Aghani",
-    "ART Hekayat",
-    "ART Aflam",
-    "Nile Drama",
-    "Nile Comedy",
-    "Nile Cinema",
-    "Al Masriya",
-    "Echorouk",
-    "Ennahar",
-    "Hannibal",
-    "Al Resalah",
-    "Panorama Drama",
-    "Panorama Food",
-    "Al Aan",
-    "Sharjah TV",
-    "Abu Dhabi TV",
-    "Dubai TV",
-    "Kuwait TV",
-    "Jordan TV",
-    "Roya TV",
-    "Al Mamlaka",
-    "Palestine TV",
-    "Al Aqsa",
-    "Syria TV",
-    "Sama",
-    "LBC",
-    "Al Jadeed",
-    "MTV Lebanon",
-    "OTV Lebanon",
-    "NBN Lebanon",
-    "Tele Liban"
-   ],
-   "auto_arabic": true,
-   "sat": [
-    "nilesat",
-    "arabsat",
-    "hotbird"
-   ],
-   "title": "قنوات عربية من ملفات أمريكا وكندا"
   }
  },
  "translate": {
