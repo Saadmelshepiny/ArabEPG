@@ -1,33 +1,115 @@
 {
  "_comment": "Official Arabic TV sites checked by the cloud. The raw pages are saved to the epg branch (probe/) so that a reader can be written from the real data. {d} = today, {t} = tomorrow (Beirut date parts Y/M/D).",
  "pages": {
-  "lbci_today": {"url": "https://www.lbcgroup.tv/schedule-channels-date/1/{dY}/{dM}/{dD}/ar"},
-  "lbci_tomorrow": {"url": "https://www.lbcgroup.tv/schedule-channels-date/1/{tY}/{tM}/{tD}/ar"},
-  "lb2": {"url": "https://www.lbcgroup.tv/schedule-channels/9/lb2-beirut-time/ar"},
-  "aljadeed_today": {"url": "https://www.aljadeed.tv/schedule-channels-date/1/{dY}/{dM}/{dD}/ar"},
-  "mtv_lebanon": {"url": "https://www.mtv.com.lb/schedule", "discover": true},
-  "tunisia_watania1": {"url": "https://www.tunisiatv.tn/ar/programme", "discover": true},
-  "saudi_sba": {"url": "https://sba.sa/", "discover": true},
-  "saudi_tv": {"url": "https://www.saudiatv.sa/", "discover": true},
-  "alkass": {"url": "https://www.alkass.net/tvguide"},
-  "qatar_tv": {"url": "https://qtv.qa/TransmissionScheduled"},
-  "dubai_tv": {"url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/program-schedule.html", "discover": true},
-  "awaan": {"url": "https://www.awaan.ae/", "discover": true},
-  "abudhabi": {"url": "https://www.admn.ae/ar/", "discover": true},
-  "sharjah": {"url": "https://sba.net.ae/", "discover": true},
-  "kuwait": {"url": "https://www.media.gov.kw/", "discover": true},
-  "bahrain": {"url": "https://www.bna.bh/", "discover": true},
-  "maspero": {"url": "https://www.maspero.eg/", "discover": true},
-  "alarabiya": {"url": "https://www.alarabiya.net/", "discover": true},
-  "skynewsarabia": {"url": "https://www.skynewsarabia.com/program", "discover": true},
-  "asharq": {"url": "https://asharq.com/", "discover": true},
-  "trt_arabi": {"url": "https://www.trtarabi.com/tv-schedule", "discover": true},
-  "alghad": {"url": "https://www.alghad.tv/", "discover": true},
-  "almayadeen": {"url": "https://www.almayadeen.net/", "discover": true},
-  "jordan_tv": {"url": "https://jrtv.gov.jo/", "discover": true},
-  "almamlaka": {"url": "https://www.almamlakatv.com/", "discover": true},
-  "alsumaria": {"url": "https://www.alsumaria.tv/TV-grid"},
-  "iraqia": {"url": "https://imn.iq/", "discover": true},
-  "yallakora": {"url": "https://www.yallakora.com/match-center"}
+  "lbci_today": {
+   "url": "https://www.lbcgroup.tv/schedule-channels-date/1/{dY}/{dM}/{dD}/ar"
+  },
+  "lbci_tomorrow": {
+   "url": "https://www.lbcgroup.tv/schedule-channels-date/1/{tY}/{tM}/{tD}/ar"
+  },
+  "lb2": {
+   "url": "https://www.lbcgroup.tv/schedule-channels/9/lb2-beirut-time/ar"
+  },
+  "aljadeed_today": {
+   "url": "https://www.aljadeed.tv/schedule-channels-date/1/{dY}/{dM}/{dD}/ar"
+  },
+  "mtv_lebanon": {
+   "url": "https://www.mtv.com.lb/schedule",
+   "discover": true
+  },
+  "tunisia_watania1": {
+   "url": "https://www.tunisiatv.tn/ar/programme",
+   "discover": true
+  },
+  "saudi_sba": {
+   "url": "https://sba.sa/",
+   "discover": true
+  },
+  "saudi_tv": {
+   "url": "https://www.saudiatv.sa/",
+   "discover": true
+  },
+  "alkass": {
+   "url": "https://www.alkass.net/tvguide"
+  },
+  "qatar_tv": {
+   "url": "https://qtv.qa/TransmissionScheduled"
+  },
+  "dubai_tv": {
+   "url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/program-schedule.html",
+   "discover": true
+  },
+  "awaan": {
+   "url": "https://www.awaan.ae/",
+   "discover": true
+  },
+  "abudhabi": {
+   "url": "https://www.admn.ae/ar/",
+   "discover": true
+  },
+  "sharjah": {
+   "url": "https://sba.net.ae/",
+   "discover": true
+  },
+  "kuwait": {
+   "url": "https://www.media.gov.kw/",
+   "discover": true
+  },
+  "bahrain": {
+   "url": "https://www.bna.bh/",
+   "discover": true
+  },
+  "maspero": {
+   "url": "https://www.maspero.eg/",
+   "discover": true
+  },
+  "alarabiya": {
+   "url": "https://www.alarabiya.net/",
+   "discover": true
+  },
+  "skynewsarabia": {
+   "url": "https://www.skynewsarabia.com/program",
+   "discover": true
+  },
+  "asharq": {
+   "url": "https://asharq.com/",
+   "discover": true
+  },
+  "trt_arabi": {
+   "url": "https://www.trtarabi.com/tv-schedule",
+   "discover": true
+  },
+  "alghad": {
+   "url": "https://www.alghad.tv/",
+   "discover": true
+  },
+  "almayadeen": {
+   "url": "https://www.almayadeen.net/",
+   "discover": true
+  },
+  "jordan_tv": {
+   "url": "https://jrtv.gov.jo/",
+   "discover": true
+  },
+  "almamlaka": {
+   "url": "https://www.almamlakatv.com/",
+   "discover": true
+  },
+  "alsumaria": {
+   "url": "https://www.alsumaria.tv/TV-grid"
+  },
+  "iraqia": {
+   "url": "https://imn.iq/",
+   "discover": true
+  },
+  "yallakora": {
+   "url": "https://www.yallakora.com/match-center"
+  },
+  "es_EG1": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_EG1.xml.gz"
+  },
+  "es_SA1": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SA1.xml.gz"
+  }
  }
 }

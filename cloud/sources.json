@@ -881,6 +881,11 @@
    "title": "sat.tv Hot Bird",
    "region": "en",
    "disabled": true
+  },
+  "ca": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_CA1.xml.gz",
+   "only_extract": true,
+   "title": "Canada (Melody)"
   }
  },
  "extract": {
@@ -899,7 +904,11 @@
     "bg",
     "hu",
     "il",
-    "ua"
+    "ua",
+    "ch",
+    "be",
+    "ca",
+    "cy"
    ],
    "names": [
     "2M",
@@ -976,7 +985,6 @@
     "Ajyal",
     "Karameesh",
     "Toyor",
-    "Melody",
     "Panorama",
     "Al Nahar",
     "Zamalek",
@@ -1004,7 +1012,20 @@
     "Zee Alwan",
     "Nogoum",
     "Al Masriya",
-    "Egyptian"
+    "Egyptian",
+    "Hekayat",
+    "AL HEKAYAT",
+    "Lana TV",
+    "NBN",
+    "Rudaw",
+    "Kurdistan",
+    "Melody Aflam",
+    "Melody Drama",
+    "Melody Hits",
+    "Melody Classic",
+    "Rusiya",
+    "Al Alam",
+    "Press TV"
    ],
    "auto_arabic": true,
    "sat": [
