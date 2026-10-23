@@ -205,6 +205,21 @@
   },
   "presstv_api": {
    "url": "https://www.presstv.co.uk/default/GetSchedule?date={dY}-{dM}-{dD}&time=00:00:00"
+  },
+  "presstv_api2": {
+   "url": "https://www.presstv.co.uk/default/GetSchedule?date={dY}-{dM}-{dD}&time=12:0:0"
+  },
+  "presstv_api3": {
+   "url": "https://www.presstv.co.uk/default/GetSchedule?date={dY}-{dM}-{dD}"
+  },
+  "presstv_api4": {
+   "url": "https://www.presstv.ir/default/GetSchedule?date={dY}-{dM}-{dD}&time=12:0:0"
+  },
+  "presstv_day": {
+   "url": "https://www.presstv.co.uk/default/schedule?date={dY}-{dM}-{dD}"
+  },
+  "es_index": {
+   "url": "https://epgshare01.online/epgshare01/"
   }
  }
 }
