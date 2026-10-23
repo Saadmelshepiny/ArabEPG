@@ -140,7 +140,7 @@
    "discover": true
   },
   "alahly": {
-   "url": "https://www.alahlytv.com/",
+   "url": "https://www.alahlytv.net/",
    "discover": true
   },
   "zamalek": {
@@ -156,19 +156,19 @@
    "discover": true
   },
   "toyor": {
-   "url": "https://www.toyoraljanahtv.com/",
+   "url": "https://toyoraljanah.com/",
    "discover": true
   },
   "karameesh": {
-   "url": "https://karameeshtv.com/",
+   "url": "https://karameesh.tv/",
    "discover": true
   },
   "iqraa": {
-   "url": "https://www.iqraatv.net/",
+   "url": "https://iqraa.com/",
    "discover": true
   },
   "almajd": {
-   "url": "https://www.almajd.tv/",
+   "url": "https://almajd.tv/",
    "discover": true
   },
   "libya_wataniya": {
@@ -180,27 +180,27 @@
    "discover": true
   },
   "suhail": {
-   "url": "https://suhail.tv/",
+   "url": "https://suhail.net/programslist.php",
    "discover": true
   },
   "sudan_tv": {
-   "url": "https://sudantv.sd/",
+   "url": "https://sudantv.sd/ar/?page_id=7",
    "discover": true
   },
   "ennahar": {
-   "url": "https://www.ennaharonline.com/",
+   "url": "https://tv.ennaharonline.com/",
    "discover": true
   },
   "entv": {
    "url": "https://www.entv.dz/",
    "discover": true
   },
-  "spacetoon": {
-   "url": "https://www.spacetoon.com/",
-   "discover": true
-  },
   "azhari": {
    "url": "https://www.azhari.tv/",
+   "discover": true
+  },
+  "libya_ahrar": {
+   "url": "https://shoof.libyaalahrar.tv/",
    "discover": true
   }
  }
