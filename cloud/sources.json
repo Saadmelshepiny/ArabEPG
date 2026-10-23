@@ -133,6 +133,16 @@
    "_comment": "Eutelsat sat.tv: its schedule service answered only 504 Gateway Timeout (21/10/2026, whole day and 2-hour slices). Remove \"disabled\" to try again.",
    "python": true,
    "disabled": true
+  },
+  "ar_presstv": {
+   "site": "presstv.co.uk",
+   "sat": [
+    "nilesat",
+    "arabsat",
+    "hotbird"
+   ],
+   "python": true,
+   "days": 3
   }
  },
  "xmltv": {

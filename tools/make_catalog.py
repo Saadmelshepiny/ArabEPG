@@ -31,6 +31,7 @@ SITES = [
     ('lbcgroup.tv', 'lbci', [None]),
     ('tunisiatv.tn', 'tunisia', [None]),
     ('trtarabi.com', 'trt', [None]),
+    ('presstv.co.uk', 'presstv', [None]),
 ]
 # sites that give the same programme in Arabic and in English: the cloud also grabs the English copy
 # (channel id + '.en', not published) to learn the real Arabic title of English titles

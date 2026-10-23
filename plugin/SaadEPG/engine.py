@@ -45,12 +45,12 @@ CLOUD_URL = REPO_RAW + '/epg/'
 VERSION_URL = REPO_RAW + '/main/version.json'
 
 SOURCE_ORDER = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt',
-                'lbci', 'tunisia', 'trt', 'elcinema', 'xml', 'xmltv')
+                'lbci', 'tunisia', 'trt', 'presstv', 'elcinema', 'xml', 'xmltv')
 SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 'Rotana', 'aljazeera': 'Al Jazeera',
                 'elcinema': 'elCinema', 'beinsports': 'beIN SPORTS', 'roya': 'Roya', 'art': 'ART',
-                'ayn': 'Oman TV', 'snrt': 'SNRT', 'lbci': 'LBCI', 'tunisia': 'Tunisia TV', 'trt': 'TRT Arabi', 'xml': 'XMLTV', 'xmltv': 'XMLTV'}
+                'ayn': 'Oman TV', 'snrt': 'SNRT', 'lbci': 'LBCI', 'tunisia': 'Tunisia TV', 'trt': 'TRT Arabi', 'presstv': 'Press TV', 'xml': 'XMLTV', 'xmltv': 'XMLTV'}
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
-             'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt',
+             'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt', 'presstv': 'ar_presstv',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
 MATCHER_VERSION = 7
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
@@ -215,7 +215,7 @@ def catalog_entry(key):
 
 
 OFFICIAL = ('shahid', 'osn', 'bein', 'beinsports', 'rotana', 'aljazeera', 'roya', 'art', 'ayn', 'snrt', 'lbci', 'tunisia',
-            'trt')
+            'trt', 'presstv')
 
 
 def source_kind(key):
@@ -1159,6 +1159,8 @@ class Fetcher(object):
             self.step(len(ids))
         elif src == 'trt':
             res.update(sources.grab_trt(ids, days, stop))
+        elif src == 'presstv':
+            res.update(sources.grab_presstv(ids, days, stop))
             self.step(len(ids))
         elif src == 'bein':
             res.update(sources.grab_bein(ids, days, cfg['lang'], stop))

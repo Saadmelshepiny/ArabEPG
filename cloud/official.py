@@ -14,7 +14,8 @@ sys.path.insert(0, os.path.join(HERE, '..', 'plugin'))
 sys.path.insert(0, HERE)
 from SaadEPG import sources  # noqa: E402
 
-GRABBERS = {'lbcgroup.tv': sources.grab_lbci, 'tunisiatv.tn': sources.grab_tunisia, 'trtarabi.com': sources.grab_trt}
+GRABBERS = {'lbcgroup.tv': sources.grab_lbci, 'tunisiatv.tn': sources.grab_tunisia, 'trtarabi.com': sources.grab_trt,
+            'presstv.co.uk': sources.grab_presstv}
 
 
 def fmt(ts):

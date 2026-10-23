@@ -1082,6 +1082,45 @@ def grab_trt(ids, days, stop=None):
     return res
 
 
+# ===================================================================== Press TV (presstv.co.uk JSON, times in GMT)
+PRESSTV_URL = 'https://www.presstv.co.uk/default/GetSchedule?date=%s&time=00:00:00'
+
+
+def presstv_parse(data, day):
+    """[{prog, description, gmtString 'HH:MM', ...}] of one day (day = UTC midnight) -> events"""
+    out = []
+    try:
+        rows = json.loads(data.decode('utf-8') if isinstance(data, bytes) else data)
+    except ValueError:
+        return out
+    for r in rows if isinstance(rows, list) else []:
+        m = re.search(r'(\d{1,2}):(\d{2})', u(r.get('gmtString') or u''))
+        title = u(r.get('prog') or u'').strip()
+        if not m or not title:
+            continue
+        out.append(ev(day + int(m.group(1)) * 3600 + int(m.group(2)) * 60, 0, title, u'',
+                      u(r.get('description') or u'')))
+    return out
+
+
+def grab_presstv(ids, days, stop=None):
+    res = dict((i, []) for i in ids)
+    day0 = calendar.timegm(time.gmtime()[:3] + (0, 0, 0, 0, 0, 0))
+    evs = []
+    for k in range(-1, days):
+        if stop and stop():
+            break
+        day = day0 + k * 86400
+        try:
+            evs += presstv_parse(http_get(PRESSTV_URL % time.strftime('%Y-%m-%d', time.gmtime(day)), timeout=40), day)
+        except Exception as e:
+            log(u'Press TV: %s' % e)
+    evs = finish(evs)
+    for i in ids:
+        res[i] = evs
+    return res
+
+
 # ===================================================================== beIN SPORTS (beinsports.com, MENA)
 def grab_beinsports(ids, days, stop=None):
     res = dict((i, []) for i in ids)
