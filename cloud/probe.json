@@ -110,6 +110,98 @@
   },
   "es_SA1": {
    "url": "https://epgshare01.online/epgshare01/epg_ripper_SA1.xml.gz"
+  },
+  "presstv": {
+   "url": "https://www.presstv.co.uk/default/schedule",
+   "discover": true
+  },
+  "almanar": {
+   "url": "https://www.almanar.com.lb/programs",
+   "discover": true
+  },
+  "alalam": {
+   "url": "https://www.alalam.ir/",
+   "discover": true
+  },
+  "rtarabic": {
+   "url": "https://arabic.rt.com/",
+   "discover": true
+  },
+  "dw_ar": {
+   "url": "https://www.dw.com/ar/",
+   "discover": true
+  },
+  "mubasher": {
+   "url": "https://mubasher.aljazeera.net/",
+   "discover": true
+  },
+  "pbc": {
+   "url": "https://www.pbc.ps/",
+   "discover": true
+  },
+  "alahly": {
+   "url": "https://www.alahlytv.com/",
+   "discover": true
+  },
+  "zamalek": {
+   "url": "https://www.zamalek.tv/",
+   "discover": true
+  },
+  "ontime": {
+   "url": "https://www.ontimesports.com/",
+   "discover": true
+  },
+  "melody": {
+   "url": "https://melody.tv/",
+   "discover": true
+  },
+  "toyor": {
+   "url": "https://www.toyoraljanahtv.com/",
+   "discover": true
+  },
+  "karameesh": {
+   "url": "https://karameeshtv.com/",
+   "discover": true
+  },
+  "iqraa": {
+   "url": "https://www.iqraatv.net/",
+   "discover": true
+  },
+  "almajd": {
+   "url": "https://www.almajd.tv/",
+   "discover": true
+  },
+  "libya_wataniya": {
+   "url": "https://www.ltv.ly/",
+   "discover": true
+  },
+  "yemen_tv": {
+   "url": "https://www.yemenitv.net/",
+   "discover": true
+  },
+  "suhail": {
+   "url": "https://suhail.tv/",
+   "discover": true
+  },
+  "sudan_tv": {
+   "url": "https://sudantv.sd/",
+   "discover": true
+  },
+  "ennahar": {
+   "url": "https://www.ennaharonline.com/",
+   "discover": true
+  },
+  "entv": {
+   "url": "https://www.entv.dz/",
+   "discover": true
+  },
+  "spacetoon": {
+   "url": "https://www.spacetoon.com/",
+   "discover": true
+  },
+  "azhari": {
+   "url": "https://www.azhari.tv/",
+   "discover": true
   }
  }
 }
