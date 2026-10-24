@@ -1,0 +1,1265 @@
+
+<!DOCTYPE html>
+
+<html lang="ar">
+<head>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-171538818-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-171538818-1');
+</script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>
+	تلفزيون قطر
+</title><link rel="icon" href="/Assets2022/images/logo.png" />
+    
+    <link href="/Assets2022/css/SeriesAndPrograms/bootstrap.min.css" rel="stylesheet">
+    <link href="/Assets2022/css/newStyle.css" rel="stylesheet" />
+     <link href="/Assets2022/css/newStyleLight.css?v=11" rel="stylesheet" />
+    <link href="/Assets2022/css/newStyleLight4.css?v=11" rel="stylesheet" />
+    
+    <link href="/Assets2022/css/nice-select.css" rel="stylesheet" />
+    <style>
+
+        *:before, *:after {
+            -webkit-box-sizing: initial !important;
+            -moz-box-sizing: initial !important;
+            box-sizing: initial !important;
+        }
+
+.container:not(.item) {
+    height: 100%;
+    width: calc(100% - (195px * 2));
+    /*background-color: rgba(139, 138, 136, 0.5);*/
+    margin: 30px auto;
+    display: block;
+    text-align: center;
+    /*box-shadow: 5px 5px 10px -4px black;*/
+    position: relative;
+    /*min-height: calc(100vh - 340px)*/
+}
+
+
+         .container, .sub-container {
+            display: flex;
+            -ms-flex-wrap: wrap;
+            -webkit-flex-wrap: wrap;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+            .sub-container .item {
+                -ms-flex: 1;
+                -webkit-flex: 1;
+                flex: 1;
+            }
+
+        .nice-select {
+            padding-right: 18px !important;
+            padding-left: 30px !important;
+            border-radius: 20px !important;
+            background-color: rgba(83, 18, 94, .45) !important;
+        }
+
+            .nice-select > .current {
+                color: white !important;
+                font-weight: bold !important;
+            }
+
+            .nice-select:after {
+                left: 12px !important;
+                right: initial !important;
+                border-width: 4px !important;
+                border-color: white !important;
+            }
+
+            .nice-select .list {
+                right: 0 !important;
+                left: inherit !important;
+            }
+
+        .item-TS {
+            min-width: 100%;
+            /*height: 150px;*/
+            background-color: #fff;
+                border-radius: 5px;
+        }
+
+            .item-TS .rowTs {
+                height: 100%;
+                position: relative;
+                display: block;
+                float: right;
+                width: 100%;
+            }
+
+            .item-TS.current {
+                background-color: rgba(70, 37, 77, .64);
+            }
+
+        .item-TS-right {
+            min-width: calc(18% - 20px);
+            height: calc(100% - 20px);
+            position: relative;
+            background-position: center center;
+            background-size: contain;
+            background-size: 100%;
+            background-repeat: no-repeat;
+            margin: 10px;
+            float: right;
+            background-color: #83aab7;
+        }
+
+            .item-TS-right .live {
+                background: #85163a;
+                width: 50%;
+                text-align: center;
+                position: relative;
+                display: block;
+                width: auto;
+                position: absolute;
+                right: 0;
+            }
+
+                .item-TS-right .live span {
+                    margin: auto;
+                    font-weight: normal;
+                    padding-top: 0px;
+                    color: #fff;
+                    padding-bottom: 5px;
+                    padding-top: 5px;
+                    /* font-weight: bold; */
+                    font-size: 16px;
+                }
+
+            .item-TS-right span {
+                min-width: 100%;
+                color: #fef4d1;
+                height: 100%;
+                margin: auto;
+                text-align: center;
+                font-size: 30px;
+                display: block;
+                font-weight: bold;
+                padding-top: 0%;
+                top: 10%;
+                position: relative;
+            }
+
+            .item-TS-right img {
+                max-height: 100%;
+                margin: auto;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                position: relative;
+                max-height: 100px;
+            }
+
+        .item-TS-middle {
+            min-width: calc(64% - 20px);
+            margin: 10px;
+            color: #333;
+            height: calc(100% - 20px);
+            float: right;
+            text-align: right;
+            direction: rtl;
+        }
+
+        .item-TS-left {
+            /* min-width: calc(18% - 20px); */
+            margin: 10px;
+            height: calc(100% - 20px);
+            color: white;
+            float: left;
+            width: 11%;
+            display: flex;
+        }
+
+            .item-TS-left.live {
+                background-color: rgba(223, 6, 6, 0.44);
+            }
+
+            .item-TS-left.repeat {
+                background-color: rgba(133, 171, 184, .34);
+            }
+
+        .separator {
+            min-width: 100%;
+            height: 1px;
+            background-color: #c8c8c8;
+            position: relative;
+            display: block;
+            float: left;
+            border-top: 0px solid #fff;
+        }
+
+        .pager-item {
+            margin: 10px 15px;
+            background-color: rgba(70, 37, 77, .64);
+            border: 0;
+            border-radius: 20px;
+            color: white;
+            padding: 0 15px;
+        }
+
+            .pager-item:disabled {
+                background-color: rgba(43, 45, 50, .60);
+            }
+    </style>
+
+    <style>
+
+        .timeScheduleBody {
+            position: relative;
+            display: block;
+            float: left;
+            width: 100%;
+            /*background: #fff;*/
+        }
+
+            .timeScheduleBody .nav-tabs {
+                border-bottom: 0px;
+                margin-bottom: 20px;
+                background: #f7f7f7;
+                border-radius: 5px;
+                border: 1px solid #892a5f;
+                display: flex;
+                width: 75%;
+                align-items: center;
+                justify-content: center;
+                margin: auto;
+                margin-bottom: 3%;
+                margin-top: 3%;
+                flex-direction: row-reverse;
+            }
+
+            .timeScheduleBody nav a {
+                position: relative;
+                top: auto;
+                text-align: center;
+                z-index: 1000;
+                -webkit-transform: unset;
+                transform: unset;
+                width: 13%;
+                float: right;
+                display: block;
+                text-transform: uppercase;
+                font-weight: bold;
+                font-size: 22px;
+                padding: 15px 11px;
+                color: #85163a;
+                transition-duration: 0.6s;
+            }
+
+            .timeScheduleBody nav a.active {
+                /*background: rgb(49, 95, 110) !important;*/
+                    background: #85163a !important;
+                color: #fff;
+            }
+
+                .timeScheduleBody nav a:visited, .timeScheduleBody nav a:focus {
+                    text-decoration: none;
+                }
+
+                .timeScheduleBody nav a:hover {
+                    background: rgba(49, 95, 110, 0.47);
+                }
+
+        a:focus {
+            outline: 0px auto -webkit-focus-ring-color;
+            outline-offset: 0px;
+        }
+        /*body {
+            background-image: url(../css/img/background.jpg);
+            background-color: #f1f4f9;
+            background-repeat: no-repeat;
+            background-position: center center !important;
+            background-size: cover !important;
+        }*/
+        .panel-heading{
+            padding: 0px !important;
+        }
+        .panel-default{
+            border-color: transparent;
+            border: 0px;
+        }
+        .panel-default>.panel-heading{
+            background-color: transparent;
+            border-color: transparent;
+        }
+        .panel{
+            background-color: transparent;
+        }
+        body{
+            background-attachment: fixed;
+        }
+        .panel-heading a{
+            transition: all 0.5s;
+        }
+        .panel-heading a:before {
+            content: "\f078"; /* fa-chevron-down */
+            font-family: 'FontAwesome';
+            float: right;
+            transition: all 0.5s;
+            font-size: 30px;
+            color: #fb9f06;
+            position: relative;
+            float: right;
+            right: 15px;
+            top: 15px;
+        }
+
+        .panel-heading a[aria-expanded="true"]:before {
+            content: "\f077"; /* fa-chevron-up */
+        }
+
+
+        #accordion .active{
+            
+        } 
+
+        .tab-content{
+            overflow: hidden;
+        }
+
+        .tab-content > .tab-pane{
+            position: relative;
+            /*float: right;
+            display: block;*/
+            /*right: 115%;*/
+        }
+
+        .sectionHeadContainerTextDiv a{
+            color: #333;
+        }
+
+        .sectionHeadContainerTextDiv.active {
+            background-color: #ffffff;
+            border-radius: 0px 0px 0px 15px;
+            z-index: 90;
+            color: maroon;
+        }
+
+        .sectionHeadContainerTextDiv.active a {
+            color: maroon;
+            display: block;
+            position: relative;
+        }
+
+        .sectionHeadContainerWithBorderAsDiv {
+            padding: 0px;
+            position: absolute;
+            position: relative;
+            z-index: 1009;
+            width: calc(100% - 30px);
+            float: right;
+            margin-left: 0px;
+            margin-right: 0px;
+            /* padding-bottom: 10px; */
+            height: auto;
+            background: #fbfbfb;
+            box-shadow: 0px 0px 0px;
+            border-top: 1px solid
+        }
+    </style>
+<link href="/Assets2022/css/SeriesAndPrograms/font-awesome.css" rel="stylesheet" /><link href="/Assets2022/jssocials/jssocials.css" rel="stylesheet" /><link href="/Assets2022/jssocials/jssocials-theme-flat.css" rel="stylesheet" /><link href="/Assets2022/headMenu/css/menuStyle.css?v=1" rel="stylesheet" />
+    <!-- Yamm styles-->
+    <link href="/Assets2022/headMenu/css/yamm.css" rel="stylesheet" /><link href="Assets2022/css/animate.min.css" rel="stylesheet" /><link href="Admin/css/skin.css" type="text/css" rel="stylesheet" /><link rel="stylesheet" href="Assets2022/headMenu/plugin/css/gray.css" /><link rel="stylesheet" href="Assets2022/css/style.css" /><link href="/Assets2022/css/responsive.css?v=17" rel="stylesheet" />
+
+    
+    <style>
+        @media only screen and (max-width: 900px) {
+
+            .itemBanner {
+                display: none;
+            }
+
+            .footerItem {
+                width: 100%
+            }
+        }
+
+        #marquee{
+            display: none !important;
+        }
+
+        .imageMenuOverlay {
+            position: relative;
+            max-width: 110px;
+            /*width: 400px;
+            height: 400px;*/
+        }
+            .imageMenuOverlay img {
+                width: 100%;
+                vertical-align: top;
+            }
+            .imageMenuOverlay:after {
+                content: '\A';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                /*background: rgba(0,0,0,0.6);*/
+                background: rgba(110, 157, 174, 0.73);
+                opacity: 1;
+                transition: all 0.5s;
+                -webkit-transition: all 0.5s;
+            }
+            .imageMenuOverlay:hover:after {
+                opacity: 0;
+            }
+
+            .imageMenuOverlay:hover .grayscale.grayscale-fade{
+                    filter: none;
+            }
+
+
+    </style>
+</head>
+<body style="margin: 0">
+    <form method="post" action="./TransmissionScheduled" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="4yNy48uYeIWnzmfWW9grzvEuX2lK/VCzDamwdKL0bPXy7oy0S3m/uq/WXnC4El6ygng2vlfmHP5aIm+21v+Be7iaeazu6yqQkh7ALxUjMTyh7MG9aAUN2O7/YeM0jhBMc1uIZaoXc5/Nhm97M+PLyR1KEZG2v+PjWM4EBdBnwp8=" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZIiwCrtfpvTHep6MQvPl50Gr3DVwbRW57EUaOVZJwZo6LgOdHbfMO4s92xKYpIBBwg2&amp;t=638563379773552689" type="text/javascript"></script>
+
+
+<script src="/ScriptResource.axd?d=nnHyWnZ5bTPuYszCeiYmKwsY-uWqR-1euXCplF1nl1EJDiIUq8QXBxFpRHyDfVn4uPrp0JVaQOz3ooJtDNy2hNFz8pw_IYF-6bt6zSB3_X56N9PO6pMzFdvimdtRtiNNbROInasf3GETSzL193zjf5I1m7FPzjDTS-JH1aOlvto1&amp;t=ffffffffc820c398" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ScriptResource.axd?d=geiJw278ELCE4oVrRV2zH0EpdZ53HeQbcfskwtwVD9yKZF7crEFYYesBK077VsjQdxCVaI89tQi4w61Vwd6VVoMK4Zls1bzR0swDPk2yDYQPaSC3-8nVhooOS7EGXW-RyOyxL67nfNKNMY_sIGKu283nFM-_qk1NWtnfSPi9QIdr7AQrvF_fkoWb3euzfEcK0&amp;t=ffffffffc820c398" type="text/javascript"></script>
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C7255C51" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="5f8nYilK7r8CmCAWSj6DlWqHsqlxjB/FtJQJJtg1HteWbMQGZpN1R5zANyfo1VKjsyqyDNHRMbTilBa/+CTWUL8QEW2IpQpvivgWRRNwh68C2Xqs+78raxZXlZ0GCec1" />
+</div>
+        
+        
+        <div style="width: 100%; position: relative; display: block;">
+            <header style="padding-bottom: 10px;" id="mainHeader" class="container-fluid main-header">
+                
+                
+
+                <div class="col-lg-12 mainNavDiv">
+                <!-- Grid demo navbar -->
+                <div class="navbar navbar-default center yamm">
+                    <div class="navbar-header">
+                        <button type="button" data-toggle="collapse" data-target="#navbar-collapse-grid" class="navbar-toggle">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <div class="navbarDiv">
+                            <a href="/" class="navbar-brand">
+                                <img src="/Assets2022/images/logo.png" class="img-responsive" />
+                            </a>
+                        </div>
+                    </div>
+                    <div id="navbar-collapse-grid" class="navbar-collapse collapse navbar-inner">
+                        <ul class="nav navbar-nav navbar-center">
+                            <li>
+                                <a href="/">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/headMenu/images/Home-w.png" class="headMenuIcon" />
+                                        الصفحة الرئيسية
+                                    </div>
+                                </a>
+                            </li>
+                            
+
+                            
+
+                            <li>
+                                <a href="/TransmissionScheduled">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/headMenu/images/Schedule-w.png" class="headMenuIcon" />
+                                        جدول البث
+                                    </div>
+                                </a>
+                            </li>
+
+                            
+
+                            <!--Aside Menu
+                            -->
+                            <!--<li class="dropdown">
+                                <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/images/headMenu/News-w.png" class="headMenuIcon" />
+                                        الأخبار
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="grid-demo">
+                                        <div class="row">
+                                            <div class="col-sm-6 col-xs-12">
+                                                <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                                    <div class="carousel-inner">
+                                                        <div class="item active">
+                                                            <a href="#"><img src="http://placehold.it/254x150/3498db/f5f5f5/&text=New+Collection" class="img-responsive" alt="product 1"></a>
+                                                            <h4><small>Summer dress floral prints</small></h4>
+                                                        </div>
+
+                                                        <div class="item">
+                                                            <a href="#"><img src="http://placehold.it/254x150/ef5e55/f5f5f5/&text=New+Collection" class="img-responsive" alt="product 2"></a>
+                                                            <h4><small>Gold sandals with shiny touch</small></h4>
+                                                        </div>
+
+                                                        <div class="item">
+                                                            <a href="#"><img src="http://placehold.it/254x150/2ecc71/f5f5f5/&text=New+Collection" class="img-responsive" alt="product 3"></a>
+                                                            <h4><small>Denin jacket stamped</small></h4>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                            <div class="col-sm-6 col-xs-12">
+                                                <ul class="media-list list-unstyled">
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">الأخبار المحلية</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">الأخبار العالمية</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">رياضة</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">صحة</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">اقتصاد</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">تقنيات</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">فنون</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                    <li class="media">
+                                                        <div class="media-body">
+                                                            <a href="#">
+                                                                <h4 class="media-heading">علوم</h4>
+                                                            </a>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="btnMore col-lg-4 col-xs-12">
+                                            <p><a href="#" class="btn btn-primary">المزيد <i class="fa fa-plus-circle" aria-hidden="true"></i></a></p>
+                                        </div>
+                                    </li>
+                                </ul>
+
+
+                            </li>-->
+                            <!-- Thumbnails demo -->
+                            
+
+                            
+
+                            
+
+                            <li>
+                                <a href="/AboutUs">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/headMenu/images/About-w.png" class="headMenuIcon" />
+                                        من نحن
+                                    </div>
+                                </a>
+                            </li>
+
+                            
+
+                            
+
+                            
+
+                            <!--<li class="dropdown yamm-fw">
+                                <a href="#">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets/images/headMenu/Contact-w.png" class="headMenuIcon" />
+                                        تواصل معنا
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li class="grid-demo">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="">
+                                                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3606.7242912823153!2d51.49535201501187!3d25.31346568384217!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e45db38be6d6655%3A0x3f2c8fdb7f915739!2sQatar+Television!5e0!3m2!1sen!2sqa!4v1519719499476"
+                                                            width="100%" height="450" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <ul class="col-sm-12 list-unstyled">
+                                                    <li>
+                                                        <p><strong>تواصل معنا</strong></p>
+                                                    </li>
+                                                    <li><a href="#"> العنوان </a></li>
+                                                    <li><a href="#"> التواصل الاجتماعي </a></li>
+                                                    <li>
+                                                        <div class="yamm-content">
+                                                            <form action="send.php">
+                                                                <div class="form-group">
+                                                                    <input id="inputName" type="text" placeholder="Name" class="form-control">
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <input id="inputEmail" type="password" placeholder="Email" class="form-control">
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <textarea placeholder="Write your message.." class="form-control"></textarea>
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <button type="submit" class="btn btn-success">Send</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+
+                            </li>-->
+                            
+                             <li>
+                                <a href="/Frequencies">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/headMenu/images/Series-w.png" class="headMenuIcon" />
+                                        الترددات
+                                    </div>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="/ContactUs">
+                                    <div class="headMenuItemDiv">
+                                        <img src="/Assets2022/headMenu/images/Contact-w.png" class="headMenuIcon" />
+                                        تواصل معنا
+                                    </div>
+                                </a>
+                            </li>
+
+                            
+
+                           
+                        </ul>
+
+                        
+                    </div>
+                </div>
+            </div>
+
+                
+            </header>
+            <div id="forAdjustMenuHeightDiv"></div>
+            
+    <div class="newBodyBg topEffectSection">
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ContentPlaceHolder$ScriptManager1', 'form1', ['tctl00$ContentPlaceHolder$UpdatePanelTS','ContentPlaceHolder_UpdatePanelTS'], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="ContentPlaceHolder_UpdatePanelTS">
+	
+            <div class="container tsPageBlock">
+                <div class="col-lg-12 col-xs-12  sectionHeadContainerWithBorderAsDiv">
+                    <div class="col-lg-2 sectionHeadContainerTextDiv active">
+                        <a href="/TransmissionScheduled">
+                            <span>قناة قطر 1 - جدول البث <span id="totalRecords"></span> <img src="/Assets2022/headMenu/images/Schedule-w.png" class="sectionHeadimg" /></span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 sectionHeadContainerTextDiv">
+                        <a  href="/TransmissionScheduledTwo">
+                            <span>قناة قطر 2 - جدول البث <span id="totalRecords2"></span> <img src="/Assets2022/headMenu/images/Schedule-w.png" class="sectionHeadimg" /></span>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div class="col-lg-12 colordLightCreamBg">
+                    <div class="col-lg-2"></div>
+                    <div class="col-lg-8 video-container">
+                        <div class='playerHolder'>
+                            <div class="player" style="background-color: #333; margin-top:2%">
+                                <div id="player" style="height: 550px; direction: ltr;"></div>
+                            </div>
+                            <br>
+                        </div>
+
+                    </div>
+                    <div class="col-lg-2"></div>
+
+                    <div class="col-lg-12">
+                    <div class="timeScheduleBody">
+                        <nav id="timeScheduleTab" class="nav nav-tabs" role="tablist">
+                            
+                            
+                        </nav>
+
+                        <div class="tab-content" id="nav-tabContent11">
+                        </div>
+
+                        <div class="panel-group" id="accordion">
+                            <div class="tab-content" id="nav-tabContent">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                                
+                
+            </div>
+        
+</div>
+    </div>
+
+            
+
+            <footer class="newFooter col-lg-12 col-md-12 col-sm-12 col-xs-12" style="text-align: center;display: block;">
+                <div style="background-color: rgba(255, 255, 255, 0.85);" class="footerItem">
+                    <div style="height: 100px; text-align: center; display: inline-block; padding: 20px;">
+                        
+                        <input type="image" name="ctl00$ctl15" src="Assets2022/images/logo.png" style="position: relative;" />
+                    </div>
+                    <ul>
+                        
+                        <li>
+                            <a href="/">الرئيسية</a>
+                        </li>
+                       
+                        <li>
+                            <a href="/TransmissionScheduled">جدول البث</a>
+                        </li>
+                        
+                        
+                        <li>
+                            <a href="/AboutUs">من نحن</a>
+                        </li>
+                       
+                        <li>
+                            <a href="/ContactUs">تواصل معنا</a>
+                        </li>
+                       
+                    </ul>
+                    <div class="copyright">
+                        <span style="color:#4B4B4B;position: relative;">All copy rights <strong> © 2026</strong> Qatar television</span>
+                    </div>
+                </div>
+            </footer>
+
+            <!-- ––––––––––––––––––––––––––––––––––––––––– -->
+            <!-- BACK TO TOP                               -->
+            <!-- ––––––––––––––––––––––––––––––––––––––––– -->
+            <div id="backTop" class="back-top is-hidden-sm-down">
+                <i class="fa fa-angle-up" aria-hidden="true"></i>
+            </div>
+        </div>
+    </form>
+    <script src='/Scripts/jquery-3.3.1.min.js'></script>
+    <script src='/Scripts/bootstrap.min.js'></script>
+
+     
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.0/jquery.matchHeight-min.js"></script>
+    
+    <script src="/Assets2022/jssocials/jssocials.js"></script>
+    <link href="/Assets2022/jssocials/jquery.fancybox.css" rel="stylesheet" />
+    <script src="/Assets2022/jssocials/jquery.fancybox.js"></script>
+
+
+    
+    
+    
+    <!-- Flowplayer library -->
+    
+    <script src='/Admin/js/flowplayer.min.js'></script>
+    <script src='/Admin/js/flowplayer.hlsjs.light.min.js'></script>
+    
+    <!-- Flowplayer hlsjs engine (light) -->
+    
+    
+    <script type="text/javascript" src="/Assets2022/js/SeriesAndPrograms/bootstrap.min.js"></script>
+    
+    <script src="/Assets2022/js/jquery.nice-select.js"></script>
+    <script>
+        //$("body").addClass('lightColor');
+
+        function pageLoad() {
+            $(document).ready(function () {
+                $('select').niceSelect();
+
+                $('.item-TS-right').matchHeight({
+                    target: $('.item-TS-middle')
+                });
+
+                //$(".timeScheduleItem").each(function (index) {
+                //    //////$(this).find(".item-TS-right").height($(this).find(".item-TS-middle").height());
+                //    ////$(".item-TS-right").height($(this).find(".item-TS-middle").height());
+                //    ////console.log($(this).find(".item-TS-right").height());
+                //    ////$(".item-TS-right").height(50);
+                //    //$(this).find(".item-TS-right").height($(this).find(".item-TS-middle").height());
+                //});
+
+            });
+            $(".item > .textDescTS").each(function () {
+                while ($(this).outerHeight() > 65) {
+                    $(this).text($(this).text().slice(0, -6))
+                }
+                $(this).text($(this).text() + "...");
+            });
+        }
+    </script>
+
+        <script>        
+        //var d = new Date().getDay();
+        //var ele = $('#nav-' + d + '-tab');
+        //    ele.addClass('active');   
+            $("#timeScheduleTab").on("click", "a", function () {
+                //$("#accordion").find('.tab-pane').css({
+                //    'right': '115%'
+                //});
+
+                //$("#nav-tabContent").find('.active').animate({
+                //    'right': '0px'
+                //});  
+
+                $('#timeScheduleTab a').removeClass("active");
+                $(this).addClass('active');
+
+                
+                $('.item-TS-right').matchHeight({
+                    target: $('.item-TS-middle')
+                });
+               
+            });
+            
+
+            
+    </script>
+
+    <script>
+        $('a[data-toggle="tab"]').on('hide.bs.tab', function (e) {
+		var $old_tab = $($(e.target).attr("href"));
+		var $new_tab = $($(e.relatedTarget).attr("href"));
+
+		if($new_tab.index() < $old_tab.index()){
+			$old_tab.css('position', 'relative').css("right", "0").show();
+			$old_tab.animate({"right":"-100%"}, 300, function () {
+				$old_tab.css("right", 0).removeAttr("style");
+			});
+		}
+		else {
+			$old_tab.css('position', 'relative').css("left", "0").show();
+			$old_tab.animate({"left":"-100%"}, 300, function () {
+				$old_tab.css("left", 0).removeAttr("style");
+			});
+		}
+	});
+
+	$('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
+		var $new_tab = $($(e.target).attr("href"));
+		var $old_tab = $($(e.relatedTarget).attr("href"));
+
+		if($new_tab.index() > $old_tab.index()){
+			$new_tab.css('position', 'relative').css("right", "-2500px");
+			$new_tab.animate({"right":"0"}, 500);
+		}
+		else {
+			$new_tab.css('position', 'relative').css("left", "-2500px");
+			$new_tab.animate({"left":"0"}, 500);
+		}
+	});
+
+	$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+		// your code on active tab shown
+	});
+    </script>
+
+        <script>
+
+
+        window.onload = function () {
+
+            var isMobile = false; //initiate as false
+            // device detection
+            if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent)
+                || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(navigator.userAgent.substr(0, 4))) {
+                isMobile = true;
+
+
+            }
+
+            var ua = navigator.userAgent.toLowerCase();
+            var isAndroid = ua.indexOf("android") > -1; //&& ua.indexOf("mobile");
+            if (isAndroid) {
+                //alert('aa');
+                flowplayer("#player", {
+                    live: false,
+                    splash: true,
+                    dvr: true,
+                    ratio: 9 / 16,
+                    key: "$318741419211230",
+                    autoplay: false,
+                    mutedAutoplay: false,
+                    facebook: true,
+                    facebook: "http://www.qtv.qa/",
+                    twitter: true,
+                    twitter: "http://www.qtv.qa/",
+                    embed: false,
+                    safari: true,
+                    native_fullscreen: true,
+                    native_ipda_fullscreen: true,
+                    clip: {
+                        sources: [
+                            { type: "application/x-mpegurl", src: "https://qatartv.akamaized.net/hls/live/20000609/qtv1/master.m3u8" },
+                           ]
+                       }
+
+                   }).on("load", function (e, api) {
+                       console.log(api);
+                       api.conf.native_fullscreen = true;
+                       api.native_fullscreen = true;
+                       api.fullscreen();
+                       api.native_fullscreen = true;
+
+                   });
+               }
+
+
+               else if (isMobile) {
+                   //alert('mm');
+                   flowplayer("#player", {
+                       live: false,
+                       splash: true,
+                       dvr: true,
+                       ratio: 9 / 16,
+                       key: "$318741419211230",
+                       autoplay: false,
+                       mutedAutoplay: false,
+                       facebook: true,
+                       facebook: "http://www.qtv.qa/",
+                       twitter: true,
+                       twitter: "http://www.qtv.qa/",
+                       embed: false,
+                       safari: true,
+                       native_fullscreen: true,
+                       native_ipda_fullscreen: true,
+                       clip: {
+                           sources: [
+                               { type: "application/x-mpegurl", src: "https://qatartv.akamaized.net/hls/live/20000609/qtv1/master.m3u8" },
+                           ]
+                       }
+
+                   }).on("ready", function (e, api) {
+                       console.log(api);
+                       api.conf.native_fullscreen = true;
+                       api.native_fullscreen = true;
+                       api.fullscreen();
+                       api.native_fullscreen = true;
+
+                   });
+               }
+
+               else {
+                   //alert('ss');
+                flowplayer("#player", {
+                       live: false,
+                       splash: false,
+                       dvr: true,
+                       ratio: 9 / 16,
+                       key: "$318741419211230",
+                       autoplay: false,
+                       mutedAutoplay: false,
+                       facebook: true,
+                       facebook: "http://www.qtv.qa/",
+                       twitter: true,
+                       twitter: "http://www.qtv.qa/",
+                       embed: false,
+                       safari: true,
+                       native_fullscreen: true,
+                       native_ipda_fullscreen: true,
+                       clip: {
+                           sources: [
+                               { type: "application/x-mpegurl", src: "https://qatartv.akamaized.net/hls/live/20000609/qtv1/master.m3u8" },
+                        ]
+                    }
+
+                });
+            }
+
+
+        };
+        // }
+
+        </script>
+
+     <script>
+         function loadScript(a) {
+             var b = document.getElementsByTagName("head")[0], c = document.createElement("script");
+             c.type = "text/javascript", c.src = "https://tracker.metricool.com/resources/be.js", c.onreadystatechange = a, c.onload = a, b.appendChild(c)
+         } loadScript(function () { beTracker.t({ hash: "24e4a35cd9ab241207477e79e128de54" }) });
+     </script>
+    <script>
+        var end = new Date('11/21/2022 01:00 PM');
+
+        var _second = 1000;
+        var _minute = _second * 60;
+        var _hour = _minute * 60;
+        var _day = _hour * 24;
+        var timer;
+
+        function showRemaining() {
+            //var now = new Date();
+            //var distance = end - now;
+            //if (distance < 0) {
+
+            //    clearInterval(timer);
+            //    document.getElementById('countdown').innerHTML = 'Qatar World Cup 2022';
+
+            //    return;
+            //}
+            //var days = Math.floor(distance / _day);
+            ////var hours = Math.floor((distance % _day) / _hour);
+            ////var minutes = Math.floor((distance % _hour) / _minute);
+            ////var seconds = Math.floor((distance % _minute) / _second);
+
+            //document.getElementById('countdown').innerHTML = days + ' يوم ';
+            ////document.getElementById('countdown').innerHTML += hours + 'hrs ';
+            ////document.getElementById('countdown').innerHTML += minutes + 'mins ';
+            ////document.getElementById('countdown').innerHTML += seconds + 'secs';
+        }
+
+        timer = setInterval(showRemaining, 1000);
+    </script>
+
+    <script>
+        $.fn.extend({
+            animateCss: function (animationName, callback) {
+                var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+                this.addClass('animated ' + animationName).one(animationEnd, function () {
+                    $(this).removeClass('animated ' + animationName);
+                    if (callback) {
+                        callback();
+                    }
+                });
+                return this;
+            }
+        });
+
+
+
+
+        //$('.snakeMenu').snakeMenu({
+        //    menuCont: '.snakeMenu',
+        //    menuItem: '.snakeMenuItem',
+        //    menuItemData: 'menuitem',
+        //    boxCont: '.snakeBox',
+        //    boxItem: '.snakeBoxItem',
+        //    boxItemData: 'boxitem',
+        //    cssMenuItemActive: 'snm-item-active',
+        //    destroySnakeRes: 767,
+        //    mouseDelay: 300,
+        //    boxOffsetTop: 0,
+        //    boxOffsetBottom: 0,
+        //    boxOffsetLeft: 0,
+        //    boxOffsetRight: 0,
+        //    noActiveMenuItem: 'no-active-sample',
+        //    animOpen: function () {
+        //        $('.snakeBox').slideDown(350);
+        //    },
+        //    animClose: function () {
+        //        $('.snakeBox').slideUp(250);
+        //    }
+        //});
+
+        //Approach to make menu on small devices with bootstrap menu
+        //$('.dropdown').each(function () {
+        //    var self = this;
+        //    $(self).find('.dropdown-btn').on('click', function () {
+        //        if ($(window).width() < 768) {
+        //            $(self).toggleClass('open');
+        //        }
+        //    });
+        //});
+
+        //$(window).resize(function () {
+        //    if ($(window).width() > 768) {
+        //        $('.dropdown').each(function () {
+        //            $('.dropdown').removeClass('open');
+        //        });
+        //    }
+        //});
+
+        
+    /* ---------- Back Top  -------- */
+    var back_to_top = function() {
+        var backTop = $('#backTop');
+        if (backTop.length) {
+            var scrollTrigger = 200,
+                scrollTop = $(window).scrollTop();
+            if (scrollTop > scrollTrigger) {
+                backTop.addClass('show');
+            } else {
+                backTop.removeClass('show');
+            }
+        }
+    };
+    
+    /* ---------- Click To Back Top -------- */
+    var click_back = function() {
+        var backTop = $('#backTop');
+        backTop.on('click', function(e) {
+            $('html,body').animate({
+                scrollTop: 0
+            }, 700);
+            e.preventDefault();
+        });
+    };
+
+        $(document).ready(function () {
+            var h = $('#mainHeader').height()
+            console.log(h);
+            $('#forAdjustMenuHeightDiv').height(h + 10);
+
+             click_back();
+
+            $(document).on('click', '#parent', function (e) {
+                    window.location.href = $(this).attr('href')
+            });
+
+            $(document).on('click', '#programsParent', function (e) {
+                    window.location.href = $(this).attr('href')
+            });
+                        
+
+            if ($('#smallMenu-indicator').is(':visible') == false) {
+                $('.dropdown').hover(function () {
+                    $(this).find('.dropdown-menu').stop(true, true).slideDown(500);
+                }, function () {
+                    $(this).find('.dropdown-menu').stop(true, true).slideUp(000);
+
+                });
+            }
+
+            else {
+                $(function () {
+                    $(document).on('click', '.yamm .dropdown-menu', function (e) {
+                        e.stopPropagation()
+                    });
+
+                    $(document).on('click', '.dropdown-toggle', function (e) {                        
+                        $('.yamm-content').find('.thumbnail').matchHeight();
+                        $('.yamm-content').find('.thumbnail').find('.caption').matchHeight();
+                    })
+                })
+            };
+
+
+            $('.yamm-content').find('.thumbnail').matchHeight();
+            $('.yamm-content').find('.thumbnail').find('.caption').matchHeight();
+
+            $('.media').find('.media-body').matchHeight();           
+        });
+
+        $(window).on('scroll', function () {
+            back_to_top();
+        });
+
+        
+/* =================================
+   When document is Scrollig
+================================== */
+$(window).on('scroll', function () {
+    var scrollTop = 0;
+    $(window).scroll(function () {
+        scrollTop = $(window).scrollTop();
+
+        if (scrollTop >= 100) {
+            $('#mainHeader').addClass('scrolled-header');
+            $('.navbar-default').addClass('scrolled-nav');            
+
+           // $('#mainHeader').css("position", "fixed");
+        } else if (scrollTop < 100) {
+            $('#mainHeader').removeClass('scrolled-header');
+            $('.navbar-default').removeClass('scrolled-nav');
+            //$('#mainHeader').css('position', 'relative');
+        }
+
+    });
+});
+
+
+    </script>
+</body>
+</html>

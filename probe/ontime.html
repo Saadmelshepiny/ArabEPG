@@ -1,0 +1,2581 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+                                <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+                        
+        <title>OntimesportsCom</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/css/splide.min.css">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
+        <link rel="stylesheet" type="text/css" href="/css/home_general_style.css?v=17928614305444"/>        <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@latest/dist/js/splide.min.js"></script>
+        <!-- <script src="/playersVip/js/jquery.min.js"></script> -->
+        <script src='/js/jquery-1.11.2.min.js'></script>
+        <link rel="stylesheet" href="/css/sportbook/icons.min.css?v=17928614305444">
+        <link rel="stylesheet" href="/playersVip/css/custom.css?v=17928614305444">
+
+    </head>
+
+    <body>
+        
+<body>
+
+    
+
+<style>
+    .container_opciones_pvip{
+        display:flex;
+        align-items: center;
+    }
+    @media (max-width: 768px) {
+
+    .container_opciones_pvip{
+        width: 100%;
+    }
+    }
+</style>
+
+
+<header id="sticky">
+    <!-- NAV BAR -->
+    <nav class="mainmenu navbar navbar-expand-lg navbar-light bg-light">
+        <div id="mainmenu_blackbar">
+            <div class="bar_container">
+                <!--<span id="language_selector">Language:
+                    <i class="fa fa-globe" id="iconLenguaje"></i>
+                    <select id="selectLenguaje" class="d-none">
+                        <option value="">Language</option>
+                        <option value="af">Afrikaans</option>
+                        <option value="sq">Albanian</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hy">Armenian</option>
+                        <option value="az">Azerbaijani</option>
+                        <option value="eu">Basque</option>
+                        <option value="be">Belarusian</option>
+                        <option value="bg">Bulgarian</option>
+                        <option value="ca">Catalan</option>
+                        <option value="zh-CN">Chinese (Simplified)</option>
+                        <option value="zh-TW">Chinese (Traditional)</option>
+                        <option value="hr">Croatian</option>
+                        <option value="cs">Czech</option>
+                        <option value="da">Danish</option>
+                        <option value="nl">Dutch</option>
+                        <option value="en">English</option>
+                        <option value="et">Estonian</option>
+                        <option value="tl">Filipino</option>
+                        <option value="fi">Finnish</option>
+                        <option value="fr">French</option>
+                        <option value="gl">Galician</option>
+                        <option value="ka">Georgian</option>
+                        <option value="de">German</option>
+                        <option value="el">Greek</option>
+                        <option value="ht">Haitian Creole</option>
+                        <option value="iw">Hebrew</option>
+                        <option value="hi">Hindi</option>
+                        <option value="hu">Hungarian</option>
+                        <option value="is">Icelandic</option>
+                        <option value="id">Indonesian</option>
+                        <option value="ga">Irish</option>
+                        <option value="it">Italian</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="lv">Latvian</option>
+                        <option value="lt">Lithuanian</option>
+                        <option value="mk">Macedonian</option>
+                        <option value="ms">Malay</option>
+                        <option value="mt">Maltese</option>
+                        <option value="no">Norwegian</option>
+                        <option value="fa">Persian</option>
+                        <option value="pl">Polish</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ro">Romanian</option>
+                        <option value="ru">Russian</option>
+                        <option value="sr">Serbian</option>
+                        <option value="sk">Slovak</option>
+                        <option value="sl">Slovenian</option>
+                        <option value="es">Spanish</option>
+                        <option value="sw">Swahili</option>
+                        <option value="sv">Swedish</option>
+                        <option value="th">Thai</option>
+                        <option value="tr">Turkish</option>
+                        <option value="uk">Ukrainian</option>
+                        <option value="ur">Urdu</option>
+                        <option value="vi">Vietnamese</option>
+                        <option value="cy">Welsh</option>
+                        <option value="yi">Yiddish</option>
+                    </select>
+                    <div id="google_translate_element2"></div>
+                    <span id="text-idioma"></span>
+                </span>-->
+
+                            </div>
+        </div>
+        <div id="mainmenu" class="container-fluid mainmenu_container_logo mainmenu_nologin">
+
+                            <a href="/" id="mainmenu_logo">
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_ontimesports.com.png" alt="playersVip_logo" class="">
+                </a>
+                        <div id="main__menu_container_buttons" class="dropdown"  style="display:flex" >
+                <div class="container_opciones_pvip">
+                
+                
+                                    
+                                    <button type="button" class="btn btn-login btn_red size16_bold" data-bs-toggle="modal" data-bs-target="#modalLogin">Sportsbook Login</button> 
+
+                     
+                     
+
+                </div>
+                
+                
+                 
+            </div>
+                         
+
+            <div id="mobile_main_menu" style="display:none" >
+                <a href="/" id="home_mobile_btn" class="btn btn_black">
+                    <i class="fas fa-home"></i>
+                </a> 
+                <a href="" id="home_mobile_btn" class="btn btn_red">
+                    <i class="fas fa-football-ball"></i>
+                </a> 
+                <a href="#" id="menu_mobile_btn" class="btn btn_black">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </div>
+             
+<div id="menu_responsive" style="display:none">
+    <button id="btn_menu_responsive_close"><span class="fa fa-plus"></span></button>
+    <div id="menu_responsive_container">
+        <a href="/" id="responseMenu_logo">
+             <img src="https://playersvip.s3.amazonaws.com/logos/logo_ontimesports.com.png" alt="playersVip_logo" class="">
+        </a>
+                    <form id="formMenuResponsiveDologinAccount">
+                <div class="mb-3">
+                    <input name="user" type="text" class="form-control input-sm" placeholder="Username">
+                </div>
+                <div class="mb-3">
+                    <input name="password" type="password" class="form-control input-sm" placeholder="Password" >
+                </div>
+                <button type="button" class="btn btn_black_login size16 btn-login-mobile btn_red" data-tipo="VIP Access">VIP Access</button>
+                <button type="button" class="btn btn_black_login size16 btn-login-mobile btn_red" data-tipo="Sportbook Access">Sportbook Access</button>
+            </form>
+            <p class="errorlogin"></p>
+            <div id="menuResponsiveloading" class="loaderElement" style="display: none;">
+                <div class="loader"></div>
+            </div>
+                                            
+        
+
+        <ul id="links_container_responsiveMenu">
+                       <!-- <li class="link_title_container">
+                <div>
+                    <a href="/">Home</a>
+                </div>
+            </li>
+                                    <li class="link_title_container submenu_links_container">
+                <div>
+                    <span>Sports</span>
+                </div>
+                <ul class="links_container_ul_responsive_menu fadeInRightBig">
+
+                                                                            <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-baseball" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">BASEBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-basketball" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">BASKETBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-college-baseball" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">COLLEGE BASEBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-college-basketball" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">COLLEGE BASKETBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-college-football" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">COLLEGE FOOTBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-combat-sports" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">COMBAT SPORTS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-cricket" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">CRICKET</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-cycling" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">CYCLING</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-e-sports" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">E-SPORTS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-entertainment" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">ENTERTAINMENT</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-football" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">FOOTBALL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-golf" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">GOLF</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-hockey" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">HOCKEY</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-horses" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">HORSES</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-mlb" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">MLB</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-nba" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">NBA</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-nfl" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">NFL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-nhl" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">NHL</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-olympics" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">OLYMPICS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-poker" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">POKER</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-rugby" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">RUGBY</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-soccer" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">SOCCER</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-specials" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">SPECIALS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-tennis" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">TENNIS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-wheels" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">WHEELS</a></li>
+                                                        <li class="ul_links_submenu"><a data-url="<?php echo ;?>/section/sports-wnba" class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">WNBA</a></li>
+                                                      
+                </ul>
+            </li>
+            <li class="link_title_container submenu_links_container">
+                <div>
+                    <span>Picks</span>
+                </div>
+                <ul class="links_container_ul_responsive_menu fadeInRightBig">
+                    <li class="ul_links_submenu"><a class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">GOTW</a></li>
+                    <li class="ul_links_submenu"><a class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">G.O.D</a></li>
+                </ul>
+            </li>-->
+            <!--<li class="link_title_container submenu_links_container">
+                <div>
+                    <span>Analysis</span>
+                </div>
+                <ul class="links_container_ul_responsive_menu fadeInRightBig">
+
+                    <li class="ul_links_submenu"><a class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">Experts</a></li>
+                    <li class="ul_links_submenu"><a class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">Spotlights</a></li>
+                    <li class="ul_links_submenu"><a class="doteSpan" href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access">Hindsight</a></li>
+                </ul>
+            </li>
+            -->
+        </ul>
+    </div>
+</div>        </div>
+
+    </nav>
+
+    <!-- NAV BAR -->
+</header>
+
+    <style>
+        @media (max-width: 768px) {
+            #mainmenu_logo {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+
+<!-- GTranslate: https://gtranslate.io/ -->
+<!--
+<style type="text/css">
+<!--
+a.gflag {
+    vertical-align:middle;
+    font-size:16px;
+    padding:1px 0;
+    background-repeat:no-repeat;
+    background-image:url(//gtranslate.net/flags/16.png);
+}
+a.gflag img {
+    border:0;
+}
+a.gflag:hover {
+    background-image:url(//gtranslate.net/flags/16a.png);
+}
+#goog-gt-tt {
+    display:none !important;
+}
+.goog-te-banner-frame {
+    display:none !important;
+}
+.goog-te-menu-value:hover {
+    text-decoration:none !important;
+}
+body {
+    top:0 !important;
+}
+#google_translate_element2 {
+    display:none!important;
+}
+
+.skiptranslate{
+    display:none;
+}
+</style>-->
+
+<script type="text/javascript">
+    function googleTranslateElementInit2() {
+        //{pageLanguage: 'en', autoDisplay: false}
+        //   new google.translate.TranslateElement({}, 'google_translate_element2'); 
+    }
+
+    $(document).ready(function () {
+        /* var idioma = localStorage.getItem('idiomaPLVIP');
+         var ln = navigator.language || navigator.userLanguage;
+         var xid = ln.split('-');
+         var idiomaNav = xid[0];
+         var idiomas = '';
+         if (idioma != undefined) {
+         idiomas = idioma + '|' + idioma;
+         } else {
+         idiomas = idiomaNav + '|' + idiomaNav;
+         }
+         if (idiomas != 'en|en') {
+         doGTranslate(idiomas);
+         }*/
+        /*
+         $('#selectLenguaje').on('change', function () {
+         var id = $(this).val();
+         var idiomas = '';
+         var idiDefault = 'en';
+         var idioma = localStorage.getItem('idiomaPLVIP');
+         if (idioma != undefined) {
+         idiomas = idioma + '|' + id;
+         } else {
+         idiomas = idiDefault + '|' + id;
+         }
+         localStorage.setItem('idiomaPLVIP', id);
+         doGTranslate(idiomas);
+         return false;
+         });*/
+
+    });
+</script>
+<!--
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit2"></script>
+
+<script type="text/javascript">
+    /* <![CDATA[ */
+    eval(function (p, a, c, k, e, r) {
+        e = function (c) {
+            return(c < a ? '' : e(parseInt(c / a))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36))
+        };
+        if (!''.replace(/^/, String)) {
+            while (c--)
+                r[e(c)] = k[c] || e(c);
+            k = [function (e) {
+                    return r[e]
+                }];
+            e = function () {
+                return'\\w+'
+            };
+            c = 1
+        }
+        ;
+        while (c--)
+            if (k[c])
+                p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
+        return p
+    }('6 7(a,b){n{4(2.9){3 c=2.9("o");c.p(b,f,f);a.q(c)}g{3 c=2.r();a.s(\'t\'+b,c)}}u(e){}}6 h(a){4(a.8)a=a.8;4(a==\'\')v;3 b=a.w(\'|\')[1];3 c;3 d=2.x(\'y\');z(3 i=0;i<d.5;i++)4(d[i].A==\'B-C-D\')c=d[i];4(2.j(\'k\')==E||2.j(\'k\').l.5==0||c.5==0||c.l.5==0){F(6(){h(a)},G)}g{c.8=b;7(c,\'m\');7(c,\'m\')}}', 43, 43, '||document|var|if|length|function|GTranslateFireEvent|value|createEvent||||||true|else|doGTranslate||getElementById|google_translate_element2|innerHTML|change|try|HTMLEvents|initEvent|dispatchEvent|createEventObject|fireEvent|on|catch|return|split|getElementsByTagName|select|for|className|goog|te|combo|null|setTimeout|500'.split('|'), 0, {}))
+    /* ]]> */
+</script>
+-->
+    <div id="main_Column" class="container-xl">
+        <div class="row">
+            <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="row">
+                    <!-- SLIDER  -->
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+    <div class="row">
+        <!-- slider content  -->
+        <div class="slider_container col-xs-12">
+            <div class="splide" id="splide">
+                <div class="splide__track">
+                    <ul class="splide__list">
+                                                <li class="splide__slide">
+                            <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas"  class="post_style_a btn-login">
+                                <div class="img_slider_container">
+                                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg" class="img_slider" alt="Slider Image">
+                                    <div id="slider_watermark_logo"> 
+                                        <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="Slider Image" class="img_slider ">
+                                    </div>
+                                </div>
+                                <div class="post_container_slider">
+                                    <h3 class="titleSlider">Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</h3>
+                                    <p>No. 7 Ole Miss travels to Austin on Saturday, October 24, 2026, for a high-stakes SEC showdown against No. 18 Texas at Darrell K Royal-Texas Memorial Stadium. The Rebels enter at 5-1 following a victory over Missouri, while the Longhorns stand at 4-2 afte</p>
+                                    <div class="footer_post">
+                                        <span class="readmore_post">Read more..</span> 
+                                        <span class="date_post">October 24th 2026, 7:00 am</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+
+                                            <li class="splide__slide">
+                            <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88384/game-of-the-day---world-series-game-2---tampa-bay-rays-vs-milwaukee-brewers"  class="post_style_a btn-login">
+                                <div class="img_slider_container">
+                                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.24.26.jpg" class="img_slider" alt="Slider Image">
+                                    <div id="slider_watermark_logo"> 
+                                        <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="Slider Image" class="img_slider ">
+                                    </div>
+                                </div>
+                                <div class="post_container_slider">
+                                    <h3 class="titleSlider">Game of the day - World Series Game 2 - Tampa Bay Rays vs Milwaukee Brewers</h3>
+                                    <p>The Milwaukee Brewers look to take a commanding 2-0 lead in the 2026 World Series when they host the Tampa Bay Rays on Saturday, October 24, at American Family Field. Milwaukee survived a dramatic ninth-inning rally to win Friday's opener 3-2, putting the</p>
+                                    <div class="footer_post">
+                                        <span class="readmore_post">Read more..</span> 
+                                        <span class="date_post">October 24th 2026, 6:40 am</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+
+                                            <li class="splide__slide">
+                            <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88202/game-of-the-week---nfl-week-7-preview---kansas-city-chiefs-vs-seattle-seahawks"  class="post_style_a btn-login">
+                                <div class="img_slider_container">
+                                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_KCCvSS%2010.19.26.jpg" class="img_slider" alt="Slider Image">
+                                    <div id="slider_watermark_logo"> 
+                                        <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="Slider Image" class="img_slider ">
+                                    </div>
+                                </div>
+                                <div class="post_container_slider">
+                                    <h3 class="titleSlider">Game of the week - NFL Week 7 Preview - Kansas City Chiefs vs Seattle Seahawks</h3>
+                                    <p>The Kansas City Chiefs travel to Lumen Field to face the Seattle Seahawks on Sunday, October 25, 2026, in a highly anticipated Sunday Night Football matchup. Kansas City enters undefeated following a convincing victory over the Los Angeles Chargers, while</p>
+                                    <div class="footer_post">
+                                        <span class="readmore_post">Read more..</span> 
+                                        <span class="date_post">October 24th 2026, 6:20 am</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+
+                                            <li class="splide__slide">
+                            <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88201/ufc-333:-volkanovski-vs.-evloev"  class="post_style_a btn-login">
+                                <div class="img_slider_container">
+                                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_UFC%2010.19.26.jpg" class="img_slider" alt="Slider Image">
+                                    <div id="slider_watermark_logo"> 
+                                        <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="Slider Image" class="img_slider ">
+                                    </div>
+                                </div>
+                                <div class="post_container_slider">
+                                    <h3 class="titleSlider">UFC 333: Volkanovski vs. Evloev</h3>
+                                    <p>UFC 333 takes place Saturday, October 24, 2026, at Etihad Arena in Abu Dhabi, United Arab Emirates, featuring two championship fights. Featherweight champion Alexander Volkanovski defends his title against undefeated contender Movsar Evloev in the main ev</p>
+                                    <div class="footer_post">
+                                        <span class="readmore_post">Read more..</span> 
+                                        <span class="date_post">October 24th 2026, 6:00 am</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+
+                                        </ul>
+                </div>
+            </div>
+        </div>
+        <!-- !slider content  -->
+
+    </div>
+</section>
+
+<!-- !SLIDER  -->
+
+                    <!-- SIDEBAR RIGHT  -->
+
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 d-none d-xl-none  d-lg-block d-md-block ">
+    <aside class="main_sidebar col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <!-- GO News -->
+<section class="">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="row newsgroup">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88202/game-of-the-week---nfl-week-7-preview---kansas-city-chiefs-vs-seattle-seahawks" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/articles/articles_KCCvSS%2010.19.26.jpg');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1>GOTW</h1>
+                            <p>Game of the week - NFL Week 7 Preview - Kansas City Chiefs vs Seattle Seahawks</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1>GOD</h1> 
+                            <p>Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/girls-vip" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant d-block d-sm-block d-md-block d-xl-none btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/actions/actions_godd%20cover%2010%2023%2026%203%20v4.png');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1></h1> 
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!--<div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 col-xs-12">
+            <div class="row newsgroup">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article//" class="col-xl-6 col-lg-3 col-md-3 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('');">
+                    <div class="newspicture_info">
+                        <div>
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article//" class="col-xl-6 col-lg-3 col-md-3 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('');">
+                    <div class="newspicture_info">
+                        <div>
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>-->
+    </div>
+</section>
+<!-- !GO News -->                    <div class="col-xl-12 gameday_sidebar">
+    <div class="row">
+        <div id="gameday_title" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <p>OntimesportsVIP Games of the Day</p>
+        </div>
+    </div>
+    <!-- game day wrapper -->
+    <div id="gamedaywrapper">
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88384/game-of-the-day---world-series-game-2---tampa-bay-rays-vs-milwaukee-brewers" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.24.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - World Series Game 2 - Tampa Bay Rays vs Milwaukee Brewers</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88308/game-of-the-day---world-series-game-1---tampa-bay-rays-vs-milwaukee-brewers" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.22.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - World Series Game 1 - Tampa Bay Rays vs Milwaukee Brewers</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88304/game-of-the-day---nfl-week-7-preview---new-england-patriots-vs-chicago-bears" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_NEPvsCB%2010.22.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - NFL Week 7 Preview - New England Patriots vs Chicago Bears</p>
+                </div>
+            </a>
+            </div>
+    <!-- !game day wrapper -->
+</div>            <!-- Optionals page -->
+
+<section class="d-none d-sm-none d-md-none d-xl-block sticky girlsection">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="row">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 optional_pages">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/girls-vip" class="col-12 btn-login">
+                    <img src="https://playersvip.s3.amazonaws.com/actions/actions_godd%20cover%2010%2023%2026%203%20v4.png" alt="Actions">
+                    <div class="optional_pages_info">
+                    </div>
+                    <p></p>
+                </a>
+            </div>
+        </div> 
+    </div>
+</section>
+<!-- !Optionals page -->            </aside>
+</section>
+
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 d-none d-xl-none  d-lg-block d-md-block  sticky">
+    <section class="d-none d-sm-none d-lg-none d-xl-block ">
+        <div class="row">
+            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 col-xs-12 ">
+                <a class="twitter-timeline" data-height="485" href="https://twitter.com/PlayersVIPTw?ref_src=twsrc%5Etfw">Tweets by
+                    PlayersVIPTw</a>
+                <script async src="https://platform.twitter.com/widgets.js" charset="utf-8">
+                </script>
+            </div>
+    </section>
+</section>
+<!-- !SIDEBAR RIGHT  -->                    <!-- POST ARTICLES -->
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+    <div class="col-xs-12 mb-2 article_container" id="mainArticleContainer" data-skip="50" data-limit="10" data-source="onlyPost" data-element="posts" data-category="">
+        <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88395/ncaa-week-8-preview---vanderbilt-vs-kentucky" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_VvsK%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Vanderbilt vs Kentucky</h3>
+                <p>No. 12 Kentucky hosts Vanderbilt at Kroger Field in Lexington on Saturday, October 24, 2026, in an SEC matchup with contrasting stakes. The Wildcats enter at 6-1 after five consecutive victories, while the Commodores stand at 3-4 following four straight c</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 1:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88405/aaron-rodgers-addresses-security-concerns-before-nfl's-first-regular-season-game-in-paris" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_AR%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Aaron Rodgers addresses security concerns before NFL's first regular-season game in Paris</h3>
+                <p>The Pittsburgh Steelers quarterback expressed confidence in the league's safety assessment despite protests in the French capital. His comments come after Paris Saint-Germain canceled its own match because of unrest.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 12:40 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88404/alex-scott-attracts-chelsea-interest-as-bournemouth-signals-position-on-potential-£100-million-transfer" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_AS%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SOCCER</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Alex Scott attracts Chelsea interest as Bournemouth signals position on potential £100 million transfer</h3>
+                <p>Bournemouth's ownership has addressed speculation surrounding its highly valued midfielder. Chelsea's reported interest could make Scott a significant figure in the upcoming transfer market.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 12:20 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88394/ncaa-week-8-preview---usc-vs-wisconsin" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_USCvsW%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - USC vs Wisconsin</h3>
+                <p>No. 16 USC travels to Madison on Saturday, October 24, 2026, for a crucial Big Ten showdown against Wisconsin at Camp Randall Stadium. The Trojans enter at 6-1 following three consecutive victories, while the Badgers stand at 4-2 after a narrow loss to UC</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 12:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88403/dougie-hamilton-reestablishes-himself-with-new-jersey-devils-after-trade-speculation" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_DH%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NHL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Dougie Hamilton reestablishes himself with New Jersey Devils after trade speculation</h3>
+                <p>The veteran defenseman is focused on contributing to New Jersey despite questions about his future with the franchise. His situation illustrates how established players respond to persistent roster speculation.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 11:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88402/wayne-rooney-criticizes-bruno-fernandes-amid-manchester-united-leadership-controversy" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_WR%2010.24.25.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SOCCER</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Wayne Rooney criticizes Bruno Fernandes amid Manchester United leadership controversy</h3>
+                <p>Rooney has entered the debate surrounding Fernandes' public criticism of manager Michael Carrick. The disagreement adds another dimension to questions about the club's direction and dressing-room leadership.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 11:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88393/ncaa-week-8-preview---iowa-vs-minnesota" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MvsI%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NHL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Iowa vs Minnesota</h3>
+                <p>No. 15 Iowa travels to Minneapolis on Saturday, October 24, 2026, for its annual Big Ten rivalry showdown against Minnesota at Huntington Bank Stadium. The Hawkeyes enter at 5-1 following an impressive victory over Washington, while the Golden Gophers sta</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 11:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88401/nwsl-removes-eligibility-restrictions-from-controversial-trinity-rodman-salary-rule" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_TR%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SOCCER</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NWSL removes eligibility restrictions from controversial Trinity Rodman salary rule</h3>
+                <p>The league and players' union have agreed to relax criteria governing additional spending on high-impact players. The settlement also resolves disputes surrounding the Washington Spirit's previous contract offer to Rodman.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 10:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88400/puka-nacua-questionable-for-los-angeles-rams-after-suffering-calf-injury" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_PN%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Puka Nacua questionable for Los Angeles Rams after suffering calf injury</h3>
+                <p>The Pro Bowl receiver missed Friday's practice and could be unavailable against Las Vegas. With Davante Adams already sidelined, another receiver injury would place additional pressure on the Rams' offense.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 10:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88392/ncaa-week-8-preview---byu-vs-ucf" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_BUYvsUCF%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - BYU vs UCF</h3>
+                <p>No. 2 BYU travels to Orlando on Saturday, October 24, 2026, for an important Big 12 showdown against UCF at the Acrisure Bounce House. The undefeated Cougars enter at 6-0 following a dramatic victory over Notre Dame, while the Knights stand at 3-3 after c</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 10:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88399/eddie-howe-emerges-as-manchester-united's-preferred-replacement-for-michael-carrick" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_EH2%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SOCCER</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Eddie Howe emerges as Manchester United's preferred replacement for Michael Carrick</h3>
+                <p>United director Jason Wilcox reportedly favors Howe because of his Premier League experience and record at Newcastle. Carrick faces increasing scrutiny following a disappointing start to the season.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 9:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88398/cole-kmet-ruled-out-for-remainder-of-chicago-bears-season-with-knee-injury" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_CK%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Cole Kmet ruled out for remainder of Chicago Bears season with knee injury</h3>
+                <p>The tight end sustained a serious injury during Chicago's victory over New England. His absence forces the Bears to reconsider their offensive personnel, with rookie Sam Roush among the possible replacements.</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 9:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88391/ncaa-week-8-preview---tennessee-vs-south-carolina" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_TvsSC%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Tennessee vs South Carolina</h3>
+                <p>No. 11 Tennessee travels to Columbia on Saturday, October 24, 2026, for an important SEC showdown against South Carolina at Williams-Brice Stadium. The Volunteers enter at 6-1 following an impressive victory over Alabama, while the Gamecocks stand at 3-3 </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 9:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88390/ncaa-week-8-preview---texas-a&m-vs-alabama" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_TAMvsA%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Texas A&M vs Alabama</h3>
+                <p>No. 13 Alabama hosts Texas A&M at Bryant-Denny Stadium on Saturday, October 24, 2026, in a crucial SEC Week 8 showdown. The Crimson Tide enter at 5-2 after consecutive losses to Georgia and Tennessee, while the Aggies stand at 4-3 following a dominant vic</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 8:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88389/ncaa-week-8-preview---oregon-vs-illinois" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_OvsI%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Oregon vs Illinois</h3>
+                <p>Oregon travels to Champaign on Saturday, October 24, 2026, for an important Big Ten matchup against Illinois at Gies Memorial Stadium. The Ducks enter at 4-2 following a narrow victory over Nebraska, while the Fighting Illini stand at 3-3 after defeating </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 8:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88388/ncaa-week-8-preview---texas-tech-vs-cincinnati" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_TTvsC%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Texas Tech vs Cincinnati</h3>
+                <p>No. 8 Texas Tech travels to Nippert Stadium on Saturday, October 24, 2026, for an important Big 12 showdown against Cincinnati. The undefeated Red Raiders enter at 6-0 following a dominant victory over Arizona State, while the Bearcats stand at 4-2 after </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 8:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88387/ncaa-week-8-preview---lsu-vs-auburn" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_LSUvsA%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - LSU vs Auburn</h3>
+                <p>No. 18 LSU travels to Jordan-Hare Stadium on Saturday, October 24, 2026, for an important SEC showdown against Auburn. LSU enters at 5-2 following a dominant shutout victory over Mississippi State, while Auburn stands at 4-2 after stunning previously unbe</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 7:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88386/ncaa-week-8-preview---indiana-vs-michigan" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_IvsM%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">COLLEGE FOOTBALL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NCAA Week 8 Preview - Indiana vs Michigan</h3>
+                <p>No. 6 Indiana travels to Ann Arbor on Saturday, October 24, 2026, for a crucial Big Ten showdown against Michigan at Michigan Stadium. The Hoosiers enter at 6-1 following a narrow loss to Ohio State, while the Wolverines stand at 4-2 after defeating Penn </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 7:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOD</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</h3>
+                <p>No. 7 Ole Miss travels to Austin on Saturday, October 24, 2026, for a high-stakes SEC showdown against No. 18 Texas at Darrell K Royal-Texas Memorial Stadium. The Rebels enter at 5-1 following a victory over Missouri, while the Longhorns stand at 4-2 afte</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 7:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88384/game-of-the-day---world-series-game-2---tampa-bay-rays-vs-milwaukee-brewers" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.24.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOD</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Game of the day - World Series Game 2 - Tampa Bay Rays vs Milwaukee Brewers</h3>
+                <p>The Milwaukee Brewers look to take a commanding 2-0 lead in the 2026 World Series when they host the Tampa Bay Rays on Saturday, October 24, at American Family Field. Milwaukee survived a dramatic ninth-inning rally to win Friday's opener 3-2, putting the</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 6:40 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88202/game-of-the-week---nfl-week-7-preview---kansas-city-chiefs-vs-seattle-seahawks" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_KCCvSS%2010.19.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOTW</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Game of the week - NFL Week 7 Preview - Kansas City Chiefs vs Seattle Seahawks</h3>
+                <p>The Kansas City Chiefs travel to Lumen Field to face the Seattle Seahawks on Sunday, October 25, 2026, in a highly anticipated Sunday Night Football matchup. Kansas City enters undefeated following a convincing victory over the Los Angeles Chargers, while</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 6:20 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88201/ufc-333:-volkanovski-vs.-evloev" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_UFC%2010.19.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOTW</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>UFC 333: Volkanovski vs. Evloev</h3>
+                <p>UFC 333 takes place Saturday, October 24, 2026, at Etihad Arena in Abu Dhabi, United Arab Emirates, featuring two championship fights. Featherweight champion Alexander Volkanovski defends his title against undefeated contender Movsar Evloev in the main ev</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 6:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88383/chase-elliott-opts-out-of-most-popular-driver-voting" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_wheels%2010%2023%2026%204.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">WHEELS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Chase Elliott opts out of Most Popular Driver voting</h3>
+                <p>Perennial winner Chase Elliott has opted to remove his name from consideration for NASCAR's Most Popular Driver Award out of respect for the late Kyle Busch.  The National Motorsports Press Association announced the start of voting Friday and Elliott's ch</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 24th 2026, 12:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88382/ian-poulter-says-he-will-not-be-part-of-liv-golf-2.0" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_golf%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOLF</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Ian Poulter says he will not be part of LIV Golf 2.0</h3>
+                <p>England's Ian Poulter and Tyrrell Hatton both announced that they won't be a part of LIV Golf 2.0.  Poulter, 50, was co-captain of the Majesticks GC team with Lee Westwood and was among the first players to join LIV Golf in June 2023.  </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 11:15 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88381/clea-menier-dies-from-injuries-sustained-during-rugby-match" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%206.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">RUGBY</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Clea Menier dies from injuries sustained during rugby match</h3>
+                <p>A 17-year-old amateur rugby player has died from injuries sustained during a women's match in France.  Clea Menier. a back row for Union du Bassin Marmandais, died at Pellegrin Hospital in Bordeaux after what her club described as an </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 10:30 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88380/carlos-sainz-retracts-qatar-and-abu-dhabi-comments" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_wheels%2010%2023%2026%203.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">WHEELS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Carlos Sainz retracts Qatar and Abu Dhabi comments</h3>
+                <p>Carlos Sainz was forced to clarify his comments regarding the F1 races in Qatar and Abu Dhabi, amid an uncertain political situation around the globe.  Williams' Sainz caused a bit of a stir on social media after his comments about having less conviction </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 9:45 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88379/indycar-announces-race-in-spain" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_wheels%2010%2023%2026%202.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">WHEELS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>IndyCar announces race in Spain</h3>
+                <p>For the first time in two decades, the NTT IndyCar Series is heading to Europe for a race in Montmeló, in Catalunya, Spain on July 18, 2027. The race was officially announced at 9:30 a.m. Eastern Time on October 23 and marks the first time IndyCar has tra</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 9:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88378/vincent-desharnais-out-four-to-six-weeks" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nhl%2010%2023%2026%203.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NHL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Vincent Desharnais out four to six weeks</h3>
+                <p>Washington Capitals defenseman Vincent Desharnais is expected to miss four to six weeks after undergoing an appendectomy, the team announced.  Desharnais leads the Caps in plus/minus at plus-9 and averaging over 19 minutes of ice time, while partnering wi</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 8:45 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88377/devils-and-jets-working-on-connor-hellebuyck-trade" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nhl%2010%2023%2026%202.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NHL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Devils and Jets working on Connor Hellebuyck trade</h3>
+                <p>The New Jersey Devils and Winnipeg Jets are working on a trade that would send star goalie Connor Hellebuyck to the Garden State, there are still 'some important details to iron out' as the two teams work towards a complete trade agreement.  ESPN’s Emily </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 7:30 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88376/anton-harrison-suffers-acl-tear" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%205.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Anton Harrison suffers ACL tear</h3>
+                <p>Anton Harrison underwent knee surgery. The procedure was aimed at setting up a return to the Jaguars late in the year, but that will not be possible.  Harrison’s surgery revealed an ACL tear, NFL Network’s Ian Rapoport reports. As a result, a return to th</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 6:45 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88375/nfl-investigating-jordan-elliott" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_mlb%2010%2023%2026%206.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>NFL investigating Jordan Elliott</h3>
+                <p>The Titans released Jordan Elliott earlier this week. It was not initially clear what prompted the move, but updates have revealed the cause to be an incident which led to the veteran defensive tackle retrieving his gun from his parked car.  The situation</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 6:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88374/brewers-and-rays-announce-world-series-rosters" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_mlb%2010%2023%2026%204.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">MLB</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Brewers and Rays announce World Series rosters</h3>
+                <p>Both clubs have submitted their 26-man squads for the matchup. The Brewers are rolling with 13 pitchers and 13 position players. The big news is Brandon Woodruff, who makes the final cut after a long layoff. The veteran righty had been working his way ba</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 5:15 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88373/lebron-james-responds-to-donald-trump's-criticism" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nba%2010%2023%2026%202.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SPECIALS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>LeBron James responds to Donald Trump's criticism</h3>
+                <p>Hours after President Donald Trump criticized him for appearing to continue his warmups while the national anthem was performed before the Philadelphia 76ers' season opener earlier this week against the Knicks in New York, LeBron James responded with a sh</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 4:30 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88372/marshall-faulk-reveals-parkinson's-diagnosis" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%204.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">SPECIALS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Marshall Faulk reveals Parkinson's diagnosis</h3>
+                <p>Pro Football Hall of Fame running back and Southern University coach Marshall Faulk has been diagnosed with Parkinson's disease. Faulk, 53, revealed his diagnosis on a podcast Wednesday. He said that with medication, he is not experiencing issues beyond h</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 3:45 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88371/nicholas-seward-wins-poker-masters-nlh-event" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_poker%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">POKER</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Nicholas Seward wins Poker Masters NLH event</h3>
+                <p>Winning a PokerGO Tour title is a momentous achievement in any context. Nicholas Seward’s victory in Event No. 9 of the 2026 Poker Masters was made all the sweeter, though, given the caliber of competition he faced heads-up.  Seward squared off against Po</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 3:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88370/lewis-hamilton-responds-to-singapore-gp-ferrari-claim" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_wheels%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">WHEELS</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Lewis Hamilton responds to Singapore GP Ferrari claim</h3>
+                <p>Lewis Hamilton described his decision to ignore a Ferrari pit call as a 'painful lesson' after it dropped him from third place to sixth in the final 12 laps of Sunday's Singapore Grand Prix.  Hamilton's race unraveled when he ignored a call from the Ferra</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 2:15 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88369/knicks-reportedly-interested-in-dalton-knecht" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nba%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NBA</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Knicks reportedly interested in Dalton Knecht</h3>
+                <p>The Knicks are among the teams with interest in free agent wing Dalton Knecht, according to Ian Begley of SNY.tv, who notes that the former first-round pick remains eligible for a two-way contract.  Jake Fischer of Bleacher Report and The Stein Line previ</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 1:30 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88368/igor-chernyshov-suffers-upper-body-injury" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nhl%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NHL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Igor Chernyshov suffers upper-body injury</h3>
+                <p>San Jose Sharks winger Igor Chernyshov left the matchup win over the Ottawa Senators in the first period after blocking a slapshot from Senators defenseman Nikolas Matinpalo. Chernyshov seemed noticeably hurt after the block, favoring his left arm. He fin</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 12:45 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88367/stephen-vogt-confirms-he-is-staying-with-cleveland-guardians" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%203.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">MLB</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Stephen Vogt confirms he is staying with Cleveland Guardians</h3>
+                <p>Although Guardians skipper Stephen Vogt has close ties to the state of Washington, he is not interested in the Mariners’ managerial vacancy. Vogt made it clear that he is sticking with the Guardians. 'I’ll be in Cleveland,' Vogt told Tim Stebbins of MLB.c</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 12:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88366/kahlil-watson-undergoes-core-muscle-surgery" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_mlb%2010%2023%2026%203.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">MLB</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Kahlil Watson undergoes core muscle surgery</h3>
+                <p>The Guardians announced this week that outfielder Kahlil Watson underwent surgery to repair a bilateral core muscle injury. The team didn’t provide an exact timetable for his recovery but noted that similar cases tend to come with a timeframe of eight to </p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 11:15 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88365/rams-expected-to-explore-wide-receiver-trade" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%202.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Rams expected to explore wide receiver trade</h3>
+                <p>Davante Adams has joined Myles Garrett and Kobie Turner among Rams placed on IR. While the future Hall of Fame wide receiver plans to undergo surgery to expedite his recovery, Los Angeles will be down a key weapon for several weeks.  With the team 2-4 aft</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 10:30 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88364/multiple-nfl-teams-reportedly-interested-in-jonathan-taylor" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Multiple NFL teams reportedly interested in Jonathan Taylor</h3>
+                <p>Since-fired GM Chris Ballard already began dealing away core players this offseason, freeing up money for Daniel Jones and Alec Pierce’s contracts. With Ballard now out, some of his remaining Colts cornerstones are coming up before the trade deadline.  Jo</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 9:45 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88363/marlins-open-to-offers-for-otto-lopez-and-xavier-edwards" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_mlb%2010%2023%2026%202.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">MLB</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Marlins open to offers for Otto Lopez and Xavier Edwards</h3>
+                <p>Teams inquired about Marlins shortstop Otto Lopez and second baseman Xavier Edwards before the Aug. 3 trade deadline, but the double-play tandem stayed put. Edwards and Lopez could continue their partnership in 2027, though the Marlins are willing to list</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 9:00 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88362/connor-brogdon-elects-free-agency" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_mlb%2010%2023%2026%201.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">MLB</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Connor Brogdon elects free agency</h3>
+                <p>Veteran right-handers Connor Brogdon haselected free agency, according to the MiLB.com transactions log..  The Guardians gave Brogdon a major league contract worth $900K last winter, but the low-cost flier didn’t pan out. The 31-year-old made 16 appearanc</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 8:15 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88308/game-of-the-day---world-series-game-1---tampa-bay-rays-vs-milwaukee-brewers" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.22.26.jpg" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">GOD</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Game of the day - World Series Game 1 - Tampa Bay Rays vs Milwaukee Brewers</h3>
+                <p>The 2026 World Series begins Friday, October 23, when the Tampa Bay Rays visit the Milwaukee Brewers at American Family Field. Both franchises are chasing their first World Series championship, guaranteeing a historic outcome to the 122nd Fall Classic. Mi</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 23rd 2026, 7:30 am</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+    <!--TEMPORAL -->
+<article class="bg-white">
+    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88361/seahawks-activate-zach-charbonnet-and-place-elijah-arroyo-on-ir" class="article_post btn-login">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12 img_container_post">
+                <div class="imgwrapper bg_gradiant">
+                    <img src="https://playersvip.s3.amazonaws.com/articles/articles_nfl%2010%2022%2026%2015.png" alt="">
+                </div>
+                <div class="slider_watermark_logo_post"> 
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_inverse_ontimesports.com.png" alt="playersVip_logo" class="img_slider ">
+                                                <div class="tag_sports_post">NFL</div>
+                </div>
+            </div>
+            <div class="post_container_slider col-xl-6 col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                <h3>Seahawks activate Zach Charbonnet and place Elijah Arroyo on IR</h3>
+                <p>The Seahawks’ run game should receive a boost in Week 7. Zach Charbonnet’s return is a go. The fourth-year running back returned to Seattle’s 53-man roster via an activation from the reserve/PUP list.  A recent report identified the Seahawks’ Week 7 Chief</p>
+                <div class="footer_post">
+                    <span class="readmore_post">Read more..</span>
+                    <span class="date_post">October 22nd 2026, 11:00 pm</span>
+                </div>
+            </div>
+        </div>
+    </a>
+</article>
+        </div>
+
+    <div id="observerInfiniteScroll" data-observer="0">
+        <section class="p-2 col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div id="loadingDataPosts" class="loadingDataPosts">
+                <svg role="img" width="610" height="170" aria-labelledby="loading-aria" viewBox="0 0 610 170" preserveAspectRatio="none">
+                    <title id="loading-aria">Loading...</title>
+                    <rect x="0" y="0" width="100%" height="100%" clip-path="url(#clip-path)" style='fill: url("#fill");'></rect>
+                    <defs>
+                        <clipPath id="clip-path">
+                            <rect x="307" y="6" rx="3" ry="3" width="291" height="26" />
+                            <rect x="2" y="4" rx="3" ry="3" width="292" height="183" />
+                            <rect x="308" y="67" rx="3" ry="3" width="285" height="6" />
+                            <rect x="308" y="49" rx="3" ry="3" width="285" height="6" />
+                            <rect x="308" y="88" rx="3" ry="3" width="285" height="6" />
+                            <rect x="308" y="108" rx="3" ry="3" width="285" height="6" />
+                            <rect x="307" y="150" rx="0" ry="0" width="79" height="17" />
+                            <rect x="509" y="152" rx="0" ry="0" width="79" height="14" />
+                        </clipPath>
+                        <linearGradient id="fill">
+                            <stop offset="0.599964" stop-color="#f3f3f3" stop-opacity="1">
+                                <animate attributeName="offset" values="-2; -2; 1" keyTimes="0; 0.25; 1" dur="1s" repeatCount="indefinite"></animate>
+                            </stop>
+                            <stop offset="1.59996" stop-color="#ecebeb" stop-opacity="1">
+                                <animate attributeName="offset" values="-1; -1; 2" keyTimes="0; 0.25; 1" dur="1s" repeatCount="indefinite"></animate>
+                            </stop>
+                            <stop offset="2.59996" stop-color="#f3f3f3" stop-opacity="1">
+                                <animate attributeName="offset" values="0; 0; 3" keyTimes="0; 0.25; 1" dur="1s" repeatCount="indefinite"></animate>
+                            </stop>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+    </div>
+</section>
+<!-- !POST ARTICLES -->                </div>
+            </div>
+            <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <!-- SIDEBAR RIGHT  -->
+
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 d-none d-xl-block">
+    <aside class="main_sidebar col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <!-- GO News -->
+<section class="">
+    <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="row newsgroup">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88202/game-of-the-week---nfl-week-7-preview---kansas-city-chiefs-vs-seattle-seahawks" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/articles/articles_KCCvSS%2010.19.26.jpg');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1>GOTW</h1>
+                            <p>Game of the week - NFL Week 7 Preview - Kansas City Chiefs vs Seattle Seahawks</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1>GOD</h1> 
+                            <p>Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/girls-vip" class="col-xl-6 col-lg-3 col-md-12 col-sm-12 col-xs-12 newspicture bg_gradiant d-block d-sm-block d-md-block d-xl-none btn-login" style="background-image: url('https://playersvip.s3.amazonaws.com/actions/actions_godd%20cover%2010%2023%2026%203%20v4.png');">
+                    <div class="newspicture_info">
+                        <div>
+                            <h1></h1> 
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!--<div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 col-xs-12">
+            <div class="row newsgroup">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article//" class="col-xl-6 col-lg-3 col-md-3 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('');">
+                    <div class="newspicture_info">
+                        <div>
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article//" class="col-xl-6 col-lg-3 col-md-3 col-sm-12 col-xs-12 newspicture bg_gradiant btn-login" style="background-image: url('');">
+                    <div class="newspicture_info">
+                        <div>
+                            <p></p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>-->
+    </div>
+</section>
+<!-- !GO News -->                    <div class="col-xl-12 gameday_sidebar">
+    <div class="row">
+        <div id="gameday_title" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <p>OntimesportsVIP Games of the Day</p>
+        </div>
+    </div>
+    <!-- game day wrapper -->
+    <div id="gamedaywrapper">
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88385/game-of-the-day---ncaa-week-8-preview---ole-miss-vs-texas" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MvsT%2010.24.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - NCAA Week 8 Preview - Ole Miss vs Texas</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88384/game-of-the-day---world-series-game-2---tampa-bay-rays-vs-milwaukee-brewers" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.24.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - World Series Game 2 - Tampa Bay Rays vs Milwaukee Brewers</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88308/game-of-the-day---world-series-game-1---tampa-bay-rays-vs-milwaukee-brewers" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_MLB%2010.22.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - World Series Game 1 - Tampa Bay Rays vs Milwaukee Brewers</p>
+                </div>
+            </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/article/88304/game-of-the-day---nfl-week-7-preview---new-england-patriots-vs-chicago-bears" class="row playersVip_container btn-login">
+                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
+                    <div class="imgwrapper">
+                        <img class="img_slider img_gameday" src="https://playersvip.s3.amazonaws.com/articles/articles_NEPvsCB%2010.22.26.jpg" alt="Game of Day Image">
+                    </div>
+                </div>
+                <div class="news_container_gameday col-xl-8 col-lg-8 col-md-4 col-sm-12 col-xs-12">
+                    <p>Game of the day - NFL Week 7 Preview - New England Patriots vs Chicago Bears</p>
+                </div>
+            </a>
+            </div>
+    <!-- !game day wrapper -->
+</div>            <!-- Optionals page -->
+
+<section class="d-none d-sm-none d-md-none d-xl-block sticky girlsection">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="row">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 optional_pages">
+                <a href="#" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#modalLogin" data-tipo="VIP Access" data-url="/girls-vip" class="col-12 btn-login">
+                    <img src="https://playersvip.s3.amazonaws.com/actions/actions_godd%20cover%2010%2023%2026%203%20v4.png" alt="Actions">
+                    <div class="optional_pages_info">
+                    </div>
+                    <p></p>
+                </a>
+            </div>
+        </div> 
+    </div>
+</section>
+<!-- !Optionals page -->            </aside>
+</section>
+
+<section class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 d-none d-xl-block sticky">
+    <section class="d-none d-sm-none d-lg-none d-xl-block ">
+        <div class="row">
+            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 col-xs-12 ">
+                <a class="twitter-timeline" data-height="485" href="https://twitter.com/PlayersVIPTw?ref_src=twsrc%5Etfw">Tweets by
+                    PlayersVIPTw</a>
+                <script async src="https://platform.twitter.com/widgets.js" charset="utf-8">
+                </script>
+            </div>
+    </section>
+</section>
+<!-- !SIDEBAR RIGHT  -->            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="login_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">LOGIN</h5>
+                <div class="login_modal_close">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="logo_login">
+                    <img src="https://playersvip.s3.amazonaws.com/logos/logo_ontimesports.com.png" alt="PlayersVip Logo">
+                </div>
+                <form id="formModalDologinAccount">
+                    <div class="mb-3">
+                        <input name="user" type="text" class="form-control input-sm" placeholder="Username">
+                    </div>
+                    <div class="mb-3">
+                        <input name="password" type="password" class="form-control input-sm" placeholder="Password">
+                    </div>
+                    <button id="doLoginAccountModalBtn" type="button" class="btn btn_black_login size16">SIGN IN</button>
+                </form>
+                <p class="errorlogin"></p>
+            </div>
+            <div class="modal-footer login_footer">
+                <p>Not a member yet? Please contact your agent</p>
+                <input type="hidden" id="urlGo" value="">
+            </div>
+            <div id="modalloading" class="loaderElement" style="display: none;">
+                <div class="loader"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+    <defs>
+        <filter id="goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+            <feBlend in="SourceGraphic" in2="goo" />
+        </filter>
+    </defs>
+</svg> -->
+<div class="modal fade" id="account_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">MY ONTIMESPORTS VIP ACCOUNT</h5>
+                <div class="login_modal_close">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                                <div class="row">
+                    <div class="col-md-6 pe-3">
+
+                        <table class="freeplayTable table table-borderless">
+                            <thead>
+                                <tr>
+                                    <th colspan="1"></th>
+                                    <th style="text-align:center;">Amount</th>
+                                    <th></th>
+                                    <th style="text-align:center;">Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="1">Free Play balance amount</td>
+                                    <td><span class="borderCell"> </span></td>
+                                    <td></td>
+                                    <td><span class="borderCell">-</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="titleTrFreeHalfpts" colspan="4">
+                                        <p id="titleSeparatorFreeHalfpts">Free Half Pts</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Football Free Half</td>
+                                    <td><span class="borderCell" style="border-bottom: none;">Inactive</span></td>
+                                    <td class="freehalfExpandUpTo"><span>Exp</span></td>
+                                    <td><span class="borderCell" style="border-bottom: none;"> </span></td>
+                                </tr>
+                                <tr>
+                                    <td>Basketball Free Half</td>
+                                    <td><span class="borderCell">Inactive</span></td>
+                                    <td class="freehalfExpandUpTo"><span>Up to</span></td>
+                                    <td><span class="borderCell"> </span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-md-6">
+                        <table class="table">
+                            <tr>
+                                <td colspan="3" align="center"><strong>Selected Promo History</strong> </td>
+                            </tr>
+                            <tr class="btn_black">
+                                <td align="center">Date</td>
+                                <td align="center">Selected Promo </td>
+                                <td align="center">Expires</td>
+                            </tr>
+                        </table>
+                    </div>
+
+
+
+                </div>
+
+
+            </div>
+            <div class="modal-footer login_footer">
+            </div>
+        </div>
+
+    </div>
+</div><footer class="footer_container" id="mainfooter">
+    <div class="info_footer">
+        <span class="page_name">ontimesportsVIP</span>
+        <!--<div class="page_icon_social">
+            <span>Social Media</span>
+            <a class="icon_social_footer"><i class="fab fa-instagram"></i></a>
+            <a class="icon_social_footer"><i class="fab fa-twitter"></i></a>
+        </div>-->
+    </div>
+</footer>
+
+<script>
+    $('.btn-login').on('click', function () {
+        var url = $(this).data('url');
+        $('#redirectVip').val(url);
+    });
+</script>    
+    
+    
+            
+        
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"cfaf409807a94417ac339c70e85e2318","spa":2}' crossorigin="anonymous"></script>
+</body>
+        <div class="init-modal " id="init_modal" style="display:none;">
+            <div class="spinner"></div>
+        </div>
+        <!--BEGIN MODAL FADE-->
+<style>
+
+
+    #confirmationModalMobile .modal-dialog{
+        width: 90%;
+    }
+    #myModalLabelMobile{
+        text-align: center;
+    }
+    #confirmationModalDisplayMobile{
+        font-size: 15px;
+    }
+    #footerButtonsMobile{
+            border-top: 1px solid transparent !important;
+                padding: 0px 15px 15px !important;
+    }
+</style>
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title" id="myModalLabel">Attention</h4>
+			</div>
+			<div class="modal-body">
+                            <span id="confirmationModalDisplay" >
+
+				</span>
+			</div>
+			<div class="modal-footer" id="footerButtons" >
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+
+        <script>
+            var _SITE_DOMAIN = "ontimesports.com";
+            var _LINE_TYPES = 'Spread,MoneyLine,Total,TeamTotal';
+            var availableCategories = null;
+            var availableCategoriesWidget = [];
+
+            var _FREE_PLAY_SETUP = ''.split(",");
+            var _FAVORITES = null;
+            var _LINES_LAYOUT = 'american';
+            var _LANGUAGE = "eng";
+        </script>
+
+        <script>
+    var getTextJs = {
+        'sportbook_suspended_account': 'Wagering has been suspended. Please contact CS for more information',
+        'sportbook_Today': 'Today',
+
+        'sportbook_betslip_Errorsometinghapend': 'We experienced an error while processing your wager.<p>Check to confirm that the wager was entered.</p>',
+
+        'sportbook_favorites': 'Favorites',
+        'sportbook_my_games': 'My Games',
+        'sportbook_overview_starts_in': 'Starts In',
+        'sportbook_game_Spread': 'Spread',
+        'sportbook_game_MoneyLine': 'Money Line',
+        'sportbook_game_Total': 'Total',
+        'sportbook_game_TeamTotal': 'Team Total',
+        'sportbook_game_Back': 'Back',
+        'sportbook_game_MainBets': 'Main Bets',
+        'sportbook_game_Over': 'Over',
+        'sportbook_game_Under': 'Under',
+        'sportbook_game_OpenAll': 'Open All',
+        'sportbook_game_CloseAll': 'Close All',
+        'sportbook_game_message_no_games': 'No Games Available at the moment',
+        'sportbook_game_message_no_props': 'No Props Available at the moment',
+        'sportbook_group_Draw': 'Draw',
+        'sportbook_group_Date': 'Date',
+        'sportbook_betslip_YourBetSlipIsEmpty': 'Your betslip is empty',
+        'sportbook_betslip_addMoreSelections': 'Need more selections',
+        'sportbook_betslip_MaxAmount': 'Max Amount',
+        'sportbook_betslip_PlaceBet': 'Place Bet',
+        'sportbook_betslip_Risk': 'Risk',
+        'sportbook_betslip_Win': 'Win',
+        'sportbook_betslip_Bet': 'Bet',
+        'sportbook_betslip_BetAmountHasToBeUnder': 'A maximum wager amount of',
+        'sportbook_betslip_BetAmountHasToBeUnderCircled': 'Circled Game: A maximum wager amount of',
+        'sportbook_betslip_BetAmountHasToBeUnder2': 'USD is permitted',
+        'sportbook_betslip_BetAmountHasToBeOver': 'Bet amount has to be over',
+        'sportbook_betslip_SelectionUnavailable': 'Selection Unavailable',
+        'sportbook_betslip_SelectionChanged': 'Selection Changed',
+        'sportbook_betslip_Accept': 'Accept',
+        'sportbook_betslip_AddedToBetslip': 'Added to Betslip',
+        'sportbook_betslip_Selection': 'Selection',
+        'sportbook_betslip_TicketNumber': 'Ticket Number',
+        'sportbook_betslip_AmountPerParlay': 'Amount Per Parlay',
+        'sportbook_betslip_TotalRisk': 'Total Risk',
+        'sportbook_betslip_Confirm': 'Confirm',
+        'sportbook_betslip_open_selection': 'Open Selection',
+        'sportbook_betslip_ticket_total_risk': 'Total Ticket Risk',
+        'sportbook_betslip_ticket_pay': 'Pay',
+        'sportbook_betslip_ticket_won': 'Win ', //This win with a blank space is for a second translation of the word "win"
+        'sportbook_betslip_freePlayMaxPayoutLimit': 'Free Play win amount must be under',
+        'sportbook_betslip_open_spot': 'Open Spot',
+        'sportbook_betslip_selection': 'Selection',
+        'sportbook_betslip_yes': 'Yes',
+        'sportbook_betslip_no': 'No',
+
+        'sportbook_wagerReport_TicketNumber': 'Ticket Number',
+        'sportbook_wagerReport_ACCEPTED': 'ACCEPTED',
+        'sportbook_wagerReport_WAGETTYPE': 'WAGET TYPE',
+        'sportbook_wagerReport_RISKTOWIN': 'RISK / TOWIN',
+        'sportbook_wagerReport_SHORTDESCRIPTION': 'SHORT DESCRIPTION',
+        'sportbook_wagerReport_WagerType': 'Wager Type',
+        'sportbook_wagerReport_Accepted': 'Accepted',
+        'sportbook_wagerReport_Status': 'Status',
+        'sportbook_wagerReport_Risk': 'Risk',
+        'sportbook_wagerReport_ToWin': 'To Win',
+        'sportbook_wagerReport_Paid': 'Paid',
+        'sportbook_wagerReport_fill': 'Fill',
+
+        'sportbook_wagerReport_GameDate': 'Game Date',
+        'sportbook_wagerReport_WagerStatus': 'Wager Status',
+        'sportbook_wagerReport_EventNotes': 'Event Notes',
+        'sportbook_wagerReport_Date': 'Date',
+        'sportbook_wagerReport_Description': 'Description',
+        'sportbook_wagerReport_Amount': 'Amount',
+        'sportbook_wagerReport_Balance': 'Balance',
+        'sportbook_wagerReport_Details': 'Details',
+        'sportbook_wagerReport_WonLost': 'Won/Lost',
+        'sportbook_wagerReport_Monday': 'Monday',
+        'sportbook_wagerReport_Tuesday': 'Tuesday',
+        'sportbook_wagerReport_Wednesday': 'Wednesday',
+        'sportbook_wagerReport_Thursday': 'Thursday',
+        'sportbook_wagerReport_Friday': 'Friday',
+        'sportbook_wagerReport_Saturday': 'Saturday',
+        'sportbook_wagerReport_Sunday': 'Sunday',
+        'sportbook_wagerReport_Free_Play': 'FP',
+        'sportbook_report_Date': 'Date',
+        'sportbook_report_gross_amount': 'Gross Amount',
+
+        'sportbook_report_FigureDate': 'Figure Date',
+        'sportbook_report_Loss': 'Loss',
+
+        'sportbook_report_SportsbookWinLoss': 'SportsbookWin/Loss',
+        'sportbook_report_SportsbookAdj': 'Sportsbook Adj',
+        'sportbook_report_CasinoWinLoss': 'Casino Win/Loss',
+        'sportbook_report_CasinoAdj': 'Casino Adj',
+        'sportbook_report_CasinoFees': 'Casino Fees',
+        'sportbook_report_NetAmount': "Net Amount",
+        'sportbook_report_CommissionType': 'Commission Type',
+        'sportbook_report_CommissionAmount': 'Commission Amount',
+        'sportbook_report_PreviousMakeup': 'Previous Makeup',
+        'sportbook_report_NewMakeup': 'New Makeup',
+        'sportbook_report_CUHeadCount': 'CU Head Count',
+        'sportbook_report_CUHeadCountFee': 'CU Head Count Fee',
+        'sportbook_report_InetHeadCount': 'Inet Head Count',
+        'sportbook_report_InetHeadCountFee': 'Inet Head Count Fee',
+        'sportbook_report_CasinoHeadCount': 'Casino Head Count',
+        'sportbook_report_CasinoHeadCountFee': 'Casino Head Count Fee',
+        'sportbook_report_PreviousBalance': 'Previous Balance',
+        'sportbook_report_Dist': 'Dist',
+        'sportbook_report_NewBalance': 'New Balance',
+        'sportbook_report_Makeup': 'Makeup',
+        'sportbook_report_AgentDistributionLast30daysFor': 'Agent Distribution (last 30 days) for',
+        'sportbook_report_AgentDistributionLastdaysFor': 'Agent Distribution (From ',
+        'sportbook_report_AgentDistributionLastdaysFor2': 'To ',
+        'sportbook_report_AgentDistributionLastdaysFor3': ') for ',
+        'sportbook_report_Allsports': 'All sports',
+        'sportbook_game_Game': 'Game',
+        'sportbook_game_Teams': 'Teams',
+        'sportbook_game_Props': 'Props',
+        'sportbook_game_TotalPoints': 'Total Points',
+        'sportbook_game_TeamTotalPoints': 'Team Total Points',
+        'sportbook_game_Date': 'Date',
+        'sportbook_left_menu_futureProps': 'FUTURE PROPS',
+
+        'sportbook_left_menu_oddsToWin': 'ODDS TO WIN',
+        'sportbook_report_Ticket': 'Ticket',
+        'sportbook_report_Agent': 'Agent',
+        'sportbook_report_Customer': 'Customer',
+        'sportbook_report_Name': 'Name',
+        'sportbook_report_Password': 'Password',
+        'sportbook_report_BetType': 'Bet Type',
+        'sportbook_report_Amount': 'Amount',
+        'sportbook_report_ToWin': 'To Win',
+        'sportbook_report_Description': 'Description',
+        'sportbook_report_Picks': 'Picks',
+        'sportbook_report_ContestName': 'Contest Name',
+        'sportbook_report_Price': 'Price',
+        'sportbook_report_Wagered': 'Wagered',
+        'sportbook_report_ContestDescription': 'Contest Description',
+        'sportbook_report_TotalfortheGame': 'Total for the Game',
+        'sportbook_report_Risk': 'Risk',
+        'sportbook_report_ChangesAppliedSuccesfully': 'Changes applied succesfully',
+        'sportbook_report_Active': 'Sports',
+        'sportbook_report_Casino': 'Casino',
+        'sportbook_report_Live': 'Live',
+        'sportbook_report_CurrentBalance': 'Current Balance',
+        'sportbook_report_CreditLimit': 'Credit Limit',
+        'sportbook_report_WagerLimit': 'Wager Limit',
+        'sportbook_report_ParlayMaxbet': 'Parlay',
+        'sportbook_report_TeaserMaxBet': 'Teaser',
+        'sportbook_report_LiveLimit': 'Live Limit',
+        'sportbook_report_LiveParlay': 'Live Parlay',
+        'sportbook_report_ContestMaxbet': 'Contest',
+        'sportbook_report_FutureMaxbet': 'Future Prop',
+        'sportbook_report_SettleFigure': 'Settle Figure',
+        'sportbook_report_InetMinWager': 'Inet Min',
+        'sportbook_report_MinbetCU': 'CU Min',
+        'sportbook_report_Store': 'Store',
+        'sportbook_report_FreePlayBalance': 'Free Play',
+        'sportbook_report_Pending': 'Pending',
+        'sportbook_report_TheCustomerHasNotAccessLive': 'N/A* The customer has not access live interface yet.',
+        'sportbook_report_Agents': '',
+        'sportbook_report_NumberPlayers': 'NumberPlayers',
+        'sportbook_report_TOTAL': 'TOTAL',
+        'sportbook_report_Players': 'Players',
+        'sportbook_report_PlayersPending': 'Players/Pending',
+        'sportbook_report_FutureProp': 'Future Prop',
+
+        'sportbook_report_ActionReverseItem': 'Action Reverse Item',
+        'sportbook_report_ActionReverseBoxBirdcageItem': 'Action Reverse Box / Birdcage Item',
+        'sportbook_report_ExactaBoxItem': 'Exacta Box Item',
+        'sportbook_report_TrifectaBoxItem': 'Trifecta Box Item',
+        'sportbook_report_QuinellaBoxItem': 'Quinella Box Item',
+        'sportbook_report_DailyDoubleBoxItem': 'Daily Double Box Item',
+        'sportbook_report_Pick3BoxItem': 'Pick 3 Box Item',
+        'sportbook_report_Pick4BoxItem': 'Pick 4 Box Item',
+        'sportbook_report_Pick5BoxItem': 'Pick 5 Box Item',
+        'sportbook_report_Pick6BoxItem': 'Pick 6 Box Item',
+        'sportbook_report_Pick7BoxItem': 'Pick 7 Box Item',
+        'sportbook_report_Pick8BoxItem': 'Pick 8 Box Item',
+        'sportbook_report_Spread': 'Spread',
+        'sportbook_report_Total': 'Total',
+        'sportbook_report_TeamTotal': 'Team Total',
+        'sportbook_report_MoneyLine': 'Money Line',
+        'sportbook_report_Parlay': 'Parlay',
+        'sportbook_report_Teaser': 'Teaser',
+        'sportbook_report_IfBet': 'If Bet',
+        'sportbook_report_Future/Prop': 'Future / Prop',
+        'sportbook_report_ActionReverse': 'Action Reverse',
+        'sportbook_report_ActionReverseBox': 'Action Reverse Box',
+        'sportbook_report_RoundRobin': 'Round Robin',
+        'sportbook_report_ManualPlay': 'Manual Play',
+        'sportbook_report_HorseRace': 'Horse Race',
+        'sportbook_report_Exacta': 'Exacta',
+        'sportbook_report_Trifecta': 'Trifecta',
+        'sportbook_report_Quinella': 'Quinella',
+        'sportbook_report_DailyDouble': 'Daily Double',
+        'sportbook_report_HorseParlay': 'Horse Parlay',
+        'sportbook_report_Pick3': 'Pick 3',
+        'sportbook_report_Pick4': 'Pick 3',
+        'sportbook_report_Pick5': 'Pick 5',
+        'sportbook_report_Pick6': 'Pick 6',
+        'sportbook_report_Pick7': 'Pick 7',
+        'sportbook_report_Pick8': 'Pick 8',
+        'sportbook_report_HORSERACE': 'HORSERACE',
+        'admin_general_NOROWS': 'There are no records for the parameters used.',
+        'admin_general_chatOffline': 'Live Chat is offline.',
+        'admin_general_SAVE_LIMITS': 'Changes were succesfully applied to',
+        'admin_general_SAVE_TRANSACTION': 'The transaction has been created successfully.',
+        'admin_general_SAVE_NEW_ACCOUNT': 'Changes were succesfully applied!!',
+        'admin_general_BADSAVE': 'Changes were NOT applied!!',
+        'admin_general_DELETED': 'The information has been deleted successfully!!',
+        'admin_general_NO_DELETED': 'Error during the elimination.',
+        'admin_general_DELETED_TRANSACTION': 'Are you sure you want to delete the transaction number',
+        'admin_general_DELETED_WAGER': 'Are you sure to delete the selected',
+        'admin_general_REDFIGURE': 'Please set a Red Figure Percentage before saving!!',
+        'admin_general_INHERITMASTER': 'Select the desired Group to inherit: ',
+        'admin_general_INHERITOTHER': 'Select the desired Group to inherit: ',
+        'admin_general_EXTERNAL_LINK_URL': 'This account does not have an URL assigned.',
+        'admin_general_PERMISSION_DENI': "The used account doesn't have permissions!!",
+        'admin_general_VALID_CUSTOMER': 'Please enter a valid customer!!"',
+        'admin_general_CHANGE_TAB_OR_CUSTOMER': 'Changes in this account have been found without saving. Do you want to continue?',
+        'admin_general_CREATE_ACCOUNT': 'This account does not exist. Do you want to create it now?',
+        'admin_general_INHERIT_PACKAGE_PER': "Should this customer inherit the selected Agent's package?",
+        'admin_general_INHERIT_LIMITS': 'Remember to SAVE the changes before the inherit process. Are you sure you want to inherit the selected package?',
+        'admin_general_FREE_HALF_PTS': 'Please enter an amount greater than zero in order to apply free half points.',
+        'admin_general_MISSING_TRANSACTION': 'The transaction amount is missing or the specified date is invalid!!',
+        'admin_general_NEW_PACKAGE': 'Select the package:',
+        'admin_general_INVALID_ACCOUNT': "  isn't a valid account !!",
+        'admin_general_SUCCESSFUL_VERI': 'Successful verification !!',
+        'admin_general_CANCELL_BUTTON': 'The changes made will not apply, are you sure to continue? ',
+        'admin_general_EXPIRATION_DATE': 'Please enter an expiration date before saving.',
+        'admin_general_VALID_PARLAY': 'Select a valid Parlay!!',
+        'admin_general_VALIDATE_TEASER': 'Please go to Selected Teasers in order to save.',
+        'admin_general_EDIT_TRANSACTION': 'The information has been modified successfully.',
+        'admin_general_INVALIDTRANSACTION': 'Invalid transaction.',
+        'admin_general_DAILYFIGUREDATEISREQUIRED': 'Daily Figure Date is required.',
+        'admin_general_EMPTY_DATA': 'There do not contain details.',
+        'admin_general_CONFIRM_DELETED_TRANSACTION': 'Are you sure you want to delete the transaction number ',
+        'admin_general_DELETE_NOTE': 'Are you sure want to delete this note?',
+        'admin_general_DEFAULT': 'No valid message Code',
+        'admin_general_ThisAccountDoesNotExist': 'This account does not exist!!',
+        'admin_general_EnterAValidAccount': 'Please enter a valid account!!',
+        'admin_general_youDoesntHavePermissionToThisCustomer': "You doesn't have permission to this customer!!",
+        'admin_general_ChangesInThisAccountHaveBeenFoundWithoutSaving': 'Changes in this account have been found without saving. Do you want to continue?',
+        'betticker_general_CLEAR_CONFIRMATION': 'This action will clear the current screen and only new tickets will be added. Do you want to continue?',
+        'betticker_general_RESET_CONFIRMATION': 'This action will reload the Bet Ticker. You have to wait until the next refresh for this action to take effect. Do you want to continue?',
+        'bestlip_select_teaser': 'Please select a teaser',
+        'mobile_show_line': 'Show Lines',
+        'login_error_usuario': 'The username or password is incorrect.',
+        'login_error_sitio': 'You are not allowed to access this site. Please contact your agent','admin_general_NOROWSEXPIRED': 'The maximum amount of time casino or poker data is stored is 90 days. Details cannot be displayed.',
+        'sportbook_report_VivoOperatorId': 'VIVOOperatorID',
+        'lvaction_select_option': 'SELECT YOUR WAGER TYPE',
+        'lvaction_select_teams': 'Select teams',
+        'lvaction_IF_WIN_OR_TIE': 'IF WIN OR TIE',
+        'lvaction_IF_WIN_ONLY': 'IF WIN ONLY',
+        'lvaction_STRAIGHT': 'STRAIGHT',
+        'lvaction_Win_Amount': 'Win Amount',
+        'lvaction_Risk_Amount': 'Risk Amount',
+        'lvaction_Enter_Amount': "Enter Amount",
+        'lvaction_Title_Transactions_Details': 'Transactions Details for Ticket',
+        'lvaction_Open_Play': 'OPENPLAY',
+        'lvaction_Open_Selection': 'Open selection',
+        'lvaction_Parlays_Of': 'PARLAYS OF',
+        'lvaction_Least_Selections': 'You must make at least 2 selections',
+        'lvaction_Make_Least_Selections': 'You must make at least',
+        'lvaction_Wager_Details_Ticket': 'Wager Details for Ticket',
+        'lvaction_Wager_Won': 'Wager won',
+        'lvaction_Wager_Loss': 'Wager loss',
+        'lvaction_Wager_Lost': 'Wager lost',
+        'lvaction_Wager_SELECT': 'SELECT',
+        'lvaction_Wager_Select_Amount': 'Select Amount',
+        
+        'sportbook_cashout': 'CASHOUT',
+        'sportbook_singles_by_sports': 'SINGLES BY SPORT',
+        'sportbook_betslip_YourTickketSlipIsEmpty': 'Your Ticket Slip is empty',
+        'sportbook_betslip_PurchaseTicket': "Complete Purchase",
+        'sportbook_betslip_DeleteToBetslip': 'Removed from betslip',
+        'sportbook_UpcomingEvents': 'Upcoming Events',
+        'sportbook_report_Cashier': 'Cashier',
+        
+        'sportbook_must_choose_at_least_1_selection': 'You must choose at least 1 selection in order to continue',
+        'sportbook_upcoming_featured_events': 'Upcoming Featured Events',
+    };
+
+    var suspendedMessages = {
+        "betluckys.ag": 'Wagering has been suspended. Please contact customer service for more information',
+        "10.0.66.22": 'Wagering has been suspended. Please contact customer service for more information'
+    };
+</script>
+
+        <!--BEGIN MODAL FADE-->
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="text-align: center;">
+                    <h4 class="modal-title" id="myModalLabel">Attention</h4>
+                </div>
+            </div>
+            <div class="modal-body">
+                <span id="confirmationModalDisplay" style="text-align:center;font-size: 16px;color:#000000;">
+
+                </span>
+            </div>
+            <div class="modal-footer" id="footerButtons"></div>
+        </div>
+    </div>
+</div>
+<!--END MODAL FADE-->
+
+<style>
+    #ModalNotifiCookies p ,#ModalNotifiCookies h4{
+        color: #000 !important;
+    }
+    #ModalNotifiCookies{
+	z-index: 1041;
+    }
+</style>
+        
+<!-- Modal -->
+<div class="modal fade" id="modalLogin" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="padding: 0;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Welcome</h4>
+            </div>
+            <div class="modal-body">
+                <input type=hidden name='ioBB' id='ioBB' value="">
+                <input type=hidden name='fpBB' id='fpBB' value="">
+                <div id="frmLogin" class="form-inline">
+                    <div>
+                        <input type="text" class="form-control modal-input-inline" name="user" id="user" placeholder="Account" value='' />
+                    </div>
+                    <div style="margin-bottom: 5px;"></div>
+                    <div>
+                        <input type="password" class="form-control modal-input-inline" name="password" id="password" maxlength="50" placeholder="Password" value=''>
+                    </div>
+                    <div class='extra-info remember'>
+                       <span>Remember Me</span>  <input type="checkbox" id="chkRemember" />
+                    </div>
+                    <div class="loginError" style="display:none">
+                        The username, pin or password is incorrect                    </div>
+                    <div class="modal-footer">
+                        <div class='extra-info row'>
+                           
+                            <input type="hidden" id="txtRedirectLogin" name="redirect" value="">
+                            <input type="hidden" id="redirectVip" name="redirectVip" value="">
+                        
+                                                <button id="btnEntrar" class="btn btn-default" type="button" value="Enter" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i>">LOGIN</button>
+                        
+                         
+                            
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+
+        $("#hlForgotPassword").click(function(e) {
+            e.preventDefault();
+
+            var buttons = "";
+            buttons += "<button id=\"forgotPassswordButton\" name=\"forgotPasswordButton\" onclick=\"sendPass();\" type=\"button\" class=\"btn btn-success\">";
+            buttons += "Submit";
+            buttons += "</button>";
+            $('#footerButtonsPass').html(buttons);
+            $('#txtEmail').val("");
+
+            $("#modalLogin").modal("hide");
+            $("#forgotPasswordModal").modal("show");
+        });
+
+    });
+
+    function login() {
+        $("#btnEntrar").button('loading');
+        if ($.trim($("#user").val()) != "" || $.trim($("#password").val()) != "") {
+            $(".loginError").css("display", "none");
+
+            if ($('#chkRemember').is(':checked')) {
+                var user = $('#user').val();
+                var password = $('#password').val();
+
+                // set cookies to expire in 14 days
+                $.cookie('user', user, {
+                    expires: 14
+                });
+                $.cookie('password', password, {
+                    expires: 14
+                });
+                $.cookie('remember', true, {
+                    expires: 14
+                });
+            } else {
+                // reset cookies
+                $.cookie('user', null);
+                $.cookie('password', null);
+                $.cookie('remember', null);
+            }
+            var redirectVip = $('#redirectVip').val(); 
+            if (!doLogin($("#user").val(), $("#password").val(), redirectVip, $("#ioBB").val(), $("#fpBB").val())) {
+                $("#btnEntrar").button('reset');
+                $("#user").focus();
+                $(".loginError label").html("The username, pin or password is incorrect");
+                $(".loginError").css("display", "block");
+                return false;
+            } else {
+                $(".loginError").css("display", "none");
+                return true;
+            }
+        } else {
+            $(".loginError label").html("Pin or password empty");
+            $(".loginError").css("display", "block");
+            //alert("Pin or password empty");
+            return false;
+        }
+    }
+
+    function sendPass() {
+        var parametros = {
+            email: $("#txtEmail").val()
+        };
+
+        $.ajax({
+            type: "POST",
+            url: "/Pages/getAccountMail",
+            dataType: "json",
+            async: true,
+            data: parametros,
+            beforeSend: function() {
+                $("#wrapper .overlay").height($("#wrapper").height());
+                $("#wrapper .overlay").width($("#wrapper").width());
+                $("#wrapper .overlay").css("display", "block");
+            },
+            complete: function() {
+                $("#wrapper .overlay").css("display", "none");
+            },
+            success: function(data) {
+
+                if (data["Result"] == -1) {
+                    showMessage("BADSAVE", data["Message"], null);
+                    $("#forgotPasswordModal").modal("toggle");
+                } else {
+                    showMessage("SAVE", data["Message"], null);
+                    $("#forgotPasswordModal").modal("toggle");
+                }
+            },
+            error: function(request, status, error) {
+                alert(request.responseText);
+            }
+        });
+    }
+</script> 
+<style>
+    #modalLogin .pt-1 {
+        padding-top: 1rem;
+    }
+    #modalLogin .left a{
+        text-decoration: revert;
+    }
+    .remember{
+        padding: 13px 0 !important;
+    }
+    .remember span{
+        float: left;
+        margin-right: 4rem;
+        margin-left: 0.5rem;
+    } 
+</style>
+                <!--BEGIN MODAL FADE-->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<div style="text-align: center;">
+					<h4 class="modal-title" id="myModalLabel">Forgot Username/Password?</h4>
+				</div>
+			</div>
+			<div class="modal-body" style="text-align: center;color:#000000;">
+				<div>
+<p style="color:#000000;">
+To receive your username and password, please enter your email in the box below. If you continue experiencing issues, please contact us at 
+</p></div>
+                <div>
+					<input type="Email" id="txtEmail" class="form-control" name="txtEmail" placeholder="Email" value="" style="margin-right: auto;
+    margin-left: auto;width: 80%;font-size: 14px;line-height: 1.42857143;box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);border-radius: 4px;">
+				</div>
+			</div>
+			<div class="modal-footer" id="footerButtonsPass">
+				
+			</div>
+		</div>
+	</div>
+</div>
+<!--END MODAL FADE-->    <!-- <script src="/js/bootstrap.bundle.min.js"></script> -->
+
+        <script src="/playersVip/js/bootstrap.bundle.min.js"></script>
+        <script src="/playersVip/js/main.js?v=17928614305444"></script>
+        <script type="text/javascript" src="/js/functions.js?v=17928614305444"></script><script type="text/javascript" src="/js/functions_theme.js?v=17928614305444"></script><script type="text/javascript" src="/js/../js/plugins/jquery.cookie.js?1678324578"></script>
+        <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "cfaf409807a94417ac339c70e85e2318"}'></script><!-- End Cloudflare Web Analytics -->
+    </body>
+
+</html>
