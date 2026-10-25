@@ -220,6 +220,21 @@
   },
   "es_index": {
    "url": "https://epgshare01.online/epgshare01/"
+  },
+  "lematin_aloula": {
+   "url": "https://lematin.ma/television/aloula"
+  },
+  "lematin_2m": {
+   "url": "https://lematin.ma/television/2m"
+  },
+  "lematin_arryadia": {
+   "url": "https://lematin.ma/television/arryadia"
+  },
+  "lematin_medi1": {
+   "url": "https://lematin.ma/television/medi1"
+  },
+  "rotana_csvpage": {
+   "url": "https://rotana.net/%D8%AC%D8%AF%D9%88%D9%84-%D8%A7%D9%84%D8%A8%D8%B1%D8%A7%D9%85%D8%AC/"
   }
  }
 }
