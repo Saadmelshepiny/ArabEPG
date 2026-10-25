@@ -22,7 +22,7 @@ python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channel
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
 cp cloud/linked_refs.json public/linked_refs.json 2>/dev/null || echo '{}' > public/linked_refs.json
-python3 tools/make_refs.py --src ziko/configs --out public/refs.json && gzip -9 -f public/refs.json || true
+python3 tools/make_refs.py --src ziko/configs --src cloud/extra_refs --out public/refs.json && gzip -9 -f public/refs.json || true
 
 # Arabic for the English guides of Arabic channels: real titles learned from bilingual sites, then machine
 # translation of the rest and of the descriptions. Never blocks publishing.

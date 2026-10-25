@@ -29,11 +29,11 @@ def key_of(ref):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--src', required=True)
+    ap.add_argument('--src', required=True, action='append', help='folder with *.channels.xml (can be given again)')
     ap.add_argument('--out', required=True)
     a = ap.parse_args()
     refs = {}
-    for f in sorted(glob.glob(os.path.join(a.src, '*.channels.xml'))):
+    for f in sorted(x for d in a.src for x in glob.glob(os.path.join(d, '*.channels.xml'))):
         text = open(f, encoding='utf8', errors='replace').read()
         for cid, ref in re.findall(r'<channel id="([^"]+)">([^<]+)</channel>', text):
             k = key_of(ref)

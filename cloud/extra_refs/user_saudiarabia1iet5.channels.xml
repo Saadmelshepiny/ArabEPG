@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<channels>
+	<channel id="Rotana Cinema Masr.sa">1:0:19:83E:15:800:DCA0000:0:0:0:</channel>
+	<channel id="Rotana Cinema HD.sa">1:0:1:83B:15:800:DCA0000:0:0:0:</channel>
+	<channel id="Rotana Cinema HD.sa">1:0:19:5141:820:E0:1040000:0:0:0:</channel>
+	<channel id="Rotana Classic HD.sa">1:0:1:838:15:800:DCA0000:0:0:0:</channel>
+	<channel id="Rotana Classic HD.sa">1:0:19:5143:820:E0:1040000:0:0:0:</channel>
+	<channel id="Rotana Comedy.sa">1:0:19:5142:820:E0:1040000:0:0:0:</channel>
+	<channel id="Rotana Drama HD.sa">1:0:1:839:15:800:DCA0000:0:0:0:</channel>
+	<channel id="Rotana Drama HD.sa">1:0:19:5145:820:E0:1040000:0:0:0:</channel>
+	<channel id="Rotana Khalijia HD.sa">1:0:19:5144:820:E0:1040000:0:0:0:</channel>
+	<channel id="Rotana Khalijia HD.sa">1:0:1:837:15:800:DCA0000:0:0:0:</channel>
+	<channel id="Zekrayat.sa">1:0:1:15E1:1A:2BE:DCA0000:0:0:0:</channel>
+	<channel id="Saudi Sunnah.sa">1:0:1:15E2:1A:2BE:DCA0000:0:0:0:</channel>
+	<channel id="Sharjah Quran.sa">1:0:19:8:208:2BE:DCA0000:0:0:0:</channel>
+	<channel id="Asharq.sa">1:0:19:65:D098:77E:DCA0000:0:0:0:</channel>
+	<channel id="RT Arabic.sa">1:0:19:33B:8:800:DCA0000:0:0:0:</channel>
+	<channel id="Sky News Arabia HD.sa">1:0:19:7DF:14:800:DCA0000:0:0:0:</channel>
+	<channel id="Al Arabiya HD.sa">1:0:1:3:3B:800:DCA0000:0:0:0:</channel>
+	<channel id="Al Hadath.sa">1:0:19:19C9:42:800:DCA0000:0:0:0:</channel>
+	<channel id="France 24.sa">1:0:1:1734:1F4:5000:DCA0000:0:0:0:</channel>
+	<channel id="Al Thaqafeya.sa">1:0:19:68:D28C:77E:DCA0000:0:0:0:</channel>
+	<channel id="Oman Mubasher.sa">1:0:1:4B3:C:800:DCA0000:0:0:0:</channel>
+	<channel id="Al Arabiya Business.sa">1:0:19:C:3B:800:DCA0000:0:0:0:</channel>
+	<channel id="Oman Sport.sa">1:0:1:4B2:C:800:DCA0000:0:0:0:</channel>
+	<channel id="Asharq Documentary.sa">1:0:19:66:D098:77E:DCA0000:0:0:0:</channel>
+	<channel id="Asharq Discovery.sa">1:0:19:67:D098:77E:DCA0000:0:0:0:</channel>
+	<channel id="Oman Al Thakafeyah.sa">1:0:1:4B4:C:800:DCA0000:0:0:0:</channel>
+	<channel id="Sharjah Sports.sa">1:0:19:6:208:2BE:DCA0000:0:0:0:</channel>
+	<channel id="AD Sports 1.sa">1:0:1:5:32:64:DCA0000:0:0:0:</channel>
+	<channel id="AD Sports 2.sa">1:0:1:6:32:64:DCA0000:0:0:0:</channel>
+	<channel id="Dubai Sports HD.sa">1:0:19:5:D1C4:77E:DCA0000:0:0:0:</channel>
+	<channel id="Dubai Sports 2.sa">1:0:19:6:D1C4:77E:DCA0000:0:0:0:</channel>
+	<channel id="Abu Dhabi.sa">1:0:19:89C:16:800:DCA0000:0:0:0:</channel>
+	<channel id="Abu Dhabi.sa">1:0:19:1CF7:4A:800:DC00000:0:0:0:</channel>
+</channels>
