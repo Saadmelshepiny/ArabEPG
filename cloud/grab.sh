@@ -36,24 +36,28 @@ if [ "$site" = "translate" ]; then
   ls -la "$work"
   exit 0
 fi
-python3 tools/make_catalog.py --iptv iptv-epg --cloud cloud/channels >/dev/null
-list="$work/ch_${site}.${part}.xml"
-python3 cloud/chan_tools.py split "cloud/channels/${site}.channels.xml" "$part" "$parts" "$list"
-read days delay conns <<< "$(python3 cloud/chan_tools.py opts "$site")"
-out="$work/out_${site}.${part}.xml"
-echo "== $site part $part/$parts: days=$days delay=$delay connections=$conns"
-cd iptv-epg
-npx tsx scripts/commands/epg/grab.ts --channels="$list" --output="$out" \
-  --days="$days" --maxConnections="$conns" --delay="$delay" --timeout=30000 || true
-cd "$root"
-if python3 cloud/chan_tools.py missing "$list" "$out" "$work/retry_${site}.${part}.xml"; then
-  echo "== retry"
-  sleep 20
+grab() {
+  python3 tools/make_catalog.py --iptv iptv-epg --cloud cloud/channels >/dev/null
+  list="$work/ch_${site}.${part}.xml"
+  python3 cloud/chan_tools.py split "cloud/channels/${site}.channels.xml" "$part" "$parts" "$list"
+  read days delay conns <<< "$(python3 cloud/chan_tools.py opts "$site")"
+  out="$work/out_${site}.${part}.xml"
+  echo "== $site part $part/$parts: days=$days delay=$delay connections=$conns"
   cd iptv-epg
-  npx tsx scripts/commands/epg/grab.ts --channels="$work/retry_${site}.${part}.xml" \
-    --output="$work/out_${site}.${part}.retry.xml" \
-    --days="$days" --maxConnections=1 --delay=$(( delay > 2000 ? delay : 2000 )) --timeout=45000 || true
+  npm run --silent grab -- --channels="$list" --output="$out" \
+    --days="$days" --maxConnections="$conns" --delay="$delay" --timeout=30000 || true
   cd "$root"
-fi
-rm -f "$work"/ch_*.xml "$work"/retry_*.xml
-ls -la "$work"
+  if python3 cloud/chan_tools.py missing "$list" "$out" "$work/retry_${site}.${part}.xml"; then
+    echo "== retry"
+    sleep 20
+    cd iptv-epg
+    npm run --silent grab -- --channels="$work/retry_${site}.${part}.xml" \
+      --output="$work/out_${site}.${part}.retry.xml" \
+      --days="$days" --maxConnections=1 --delay=$(( delay > 2000 ? delay : 2000 )) --timeout=45000 || true
+    cd "$root"
+  fi
+  rm -f "$work"/ch_*.xml "$work"/retry_*.xml
+  ls -la "$work"
+}
+# the log is published (epg branch, tr/grab/) so problems can be read without signing in to GitHub
+grab 2>&1 | tee "$work/out_grablog_${site}.${part}.xml"

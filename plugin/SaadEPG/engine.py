@@ -1066,7 +1066,85 @@ class Fetcher(object):
         self.cloud_files[fname] = path
         return path
 
+    # ---- per-channel files: only your channels are downloaded (a few KB each, several at a time)
+    def has_chunks(self, fname):
+        f = (self.index.get('files') or {}).get(fname) or {}
+        return bool(f.get('ch') and self.index.get('chunks') and
+                    u(self.cfg.get('cloud_url', '')).startswith('http'))
+
+    def chunks(self, pairs, progress=True):
+        """[(fname, cid)] -> ({(fname, cid): events}, set of files that should be read whole instead)"""
+        import hashlib
+        try:
+            from urllib.parse import quote
+        except ImportError:
+            from urllib import quote
+        base = self.cfg['cloud_url']
+        pat = (self.index.get('chunks') or {}).get('path') or 'ch/%s/%s.json.gz'
+        days = self.cfg['days']
+        lower, limit = time.time() - 6 * 3600, time.time() + days * 86400
+        prefer_en = sources.XML_PREFER_EN
+        todo = list(pairs)
+        res, errors, lock = {}, {}, threading.Lock()
+        step = self.step
+
+        def one(fname, cid):
+            h = hashlib.sha1(cid.encode('utf-8') if not isinstance(cid, bytes) else cid).hexdigest()[:16]
+            url = base + pat % (quote(fname.encode('utf-8') if not PY3 else fname), h)
+            try:
+                obj = json.loads(sources.http_get(url, timeout=40).decode('utf-8'))
+            except Exception as e:
+                if '404' in str(e):
+                    return []         # no programmes for this channel in the cloud
+                raise
+            en = obj.get('en') or {}
+            out = []
+            for i, e in enumerate(obj.get('e') or []):
+                st, dur = int(e[0]), int(e[1])
+                if st + dur <= lower or st >= limit:
+                    continue
+                title, desc = e[2], e[4]
+                if prefer_en and str(i) in en:
+                    title, desc = en[str(i)][0] or title, en[str(i)][1] or desc
+                out.append((st, dur, title, e[3], desc, int(e[5] if len(e) > 5 else 0)))
+            return out
+
+        def worker():
+            while True:
+                with lock:
+                    if not todo or (self.stop and self.stop()):
+                        return
+                    fname, cid = todo.pop()
+                try:
+                    evs = one(fname, cid)
+                    with lock:
+                        res[(fname, cid)] = evs
+                except Exception as e:
+                    with lock:
+                        errors.setdefault(fname, []).append(str(e)[:80])
+                if progress:
+                    step(1)
+        threads = [threading.Thread(target=worker) for _i in range(min(8, max(1, len(todo))))]
+        for t in threads:
+            t.daemon = True
+            t.start()
+        for t in threads:
+            t.join()
+        per_file = {}
+        for fname, _c in pairs:
+            per_file[fname] = per_file.get(fname, 0) + 1
+        bad = set(f for f, errs in errors.items() if len(errs) > max(2, per_file.get(f, 0) // 5))
+        if errors:
+            log(u'السحابة (ملفات القنوات): تعذر تحميل %d قناة%s' % (
+                sum(len(v) for v in errors.values()),
+                (u' - سيُقرأ الملف كاملا: %s' % u'، '.join(sorted(bad))) if bad else u''))
+        return res, bad
+
     def from_cloud(self, fname, ids):
+        if self.has_chunks(fname):
+            got, bad = self.chunks([(fname, c) for c in ids], progress=False)
+            if fname not in bad:
+                return dict((c, evs) for (_f, c), evs in got.items())
         path = self._cloud_file(fname)
         if not path:
             return {}
@@ -1089,10 +1167,25 @@ class Fetcher(object):
             for i in ids:
                 fname, _, cid = i.partition('/')
                 byfile.setdefault(fname, []).append(cid)
+            fast = [(f, c) for f, cids in byfile.items() if self.has_chunks(f) for c in cids]
+            got, bad = self.chunks(fast) if fast else ({}, set())
+            for (f, c), evs in got.items():
+                if f not in bad:
+                    res[f + '/' + c] = evs
             for fname, cids in byfile.items():
-                for cid, evs in self.from_cloud(fname, cids).items():
-                    res[fname + '/' + cid] = evs
-                self.step(len(cids))
+                if self.has_chunks(fname) and fname not in bad:
+                    continue
+                path = self._cloud_file(fname)       # the old way: the whole file
+                if path:
+                    try:
+                        whole, _n = sources.parse_xmltv_file(path, set(cids), self.cfg['days'], self.stop)
+                    except Exception as e:
+                        log(u'السحابة: خطأ في قراءة %s (%s)' % (fname, e))
+                        whole = {}
+                    for cid, evs in whole.items():
+                        res[fname + '/' + cid] = evs
+                if not self.has_chunks(fname):
+                    self.step(len(cids))
             return res
         if src == 'xmltv':
             for url in cfg['xmltv_urls']:

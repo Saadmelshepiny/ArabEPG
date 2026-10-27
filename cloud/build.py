@@ -590,6 +590,15 @@ def main():
         status['files']['gold'] = {'ok': False, 'error': str(e)[:300]}
         print('gold failed: %s' % e)
 
+    # one small file per channel: a receiver downloads only its own channels
+    try:
+        import chunks
+        chunks.build(gdir, a.out, index, days)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print('per-channel files failed: %s' % e)
+
     if a.tr and pairs:
         with gzip.open(os.path.join(a.tr, 'pairs_ar.json.gz'), 'wt', encoding='utf-8', compresslevel=9) as f:
             json.dump(pairs, f, ensure_ascii=False, separators=(',', ':'))

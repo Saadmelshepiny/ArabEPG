@@ -16,6 +16,7 @@ for l in $(python3 -c "import json;print(' '.join(x for g in json.load(open('clo
   fi
 done
 cat work/out_trlog_*.xml > public/tr/log.txt 2>/dev/null || true
+mkdir -p public/tr/grab && for f in work/out_grablog_*.xml; do [ -f "$f" ] && tail -c 60000 "$f" > "public/tr/grab/$(basename "$f" .xml).txt"; done; true
 (python3 cloud/sattv.py merge work work/sattv_ar.xml work/sattv_en.xml || echo "sat.tv merge skipped") 2>&1 | tee -a public/tr/official.txt
 python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr 2>&1 | tee public/tr/build.txt
 [ "${PIPESTATUS[0]}" = "0" ] || exit 1
