@@ -1,6 +1,6 @@
 {
- "version": "2.1",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.1_all.ipk",
- "date": "2026-10-22",
- "notes": "إيقاف ترجمة الدليل: كل الأسماء والوصف كما تكتبها القناة (يمكن تشغيلها من الإعدادات)"
+ "version": "2.2",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.2_all.ipk",
+ "date": "2026-10-27",
+ "notes": "تحديث في دقيقة (ملف لكل قناة)، الدليل يتبع البث، نسبة الثقة، باقات ذكية، ربط القنوات ببصمة الجدول، جمع دليل القمر ليلا"
 }
