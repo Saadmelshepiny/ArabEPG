@@ -183,6 +183,22 @@ def rank(fname, ch, now, hi):
     return (ar_ratio(evs) >= 0.6, -tier, cover // 3600, sum(1 for e in evs if len(e.get('desc', '')) > 20))
 
 
+def agreement(members, now, hours=24):
+    """share (0-100) of the best member's programmes of the next day that another source starts at the same
+    minute (+-5): the confidence of the golden channel"""
+    prim = [e for e in members[0][2]['ev'] if now - 3600 <= e['start'] < now + hours * 3600]
+    if not prim or len(members) < 2:
+        return 0
+    others = sorted(e['start'] for _f, _c, ch in members[1:] for e in ch['ev'])
+    import bisect
+    hit = 0
+    for e in prim:
+        i = bisect.bisect_left(others, e['start'] - 300)
+        if i < len(others) and others[i] <= e['start'] + 300:
+            hit += 1
+    return int(round(hit * 100.0 / len(prim)))
+
+
 def merge(members, now, hi):
     """members: [(fname, cid, ch)] best first -> merged events"""
     prim = [e for e in members[0][2]['ev'] if e['stop'] > now - WINDOW_BACK and e['start'] < hi]
@@ -279,6 +295,7 @@ def build(gdir, index, catalog, days=3, data=None, log=print):
     for node in nodes:
         groups.setdefault(uf.find(node), []).append(node)
     gold, members_map, used_ids = [], {}, set()
+    conf = {}
     for g in groups.values():
         if len(g) < 2:
             continue
@@ -298,6 +315,7 @@ def build(gdir, index, catalog, days=3, data=None, log=print):
         if len(evs) < 4:
             continue
         gold.append((gid, names[:10], evs, ms))
+        conf[gid] = agreement(ms, now)
         for f, c, _ch in ms:
             members_map[plugin_key(f, (index['files'].get(f) or {}).get('kind'), c)] = gid
     out = os.path.join(gdir, 'gold.xml.gz')
@@ -334,7 +352,10 @@ def build(gdir, index, catalog, days=3, data=None, log=print):
         'url': 'guides/gold.xml.gz', 'sat': sats, 'title': 'الدليل الذهبي', 'kind': 'xmltv', 'region': 'ar',
         'lang': 'ar', 'size': os.path.getsize(out), 'programmes': n_ev,
         'channels': [[gid, names] for gid, names, _e, _m in gold]}
-    index['gold'] = {'file': 'gold', 'members': members_map}
+    index['gold'] = {'file': 'gold', 'members': members_map, 'conf': conf}
+    good = len([1 for v in conf.values() if v >= 80])
+    log('gold confidence: %d channels agree >= 80%%, %d between 50 and 80, %d below 50' % (
+        good, len([1 for v in conf.values() if 50 <= v < 80]), len([1 for v in conf.values() if v < 50])))
     log('gold: %d channels from %d members (%d sources), %d programmes, %d English titles given their Arabic one' % (
         len(gold), len(members_map), len(data), n_ev, n_ar))
     for gid, names, evs, ms in sorted(gold, key=lambda g: -len(g[3]))[:12]:

@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.1'
+VERSION = '2.2'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -94,6 +94,9 @@ C.ar_tr_mode = ConfigSelection(default='desc', choices=[
 C.lock_epg = ConfigYesNo(default=True)
 C.translate = ConfigYesNo(default=False)
 C.gold = ConfigYesNo(default=True)
+C.follow_live = ConfigYesNo(default=True)
+C.night_scan = ConfigYesNo(default=True)
+C.smart_bq_t = ConfigText(default='0', fixed_size=False)
 C.web = ConfigYesNo(default=True)
 C.web_port = ConfigSelection(default='8899', choices=[('8899', '8899'), ('8898', '8898'), ('8090', '8090'), ('9090', '9090')])
 C.foreign_lang = ConfigSelection(default='en', choices=[
@@ -303,6 +306,7 @@ MAIN_ITEMS = [
     (u'أدوات متقدمة', 'advanced', u'الباقات، الإحصائيات، النسخ الاحتياطي...'),
 ]
 ADVANCED_ITEMS = [
+    (u'الباقات الذكية', 'smartbq', u'أفلام، مسلسلات، رياضة، أخبار... تلقائيا'),
     (u'اختيار الباقات التي يحدّثها البلوجين', 'bouquets', u'الباقات المفضلة أولا'),
     (u'إحصائيات الباقات وعدد البرامج', 'stats', u'لكل باقة: قنوات ومربوطة وبرامج'),
     (u'حفظ الدليل على الهارد (epg.dat)', 'epgfile', u'يبقى الدليل بعد إعادة التشغيل'),
@@ -418,6 +422,9 @@ class SaadEPGMain(BaseScreen):
             self.session.open(views.SeriesScreen)
         elif a == 'smap':
             self.session.open(views.SeriesMapScreen)
+        elif a == 'smartbq':
+            self.session.openWithCallback(self._smart, ChoiceBox, title=T(u'الباقات الذكية'), list=[
+                (T(u'إنشاء / تحديث الباقات الذكية من قنواتك'), 'make'), (T(u'حذف الباقات الذكية'), 'remove')])
         elif a == 'advanced':
             self.session.openWithCallback(lambda r: r and self.run(r), MenuScreen, u'أدوات متقدمة', self.advanced_items)
         elif a == 'epgfile':
@@ -466,6 +473,29 @@ class SaadEPGMain(BaseScreen):
         elif a == 'reset':
             self.session.openWithCallback(self._reset, MessageBox,
                                           T(u'حذف كل الربط اليدوي والعودة للربط التلقائي الذكي؟'), MessageBox.TYPE_YESNO)
+
+    def _smart(self, c):
+        if not c:
+            return
+        if c[1] == 'remove':
+            features.remove_smart()
+            self.session.open(MessageBox, T(u'تم حذف الباقات الذكية.'), MessageBox.TYPE_INFO, timeout=5)
+            return
+        epg = eEPGCache.getInstance()
+        bqs = engine.get_bouquets()
+        self.session.open(MessageBox, T(u'جاري تصنيف قنواتك (دقيقة تقريبا)...'), MessageBox.TYPE_INFO, timeout=4)
+        self._sjob = BackgroundJob(lambda: features.smart_plan(epg, bqs), self._smart_done)
+
+    def _smart_done(self, plan):
+        if isinstance(plan, Exception):
+            self.session.open(MessageBox, T(u'خطأ: %s' % plan), MessageBox.TYPE_ERROR)
+            return
+        out = features.write_smart(plan)
+        C.smart_bq_t.value = str(int(time.time()))
+        C.smart_bq_t.save()
+        names = dict(features.SMART)
+        self.session.open(MessageBox, T(u'تم إنشاء الباقات الذكية (تجدها في قائمة الباقات وتتحدث يوميا):\n' + u'\n'.join(
+            u'%s: %d قناة' % (names[k], v) for k, v in out.items())), MessageBox.TYPE_INFO)
 
     def _offer_update(self, info):
         if isinstance(info, dict):
@@ -618,6 +648,24 @@ def health_text():
             len(engine.locked_refs()), u'' if ok is not False else u'  - هذه الصورة لا تدعم التثبيت'))
     else:
         out.append(u'تثبيت دليل البلوجين: متوقف من الإعدادات')
+    # confidence of every channel the plugin fills
+    groups = {'accent': [], 'amber': [], 'red': []}
+    idx_now = engine.load_index()
+    names_all = None
+    for r in (st.get('filled') or {}):
+        _sc, lbl, col = engine.confidence(r, st, idx_now)
+        if lbl:
+            groups.setdefault(col, []).append((r, lbl))
+    out.append(u'الثقة في الدليل: مؤكد/متفق %d  |  غير مؤكد %d  |  مختلف بين المصادر %d' % (
+        len(groups['accent']), len(groups['amber']), len(groups['red'])))
+    if groups['red']:
+        names_all = dict(engine.get_services())
+        out.append(u'  راجع هذه القنوات (المصادر لا تتفق): ' + u'، '.join(
+            names_all.get(r, r) for r, _l in groups['red'][:25]))
+    nt = st.get('night') or {}
+    if nt.get('t'):
+        out.append(u'آخر مسح ليلي لدليل القمر: %s - %d قناة صار لها دليل (من %d)' % (
+            time.strftime('%d/%m %H:%M', time.localtime(nt['t'])), nt.get('gained', 0), nt.get('cands', 0)))
     out.append(u'رُفض لعدم مطابقة دليل القمر: %d' % h.get('rejected', 0))
     out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
     out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
@@ -1126,6 +1174,9 @@ class ChannelsScreen(BaseScreen):
             lines.append(u'تصحيح توقيت تلقائي: %+d ساعة' % (int(st['shift']) // 3600))
         if st:
             lines.append(u'')
+            sc, lbl, _col = engine.confidence(ref)
+            if lbl:
+                lines.append(u'الثقة: %s' % lbl)
             lines.append(u'آخر تحديث: %s' % time.strftime('%d/%m %H:%M', time.localtime(st.get('t', 0))))
             if st.get('until'):
                 lines.append(u'الدليل حتى: %s' % time.strftime('%d/%m %H:%M', time.localtime(st['until'])))
@@ -1568,6 +1619,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'عدد الأيام'), C.days),
             getConfigListEntry(T(u'تثبيت دليل البلوجين (لا يظهر دليل القمر فوقه)'), C.lock_epg),
             getConfigListEntry(T(u'الدليل الذهبي (كل مصادر القناة في جدول واحد)'), C.gold),
+            getConfigListEntry(T(u'الدليل يتبع البث (تأخير الماتشات والبرامج)'), C.follow_live),
+            getConfigListEntry(T(u'جمع دليل القمر ليلا في الاستاندباي (للقنوات بدون دليل)'), C.night_scan),
             getConfigListEntry(T(u'صفحة الموبايل (%s)' % web.address(int(C.web_port.value))), C.web),
             getConfigListEntry(T(u'منفذ صفحة الموبايل'), C.web_port),
             getConfigListEntry(T(u'تحديث تلقائي يومي'), C.autoupdate),
@@ -1686,6 +1739,15 @@ class AutoUpdate(object):
         # the update thread wrote blacklist.eit: enigma2 reads it again on the main thread
         self.lock_timer = make_timer(self.apply_lock)
         self.lock_timer.start(3000, False)
+        # the guide follows the broadcast: checked every minute on the channel being watched
+        self.live_timer = make_timer(self.follow_live)
+        self.live_timer.start(60000, False)
+        # standby: collect the satellite's own guide of the channels that have none
+        self.night = features.NightScan(session, make_timer)
+        try:
+            config.misc.standbyCounter.addNotifier(self.standby, initial_call=False)
+        except Exception as e:
+            print('[SaadEPG] standby watcher not available', e)
         # followed series: reminders / recordings for the coming days (every 3 hours)
         self.series_timer = make_timer(self.series)
         self.series_timer.startLongTimer(300)
@@ -1701,11 +1763,36 @@ class AutoUpdate(object):
     def series(self):
         self.series_timer.startLongTimer(3 * 3600)
         try:
+            if features.has_smart() and time.time() - int(C.smart_bq_t.value or 0) > 20 * 3600:
+                epg = eEPGCache.getInstance()
+                bqs = engine.get_bouquets()
+
+                def done(plan):
+                    if not isinstance(plan, Exception):
+                        out = features.write_smart(plan)
+                        C.smart_bq_t.value = str(int(time.time()))
+                        C.smart_bq_t.save()
+                        log(u'تحديث الباقات الذكية: %s' % u'، '.join(u'%s %d' % kv for kv in out.items()))
+                self._smart_job = BackgroundJob(lambda: features.smart_plan(epg, bqs), done)
+        except Exception as e:
+            log(u'الباقات الذكية: %s' % e)
+        try:
             n = features.schedule_series(self.session, eEPGCache.getInstance(), engine.get_services())
             if n:
                 self._popup(u'Saad EPG: أُضيف %d تذكير/تسجيل لمسلسلاتك' % n, 6)
         except Exception as e:
             log(u'مسلسلاتي: %s' % e)
+
+    def standby(self, *args):
+        if C.night_scan.value:
+            self.night.entered_standby()
+
+    def follow_live(self):
+        if not C.follow_live.value:
+            return
+        msg = features.follow_live(self.session, eEPGCache.getInstance())
+        if msg:
+            self._popup(msg, 6)
 
     def apply_lock(self):
         if engine.LOCK['dirty']:

@@ -353,3 +353,331 @@ def genre(title, short=u'', desc=u''):
         if rx.search(s):
             return g
     return None
+
+
+# --------------------------------------------------------------------- the guide follows the broadcast
+_LIVE = {'last': {}}
+
+
+def _same_title(a, b):
+    from difflib import SequenceMatcher
+    from .matcher import norm
+    x, y = norm(a), norm(b)
+    if not x or not y:
+        return False
+    if x == y or (len(x) > 4 and (x in y or y in x)):
+        return True
+    return SequenceMatcher(None, x, y).ratio() >= 0.75
+
+
+def follow_live(session, epgcache):
+    """main thread, every minute while a channel filled by the plugin is watched: the channel sends its own
+    "now" with the picture. A programme that started late or runs over (extra time in a match) moves the
+    rest of the plugin's guide for this channel, and the plugin's reminders / recordings with it.
+    -> message for the screen, or None"""
+    try:
+        sref = session.nav.getCurrentlyPlayingServiceReference()
+        ref = engine.clean_ref(sref.toString()) if sref else None
+        if not ref or not engine.is_locked(ref):
+            return None
+        service = session.nav.getCurrentService()
+        info = service and service.info()
+        ev = info and info.getEvent(0)
+        if not ev:
+            return None
+        s_title = u(ev.getEventName() or u'')
+        s_begin, s_dur = int(ev.getBeginTime() or 0), int(ev.getDuration() or 0)
+        now = int(time.time())
+        if not s_title or not s_begin or s_dur <= 0:
+            return None
+        ours = []
+        for x in epgcache.lookupEvent(['IBDTSE', (engine._enc(ref), 0, now - 4 * 3600, 10 * 60)]) or []:
+            if x and x[1] and x[2]:
+                ours.append((int(x[1]), int(x[2]), u(x[3] or u''), u(x[4] or u''), u(x[5] or u''), int(x[0] or 0)))
+        ours.sort()
+        near = [e for e in ours if abs(e[0] - s_begin) < 3 * 3600 and _same_title(e[2], s_title)]
+        if not near:
+            return None
+        e = min(near, key=lambda x: abs(x[0] - s_begin))
+        delta = s_begin - e[0]                                   # started earlier / later than the guide says
+        overrun = (s_begin + s_dur) - (e[0] + e[1])               # ends later than the guide says
+        if abs(delta) < 180:
+            delta = 0
+        if delta == 0 and overrun >= 300 and e[0] + e[1] <= now + 600:
+            delta = overrun                                      # still on air after its planned end
+            move_from = e[0] + e[1]
+            new = [(e[0], e[1] + delta) + e[2:]]
+        elif delta:
+            move_from = e[0]
+            new = []
+        else:
+            return None
+        if abs(delta) > 3 * 3600:
+            return None
+        key = (ref, e[0], delta)
+        if _LIVE['last'].get(ref) == key:
+            return None
+        _LIVE['last'][ref] = key
+        limit = now + 8 * 3600
+        for x in ours:
+            if x[0] >= move_from and x[0] < limit:
+                new.append((x[0] + delta,) + x[1:])
+        if not new:
+            return None
+        engine.import_events(epgcache, [ref], [(b, d, t, sh, lo, 0) for b, d, t, sh, lo, _eid in new])
+        moved = 0
+        for t in plugin_timers(session):
+            try:
+                if engine.clean_ref(str(t.service_ref)) == ref and move_from - 300 <= t.begin < limit:
+                    t.begin += delta
+                    t.end += delta
+                    session.nav.RecordTimer.timeChanged(t)
+                    moved += 1
+            except Exception:
+                pass
+        mins = int(round(delta / 60.0))
+        log(u'الدليل يتبع البث: %s %s %d دقيقة - تم تعديل %d برنامج%s' % (
+            s_title, u'متأخر' if mins > 0 else u'مبكر', abs(mins), len(new),
+            (u' و %d تذكير/تسجيل' % moved) if moved else u''))
+        return u'Saad EPG: البث %s %d دقيقة - تم تعديل مواعيد البرامج التالية%s' % (
+            u'متأخر' if mins > 0 else u'مبكر', abs(mins), (u' و %d تذكير/تسجيل' % moved) if moved else u'')
+    except Exception as e:
+        log(u'متابعة البث: %s' % e)
+        return None
+
+
+# --------------------------------------------------------------------- smart bouquets
+SMART = (('films', u'أفلام'), ('series', u'مسلسلات ودراما'), ('sport', u'رياضة'), ('news', u'أخبار'),
+         ('kids', u'أطفال'), ('religion', u'ديني'), ('docs', u'وثائقي'), ('music', u'موسيقى'))
+_NAME_CAT = (
+    ('sport', re.compile(u'(?i)(sport|bein|ssc|alkass|al kass|kass|eurosport|arryadia|رياض|سبورت|الكاس|الكأس|on ?time|yas|dazn|'
+                         u'espn|sky sport|polsat sport|nova sport|arena sport|match|futbol|calcio|football|tennis)')),
+    ('news', re.compile(u'(?i)(news|akhbar|أخبار|اخبار|الإخبارية|الاخبارية|jazeera|arabiya|العربية|hadath|الحدث|sky ?news|'
+                        u'cnn|bbc world|france ?24|euronews|rt |rusiya|alhurra|mayadeen|alghad|الغد|extra news|asharq|الشرق|'
+                        u'cnbc|bloomberg|tvn24|ntv|haber)')),
+    ('kids', re.compile(u'(?i)(kids|kid|cartoon|toon|junior|baby|spacetoon|majid|ماجد|طيور|toyor|karameesh|كراميش|ajyal|أجيال|'
+                        u'nick|disney|jeem|cbeebies|boomerang|duck|minimax|أطفال|اطفال)')),
+    ('religion', re.compile(u'(?i)(quran|qur.an|قرآن|القران|القرآن|sunnah|السنة|iqraa|اقرأ|majd|المجد|resalah|الرسالة|azhari|'
+                            u'الأزهر|noor|نور|hidayah|الهداية|islam|إسلام|makkah|مكة|madinah|المدينة|ctv|aghapy|miracle|sat-7)')),
+    ('docs', re.compile(u'(?i)(nat ?geo|national geographic|discovery|animal planet|history|documentary|وثائقي|الوثائقية|'
+                        u'doc|science|travel|viasat (explore|nature|history))')),
+    ('music', re.compile(u'(?i)(music|mazzika|مزيكا|rotana clip|روتانا كليب|melody hits|aghani|أغاني|اغاني|tarab|طرب|'
+                         u'mtv|vh1|clip|radio|fm\\b)')),
+    ('films', re.compile(u'(?i)(cinema|سينما|aflam|أفلام|افلام|movies?|film|mbc ?2|mbc ?max|mbc ?action|bollywood|zee aflam|'
+                         u'rotana classic|نايل سينما|hbo|cinemax|kino)')),
+    ('series', re.compile(u'(?i)(drama|دراما|series|مسلسلات|mosalsalat|hekayat|حكايات|novela|serie|zaman|زمان|hayat '
+                          u'mosalsalat)')),
+)
+
+
+def classify(name, events):
+    """-> category of a channel: its name first, otherwise what its guide mostly shows"""
+    for cat, rx in _NAME_CAT:
+        if rx.search(name):
+            return cat
+    count = {}
+    for e in events:
+        g = genre(e[2], e[3])
+        if g:
+            count[g] = count.get(g, 0) + e[1]
+    total = sum(e[1] for e in events) or 1
+    if count:
+        g, v = max(count.items(), key=lambda kv: kv[1])
+        if v >= 0.45 * total:
+            return {'film': 'films', 'series': 'series', 'sport': 'sport', 'news': 'news', 'kids': 'kids',
+                    'religion': 'religion'}.get(g)
+    return None
+
+
+def smart_plan(epgcache, bouquets):
+    """background thread: {category: [(ref, name)]} from the channels of your own bouquets"""
+    plan, seen = {}, set()
+    for bname, items in bouquets:
+        if u(bname).startswith(u'Saad EPG'):
+            continue
+        for ref, name in items:
+            if ref in seen:
+                continue
+            seen.add(ref)
+            evs = engine.read_events(epgcache, ref, 1)
+            cat = classify(name, evs)
+            if cat:
+                plan.setdefault(cat, []).append((ref, name))
+    for cat in plan:
+        plan[cat].sort(key=lambda x: x[1].lower())
+    return plan
+
+
+BQ_DIR = '/etc/enigma2'
+BQ_FILE = 'userbouquet.saadepg_%s.tv'
+
+
+def _bq_line(fn):
+    return '#SERVICE 1:7:1:0:0:0:0:0:0:0:FROM BOUQUET "%s" ORDER BY bouquet' % fn
+
+
+def write_smart(plan):
+    """main thread: write the bouquets, add them to the bouquet list and reload. -> {category: count}"""
+    idx = os.path.join(BQ_DIR, 'bouquets.tv')
+    try:
+        with open(idx) as f:
+            lines = f.read().splitlines()
+    except (IOError, OSError):
+        lines = ['#NAME User - Bouquets (TV)']
+    out = {}
+    for cat, title in SMART:
+        fn = BQ_FILE % cat
+        path = os.path.join(BQ_DIR, fn)
+        items = plan.get(cat) or []
+        if not items:
+            if os.path.exists(path):
+                os.remove(path)
+            lines = [x for x in lines if fn not in x]
+            continue
+        body = [u'#NAME Saad EPG - %s' % title]
+        for ref, name in items:
+            body.append(u'#SERVICE %s' % ref)
+            body.append(u'#DESCRIPTION %s' % name)
+        with open(path, 'wb') as f:
+            f.write((u'\n'.join(body) + u'\n').encode('utf-8'))
+        if not [1 for x in lines if fn in x]:
+            lines.append(_bq_line(fn))
+        out[cat] = len(items)
+    with open(idx, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    reload_bouquets()
+    return out
+
+
+def remove_smart():
+    idx = os.path.join(BQ_DIR, 'bouquets.tv')
+    try:
+        with open(idx) as f:
+            lines = f.read().splitlines()
+        lines = [x for x in lines if 'userbouquet.saadepg_' not in x]
+        with open(idx, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+    except (IOError, OSError):
+        pass
+    for cat, _t in SMART:
+        try:
+            os.remove(os.path.join(BQ_DIR, BQ_FILE % cat))
+        except OSError:
+            pass
+    reload_bouquets()
+
+
+def has_smart():
+    return any(os.path.exists(os.path.join(BQ_DIR, BQ_FILE % c)) for c, _t in SMART)
+
+
+def reload_bouquets():
+    try:
+        from enigma import eDVBDB
+        eDVBDB.getInstance().reloadBouquets()
+    except Exception as e:
+        log(u'إعادة تحميل الباقات: %s' % e)
+    try:
+        from Screens.InfoBar import InfoBar
+        if InfoBar.instance and getattr(InfoBar.instance, 'servicelist', None):
+            InfoBar.instance.servicelist.reloadBouquets()
+    except Exception:
+        pass
+
+
+# --------------------------------------------------------------------- night scan of the satellite's own guide
+class NightScan(object):
+    """In standby, every transponder that carries channels without any guide is tuned for a minute: the
+    receiver then collects the guide the satellite sends for all its channels (many Nilesat channels send
+    several days that the receiver never sees, because nobody watches them)."""
+    DWELL = 60
+    MAX_TP = 90
+
+    def __init__(self, session, timer_factory):
+        self.session = session
+        self.timer = timer_factory(self.step)
+        self.wait = timer_factory(self.begin)
+        self.todo, self.cands, self.active = [], [], False
+        self.standby = None
+
+    def entered_standby(self, wait=600):
+        try:
+            from Screens import Standby
+            self.standby = Standby.inStandby
+            if self.standby is not None and self.leave not in self.standby.onClose:
+                self.standby.onClose.append(self.leave)
+        except Exception:
+            pass
+        self.wait.startLongTimer(wait)
+
+    def leave(self):
+        self.wait.stop()
+        self.standby = None              # the picture is back: never stop the service now
+        if self.active:
+            self.finish(u'خرج الريسيفر من الاستاندباي')
+
+    def recording(self):
+        try:
+            return bool(self.session.nav.getRecordings())
+        except Exception:
+            return False
+
+    def begin(self):
+        from enigma import eEPGCache
+        st = engine.load_state()
+        if time.time() - (st.get('night') or {}).get('t', 0) < 20 * 3600 or self.recording():
+            return
+        epg = eEPGCache.getInstance()
+        tps, cands = {}, []
+        for ref, name in engine.get_services():
+            p = ref.split(':')
+            if len(p) < 10 or p[0] != '1' or engine.sat_of_ref(ref) in ('iptv', 'terrestrial'):
+                continue
+            if engine.is_locked(ref) or engine.epg_count(epg, ref, 24) >= 3:
+                continue
+            cands.append(ref)
+            tps.setdefault((p[4], p[5], p[6]), ref)
+        self.todo = list(tps.values())[:self.MAX_TP]
+        self.cands = cands
+        if not self.todo:
+            return
+        self.active = True
+        self.started = time.time()
+        log(u'مسح دليل القمر الليلي: %d تردد فيها %d قناة بدون دليل' % (len(self.todo), len(cands)))
+        self.step()
+
+    def step(self):
+        if not self.active:
+            return
+        if self.recording():
+            return self.finish(u'بدأ تسجيل')
+        if not self.todo:
+            return self.finish(None)
+        ref = self.todo.pop(0)
+        try:
+            from enigma import eServiceReference
+            self.session.nav.playService(eServiceReference(engine._enc(ref)))
+        except Exception as e:
+            log(u'مسح ليلي: %s' % e)
+        self.timer.startLongTimer(self.DWELL)
+
+    def finish(self, why):
+        from enigma import eEPGCache
+        self.active = False
+        self.timer.stop()
+        epg = eEPGCache.getInstance()
+        try:
+            if self.standby is not None:          # still in standby: no picture needed
+                self.session.nav.stopService()
+        except Exception:
+            pass
+        gained = len([r for r in self.cands if engine.epg_count(epg, r, 24) >= 3])
+        try:
+            epg.save()
+        except Exception:
+            pass
+        st = engine.load_state()
+        st['night'] = {'t': int(time.time()), 'gained': gained, 'cands': len(self.cands)}
+        engine.save_state(st)
+        log(u'مسح دليل القمر الليلي: %d قناة صار لها دليل من القمر (من %d بدون دليل)%s' % (
+            gained, len(self.cands), (u' - توقف: %s' % why) if why else u''))

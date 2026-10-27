@@ -425,6 +425,28 @@ def refresh_cloud(base=CLOUD_URL, max_age=6 * 3600, force=False, use_cloud=True,
     return load_index()
 
 
+def confidence(ref, state=None, idx=None):
+    """how sure the plugin is of a channel's guide -> (0-100 or None, label, colour)"""
+    state = state or state_ro()
+    f = (state.get('filled') or {}).get(ref)
+    if not f:
+        return None, u'', 'dim'
+    if f.get('v'):
+        return 100, u'مؤكد بدليل القمر', 'accent'
+    key = u(f.get('key', ''))
+    if key.startswith(u'xml:gold/'):
+        c = (((idx or load_index()).get('gold') or {}).get('conf') or {}).get(key[9:])
+        if c is not None:
+            if c >= 80:
+                return c, u'المصادر متفقة %d%%' % c, 'accent'
+            if c >= 50:
+                return c, u'المصادر متفقة جزئيا %d%%' % c, 'amber'
+            return c, u'المصادر مختلفة %d%%' % c, 'red'
+    if key.startswith(u'copy:'):
+        return 60, u'منسوخ من نسخة أخرى للقناة', 'amber'
+    return 70, u'مصدر واحد (لم يُقارن)', 'amber'
+
+
 def gold_members():
     """{plugin key of a source channel: golden channel id} from the cloud index"""
     return (load_index().get('gold') or {}).get('members') or {}
@@ -785,6 +807,103 @@ def smart_link(services, enabled, force=False, min_score=0.86):
     return out
 
 
+FP_FILE = os.path.join(DATA_DIR, 'fp_links.json')
+
+
+def title_hash(t):
+    import hashlib
+    n = norm(t)
+    return hashlib.md5(n.encode('utf-8')).hexdigest()[:6] if n else u''
+
+
+class FPLinker(object):
+    """links a channel that has no name match by its schedule: the satellite's own programmes of the next hours
+    start at the same minutes (with the same titles, when the language is the same) as a channel in the cloud."""
+
+    def __init__(self, cfg, enabled):
+        self.cfg, self.enabled = cfg, enabled
+        self.cache = _load(FP_FILE, {})
+        self.by_min = None
+        self.allow = {}
+        self.changed = False
+        self.found = 0
+
+    def _index(self):
+        if self.by_min is None:
+            self.by_min = {}
+            try:
+                if (load_index().get('fp') and self.cfg.get('cloud') and
+                        u(self.cfg.get('cloud_url', '')).startswith('http')):
+                    data = json.loads(sources.http_get(self.cfg['cloud_url'] + 'fp.json.gz', timeout=90).decode('utf-8'))
+                    for key, marks in (data.get('fp') or {}).items():
+                        for m, h in marks:
+                            self.by_min.setdefault(m, []).append((key, h))
+            except Exception as e:
+                log(u'بصمة الجدول: %s' % e)
+        return self.by_min
+
+    def find(self, ref, name, native):
+        now = time.time()
+        c = self.cache.get(ref)
+        if c and now - c[2] < 7 * 86400 and c[3] == name:
+            return c[0]
+        if not native or len(native) < 4:
+            return None
+        idx = self._index()
+        if not idx:
+            return None
+        sat = sat_of_ref(ref)
+        if sat not in self.allow:
+            self.allow[sat] = _allow_for(self.enabled, sat)
+        ok = self.allow[sat]
+        nat = [(int(b // 60), title_hash(t)) for b, _d, t in native if b + 600 > now]
+        if len(nat) < 4:
+            return None
+        score = {}
+        for m, h in nat:
+            seen = set()
+            for dm in (-2, -1, 0, 1, 2):
+                for key, kh in idx.get(m + dm, ()):
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    x = score.setdefault(key, [0, 0, 0])
+                    x[0] += 1
+                    if 3 <= m % 30 <= 27:
+                        x[1] += 1
+                    if h and h == kh:
+                        x[2] += 1
+        best, passing = None, []
+        for key, (hit, dist, tit) in score.items():
+            if hit < max(4, 0.6 * len(nat)) or (dist < 3 and tit < 0.4 * hit) or not ok(key):
+                continue
+            passing.append(key)
+            val = hit + 2 * tit + dist
+            if best is None or val > best[1]:
+                best = (key, val, hit, tit)
+        if not best:
+            return None
+        if best[3] < 0.4 * best[2]:
+            # times only (the titles are in another language): several different channels with these times
+            # (copied schedules in some files) -> not sure which one it is
+            names = set(norm(display_key(k).split(u': ')[-1]) for k in passing)
+            if len(names) > 1:
+                return None
+        self.cache[ref] = [best[0], best[1], int(now), name]
+        self.changed = True
+        self.found += 1
+        log(u'ربط بالجدول (نفس البرامج في نفس المواعيد): %s ← %s (%d برنامج، %d عنوان)' % (
+            name, display_key(best[0]), best[2], best[3]))
+        return best[0]
+
+    def save(self):
+        if self.changed:
+            now = time.time()
+            _save(FP_FILE, dict((r, v) for r, v in self.cache.items() if now - v[2] < 14 * 86400))
+        if self.found:
+            log(u'قنوات رُبطت ببصمة الجدول: %d' % self.found)
+
+
 def resolve(ref, mapping, auto):
     """-> (candidates [(key, score)], manual)"""
     k = mapping.get(ref)
@@ -794,7 +913,22 @@ def resolve(ref, mapping, auto):
         return [(k, 1.0)], True
     if k and source_of(k).split(':')[0] in SOURCE_ORDER:
         return [(k, 1.0)], True
-    return [c for c in (auto.get(ref) or []) if c[0].split(':')[0] in SOURCE_ORDER], False
+    out = [c for c in (auto.get(ref) or []) if c[0].split(':')[0] in SOURCE_ORDER]
+    if not out:
+        fp = _fp_links().get(ref)
+        if fp:
+            out = [(fp[0], 0.93)]
+    return out, False
+
+
+_FPL = {'sig': None, 'data': {}}
+
+
+def _fp_links():
+    sig = _mtime(FP_FILE)
+    if _FPL['sig'] != sig:
+        _FPL['sig'], _FPL['data'] = sig, _load(FP_FILE, {})
+    return _FPL['data']
 
 
 # --------------------------------------------------------------------- enigma2 side
@@ -2328,9 +2462,14 @@ class Updater(object):
             shifts = load_shifts()
             gold = gold_members() if cfg.get('gold', True) else {}
             stale = []
+            fpl = FPLinker(cfg, enabled)
             for ref, name in self.services:
                 cands, manual = resolve(ref, mapping, auto)
                 s.done += 1
+                if not cands and not manual:      # no name links: the same programmes at the same minutes?
+                    hit = fpl.find(ref, name, self.native.get(ref))
+                    if hit:
+                        cands = [(hit, 0.93)]
                 fk = u(state['filled'].get(ref, {}).get('key', ''))
                 if fk and not fk.startswith('copy:') and fk not in [c[0] for c in cands]:
                     stale.append(ref)
@@ -2370,6 +2509,7 @@ class Updater(object):
                 if shifts.get(ref):           # your own time correction for this channel
                     jobs[-1]['shift'], jobs[-1]['manual_shift'] = int(shifts[ref]) * 3600, True
             self.stale = stale
+            fpl.save()
             if stale:
                 log(u'قنوات تغيّر ربطها (سيُمسح دليلها القديم): %d' % len(stale))
             s.state = 'ok'
@@ -2675,6 +2815,8 @@ class Updater(object):
         if to_clean and self._flush(to_clean, u'دليل خطأ أو قديم'):
             to_clean = set()
 
+        jref = dict((j['ref'], j) for j in jobs)
+
         def do_import(exclude, quiet=False):
             done = {}
             st = self.stage('import', u'إضافة البرامج إلى EPG الريسيفر', len(groups), 3)
@@ -2692,6 +2834,8 @@ class Updater(object):
                         for r in refs:
                             done[r] = evs
                             state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
+                            if jref.get(r, {}).get('verified'):
+                                state['filled'][r]['v'] = 1     # the satellite's own guide agrees
                             if shift:
                                 state['filled'][r]['shift'] = shift
                     except Exception as e:

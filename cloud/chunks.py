@@ -19,6 +19,21 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'plugin'))
 from SaadEPG import sources  # noqa: E402
+from SaadEPG.matcher import norm  # noqa: E402
+
+FP_HOURS = 24
+
+
+def title_hash(t):
+    n = norm(t)
+    return hashlib.md5(n.encode('utf-8')).hexdigest()[:6] if n else ''
+
+
+def plugin_key(fname, kind, cid):
+    if kind == 'site' and '.' in cid:
+        src, _, i = cid.partition('.')
+        return '%s:%s' % (src, i)
+    return 'xml:%s/%s' % (fname, cid)
 
 
 def chan_hash(cid):
@@ -28,6 +43,8 @@ def chan_hash(cid):
 def build(gdir, out_dir, index, days=3, log=print):
     t0 = time.time()
     n_files = n_ch = size = 0
+    now = time.time()
+    fp = {}            # schedule fingerprints: key -> [[start minute, title hash], ...] of the next day
     for fname, f in sorted((index.get('files') or {}).items()):
         path = os.path.join(gdir, fname + '.xml.gz')
         if not os.path.exists(path):
@@ -49,6 +66,9 @@ def build(gdir, out_dir, index, days=3, log=print):
         for cid, evs in orig.items():
             if not evs:
                 continue
+            marks = [[int(e[0] // 60), title_hash(e[2])] for e in evs if now - 3600 <= e[0] < now + FP_HOURS * 3600]
+            if len(marks) >= 4:
+                fp[plugin_key(fname, f.get('kind'), cid)] = marks
             obj = {'c': cid, 'e': [list(e) for e in evs]}
             alt = dict((e[0], e) for e in en.get(cid) or [])
             tr = {}
@@ -68,6 +88,10 @@ def build(gdir, out_dir, index, days=3, log=print):
             n_files += 1
             n_ch += done
     index['chunks'] = {'v': 1, 'path': 'ch/%s/%s.json.gz', 'hash': 'sha1:16'}
+    with gzip.open(os.path.join(out_dir, 'fp.json.gz'), 'wb', compresslevel=9) as fh:
+        fh.write(json.dumps({'generated': int(now), 'fp': fp}, separators=(',', ':')).encode('utf-8'))
+    index['fp'] = 'fp.json.gz'
+    log('schedule fingerprints: %d channels, %d KB' % (len(fp), os.path.getsize(os.path.join(out_dir, 'fp.json.gz')) // 1024))
     log('per-channel files: %d channels from %d guides, %d MB, %ds' % (n_ch, n_files, size // 1048576,
                                                                       time.time() - t0))
     return n_ch

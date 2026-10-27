@@ -18,7 +18,23 @@ done
 cat work/out_trlog_*.xml > public/tr/log.txt 2>/dev/null || true
 mkdir -p public/tr/grab && for f in work/out_grablog_*.xml; do [ -f "$f" ] && tail -c 60000 "$f" > "public/tr/grab/$(basename "$f" .xml).txt"; done; true
 (python3 cloud/sattv.py merge work work/sattv_ar.xml work/sattv_en.xml || echo "sat.tv merge skipped") 2>&1 | tee -a public/tr/official.txt
-python3 cloud/build.py --work work --out public --catalog plugin/SaadEPG/channels.json --tr public/tr 2>&1 | tee public/tr/build.txt
+# the channel catalog follows iptv-org every run: channels the sites add appear by themselves
+CAT=plugin/SaadEPG/channels.json
+if python3 tools/make_catalog.py --iptv iptv-epg --catalog work/catalog_auto.json --cloud work/channels_auto >/dev/null 2>&1; then
+  python3 - <<'PY' && CAT=work/catalog_auto.json
+import json, sys
+old = json.load(open('plugin/SaadEPG/channels.json', encoding='utf8'))
+new = json.load(open('work/catalog_auto.json', encoding='utf8'))
+if len(new) < 0.9 * len(old):
+    sys.exit(1)
+have = set((c['src'], c['id']) for c in new)
+new += [c for c in old if (c['src'], c['id']) not in have]       # hand-made entries stay
+added = len(new) - len(old)
+json.dump(new, open('work/catalog_auto.json', 'w', encoding='utf8'), ensure_ascii=False, separators=(',', ':'))
+print('catalog: %d channels (%+d new from iptv-org)' % (len(new), added))
+PY
+fi
+python3 cloud/build.py --work work --out public --catalog "$CAT" --tr public/tr 2>&1 | tee public/tr/build.txt
 [ "${PIPESTATUS[0]}" = "0" ] || exit 1
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers
