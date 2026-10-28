@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.2'
+VERSION = '2.3'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -656,7 +656,7 @@ def health_text():
         _sc, lbl, col = engine.confidence(r, st, idx_now)
         if lbl:
             groups.setdefault(col, []).append((r, lbl))
-    out.append(u'الثقة في الدليل: مؤكد/متفق %d  |  غير مؤكد %d  |  مختلف بين المصادر %d' % (
+    out.append(u'الثقة في الدليل: مؤكد أو المصادر متفقة %d  |  مصدر واحد %d  |  المصادر مختلفة %d' % (
         len(groups['accent']), len(groups['amber']), len(groups['red'])))
     if groups['red']:
         names_all = dict(engine.get_services())

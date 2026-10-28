@@ -1039,11 +1039,19 @@ def triple_conflicts(services):
     for ref, name in services:
         t = epg_triple(ref)
         if t:
-            slots.setdefault(t, set()).add(copy_key(name) or norm(name) or u'?')
+            slots.setdefault(t, []).append(name)
+    shared = set()
+    for t, names in slots.items():
+        uniq = []
+        for n in names:
+            if not any(name_like(n, x) for x in uniq):    # "beIN SPORTS" and "beIN Sports HD" are one channel
+                uniq.append(n)
+        if len(uniq) > 1:
+            shared.add(t)
     bad = set()
     for ref, _n in services:
         t = epg_triple(ref)
-        if not t or t[0] == 0 or len(slots.get(t, ())) > 1:
+        if not t or t[0] == 0 or t in shared:
             bad.add(ref)
     return bad
 
