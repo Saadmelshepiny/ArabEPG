@@ -59,6 +59,12 @@ def base_norm(name):
     return re.sub(u'\\s+', u' ', s).strip()
 
 
+def _raw(n):
+    n = re.sub(u'(?i)\\b(hd|fhd|uhd|sd|4k|8k|tv)\\b', u' ', _u(n))
+    n = re.sub(u'\\.[a-z]{2}$', u'', n.strip())
+    return re.sub(u'[\\W_]+', u'', unicodedata.normalize('NFKC', n).lower())
+
+
 _NORM = {}
 
 
@@ -75,7 +81,7 @@ def norm(name):
 
 def _norm(name):
     s = re.sub(u'[^0-9a-zء-ي]', u'', base_norm(name))
-    s = re.sub(u'^(al|el)(?=[a-z]{3})', u'', s)
+    s = re.sub(u'^(al|el)(?=[a-z]{4})', u'', s)   # 'Al Rai' stays 'alrai' (never 'Rai 4K')
     s = re.sub(u'^ال(?=..)', u'', s) if re.match(u'^ال...', s) else s
     return s
 
@@ -92,7 +98,7 @@ _TR = {
 def latin(name):
     s = norm(name)
     s = u''.join(_TR.get(c, c) for c in s)
-    s = re.sub(u'^(al|el)(?=[a-z]{3})', u'', s)
+    s = re.sub(u'^(al|el)(?=[a-z]{4})', u'', s)   # 'Al Rai' stays 'alrai' (never 'Rai 4K')
     return s
 
 
@@ -153,12 +159,15 @@ class Matcher(object):
         self.exact = {}
         self.items = []     # (latin, skeleton, digits, key)
         self.tri = {}
+        self.raw = {}       # short names: the letters as written ("Rai" is not "РАІ" nor "Al Rai")
         for c in catalog:
             key = u'%s:%s' % (c['src'], c['id'])
             for n in c['names']:
                 k = norm(n)
                 if not k:
                     continue
+                if len(k) <= 3:
+                    self.raw.setdefault(key, set()).add(_raw(n))
                 self._put_exact(k, key)
                 lat = latin(n)
                 if not lat:
@@ -183,6 +192,10 @@ class Matcher(object):
         k = norm(name)
         if not k:
             return []
+        if len(k) <= 3 and not re.search(u'\\d', k):
+            # three letters or less: only the very same letters (Rai 4K != Al Rai != РАІ)
+            r = _raw(name)
+            return [(key, 1.0) for key in self.exact.get(k, ()) if ok(key) and r in self.raw.get(key, ())][:limit]
         lat = latin(name)
         found = {}
         for cand in (k, lat):

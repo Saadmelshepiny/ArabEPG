@@ -52,7 +52,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt', 'presstv': 'ar_presstv',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 8
+MATCHER_VERSION = 9
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -683,8 +683,9 @@ def wide_match(name, idx, rejected=(), sat=None):
     Arabic guides; European satellites: European guides - "Nat Geographic" on 16E is not the Saudi one), and
     only when every file that has it is of one country ("Sport 1" exists in several and is left alone)."""
     n = norm(name)
-    if len(re.sub(u'(hd|fhd|uhd|4k)$', u'', n)) < 3:
-        return []
+    core = re.sub(u'(hd|fhd|uhd|4k)$', u'', n)
+    if len(core) < 3 or (len(core) < 4 and not re.search(u'\\d', core)):
+        return []          # "TA3" is a name, "Rai" is too short to be sure of
     files = idx.get('files') or {}
     arabic = sat in ('nilesat', 'arabsat') or bool(re.search(u'[\u0621-\u064a]', name))
 

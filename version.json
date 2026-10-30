@@ -1,6 +1,6 @@
 {
- "version": "2.4.2",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.2_all.ipk",
+ "version": "2.4.3",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.3_all.ipk",
  "date": "2026-10-30",
- "notes": "قنوات أوروبية بدون دليل تأخذ دليل نفس القناة من ملف دولة أخرى (البلغارية على هوت بيرد، السلوفاكية على 16 شرق...)، إخفاء القنوات التجريبية والبدون اسم من قائمة بدون دليل"
+ "notes": "إصلاح: قناة Rai 4K كانت تأخذ دليل قناة الراي الكويتية (الأسماء القصيرة لازم تتطابق حرفيا)، والراي صار لها دليلها الصحيح"
 }
