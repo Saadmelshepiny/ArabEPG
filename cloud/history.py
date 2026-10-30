@@ -97,8 +97,9 @@ def update(hist, gdir, index, now, log=print):
         except Exception as e:
             log('history: %s unreadable (%s)' % (fname, e))
             continue
+        listed = set(c for c, _n in f.get('channels') or [])   # channels the cloud removed (copies) stay out
         for cid, evs in data.items():
-            if len(evs) < 3:
+            if len(evs) < 3 or cid not in listed:
                 continue
             key = plugin_key(fname, f.get('kind'), cid)
             evs.sort()

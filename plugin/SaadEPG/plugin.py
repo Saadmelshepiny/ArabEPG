@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.4.1'
+VERSION = '2.4.2'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -677,6 +677,9 @@ def receiver_time_text():
 _BAD_NAME = re.compile(u'^(<n/a>|n/a|\\.+|)$|[\u00c0-\u00ff]{2}', re.I)
 
 
+_PLACEHOLDER = re.compile(u'(?i)^\\s*(service[\\s_-]*\\d*|test([\\s_-]*\\w{0,3})?|\\(\\.\\.\\.\\)|\\.+|-+|ebu\\s*\\d.*enc|img\\s*\\d.*)\\s*$')
+
+
 def name_lines(names, per=3, most=24):
     """a list of channel names as short lines under its heading: a long line that mixes Arabic and Latin
     names is shown out of order by the receiver"""
@@ -1244,8 +1247,9 @@ class ChannelsScreen(BaseScreen):
                 continue
             if mode == 'review' and not (linked and not manual and (cands[0][1] < 0.97 or ref in self.held)):
                 continue
-            if mode == 'missing' and (self.epg.get(ref, ' ') in ('A', '+') or key == '-'):
-                continue
+            if mode == 'missing' and (self.epg.get(ref, ' ') in ('A', '+') or key == '-' or
+                                      _BAD_NAME.search(name) or _PLACEHOLDER.match(name)):
+                continue       # nameless / test services are not channels you watch
             rows.append(self.table.row((ref, name, key, cands, manual),
                                        channel_cells(self.epg.get(ref, ' '), name, key, cands, manual,
                                                      mapping.get(ref)), len(rows)))

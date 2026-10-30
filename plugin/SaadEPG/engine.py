@@ -52,7 +52,7 @@ SOURCE_NAMES = {'shahid': 'Shahid/MBC', 'osn': 'OSN', 'bein': 'beIN', 'rotana': 
 SITE_FILE = {'shahid': 'ar_shahid', 'osn': 'ar_osn', 'elcinema': 'ar_elcinema', 'beinsports': 'ar_beinsports',
              'roya': 'ar_roya', 'art': 'ar_art', 'ayn': 'ar_ayn', 'snrt': 'ar_snrt', 'lbci': 'ar_lbci', 'tunisia': 'ar_tunisia', 'trt': 'ar_trt', 'presstv': 'ar_presstv',
              'bein': 'ar_bein', 'rotana': 'ar_rotana', 'aljazeera': 'ar_aljazeera'}
-MATCHER_VERSION = 7
+MATCHER_VERSION = 8
 BULK_SOURCES = ('bein', 'xml', 'roya', 'beinsports')   # one request/file serves many channels
 
 # orbital positions (tenths of a degree; west = 3600 - x)
@@ -652,6 +652,57 @@ def matcher(user_sats=None):
     return _MATCHER
 
 
+_MATCHER_ALL = {'sig': None, 'm': None}
+
+
+def matcher_every():
+    """every cloud channel, whatever satellite its guide was made for"""
+    xml = cloud_xml_entries(None, every=True)
+    sig = (len(xml), load_index().get('generated'))
+    if _MATCHER_ALL['sig'] != sig:
+        _MATCHER_ALL['m'] = Matcher([x for x in xml if not x['id'].startswith('est/')], SOURCE_ORDER)
+        _MATCHER_ALL['sig'] = sig
+    return _MATCHER_ALL['m']
+
+
+# countries that share the same channels (one guide each): Czech/Slovak, ex-Yugoslav, German speaking
+_SAME_MARKET = {'cs': 'cs', 'cz': 'cs', 'sk': 'cs', 'sr': 'yu', 'rs': 'yu', 'hr': 'yu', 'bs': 'yu', 'ba': 'yu',
+                'sl': 'yu', 'si': 'yu', 'me': 'yu', 'mk': 'yu', 'de': 'de', 'at': 'de'}
+
+
+def _file_country(key, idx):
+    fn = key[4:].split('/', 1)[0]
+    f = (idx.get('files') or {}).get(fn) or {}
+    c = f.get('lang') or re.sub(u'^oe_|\\d+$', u'', fn)
+    return _SAME_MARKET.get(c, c)
+
+
+def wide_match(name, idx, rejected=(), sat=None):
+    """a channel nobody links: the guide made for another satellite (Bulgarian channels on Hot Bird, Slovak
+    ones on Eutelsat 16E...). Only a (nearly) exact name, only guides of the same world (Arabic satellites:
+    Arabic guides; European satellites: European guides - "Nat Geographic" on 16E is not the Saudi one), and
+    only when every file that has it is of one country ("Sport 1" exists in several and is left alone)."""
+    n = norm(name)
+    if len(re.sub(u'(hd|fhd|uhd|4k)$', u'', n)) < 3:
+        return []
+    files = idx.get('files') or {}
+    arabic = sat in ('nilesat', 'arabsat') or bool(re.search(u'[\u0621-\u064a]', name))
+
+    def ok(k):
+        if not k.startswith('xml:'):
+            return False
+        return (files.get(k[4:].split('/', 1)[0], {}).get('region') == 'ar') == arabic
+    short = re.sub(u'(?i)[\\s._-]*(hd|fhd|uhd|4k)\\s*$', u'', name).strip()
+    wide = {}
+    for nm in set([name, short]):
+        for k, sc in matcher_every().match_all(nm, ok, min_score=0.97, limit=8):
+            if (n, k) not in rejected:
+                wide[k] = max(sc, wide.get(k, 0))
+    if not wide or len(set(_file_country(k, idx) for k in wide)) != 1:
+        return []
+    return [(k, 0.93) for k, _sc in sorted(wide.items(), key=lambda kv: -kv[1])[:3]]
+
+
 # --------------------------------------------------------------------- learning from the user
 def load_learned():
     d = _load(LEARN_FILE, {})
@@ -887,6 +938,8 @@ def smart_link(services, enabled, force=False, min_score=0.86):
             rk = None       # an old automatic confirmation that does not even look like this channel
         if rk and ok(rk):   # this exact service was confirmed before (by you, by the satellite guide, or the cloud)
             cands = [(rk, 1.0)] + [c for c in cands if c[0] != rk]
+        if not cands and 'xml' in enabled and sat not in ('iptv', 'other', 'terrestrial'):
+            cands = wide_match(name, idx, rejected, sat)
         cands = cands[:4]
         cache[ref] = [name, [list(x) for x in cands], stamp]
         out[ref] = cands

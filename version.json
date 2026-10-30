@@ -1,6 +1,6 @@
 {
- "version": "2.4.1",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.1_all.ipk",
+ "version": "2.4.2",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.2_all.ipk",
  "date": "2026-10-30",
- "notes": "شاشة صحة الدليل أوضح: أسماء القنوات في سطور قصيرة مرتبة، وإخفاء الأسماء التالفة"
+ "notes": "قنوات أوروبية بدون دليل تأخذ دليل نفس القناة من ملف دولة أخرى (البلغارية على هوت بيرد، السلوفاكية على 16 شرق...)، إخفاء القنوات التجريبية والبدون اسم من قائمة بدون دليل"
 }
