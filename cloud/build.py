@@ -321,8 +321,12 @@ def _norm_name(n):
     return n.replace(' ', '')
 
 
-TIME_ANCHORS = ('oe_egypt1', 'oe_egypt2', 'oe_saudiarabia1', 'oe_saudiarabia2', 'oe_saudiarabia3',
-                'oe_saudiarabia4', 'oe_uae1', 'oe_qatar1', 'ar_osn', 'ar_shahid', 'ar_beinsports')
+# official sites: their times are checked against real kick-off times (beIN) and they never move together
+TIME_CORE = ('ar_shahid', 'ar_osn', 'ar_bein', 'ar_beinsports')
+# more anchors, used only on the days they agree with the core (oe_egypt went 2 h early when Egypt left
+# summer time on 30/10/2026: an anchor is never trusted blindly)
+TIME_ANCHORS = ('oe_saudiarabia1', 'oe_saudiarabia2', 'oe_saudiarabia3', 'oe_saudiarabia4', 'oe_qatar1',
+                'oe_uae1', 'oe_egypt1', 'oe_egypt2')
 _PROG = re.compile(r'<programme start="([^"]+)" stop="([^"]+)" channel="([^"]+)"><title[^>]*>([^<]*)</title>')
 
 
@@ -344,13 +348,75 @@ def _read_titles(path):
 _TIMESHIFT = re.compile(r'(\+\s*\d|plus\s*\d|\b\d\s*h\b|time\s*shift)', re.I)
 
 
-def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
+def _occurrences(data, names):
+    occ = {}
+    for n in names:
+        for cid, ev in data[n].items():
+            for st, t in ev.items():
+                occ.setdefault(t, []).append((n, cid, st))
+    return occ
+
+
+def _channel_offsets(ev, occ, skip=None):
+    """{(anchor file, anchor channel, d): hits}: the same title at a whole half-hour distance"""
+    pair = {}
+    for st, t in ev.items():
+        o = occ.get(t)
+        if not o or len(o) > 40:          # news, "Live" ... say nothing
+            continue
+        for an, acid, ast in o:
+            if an == skip:
+                continue
+            d = st - ast
+            if d % 1800 == 0 and abs(d) <= 6 * 3600:
+                k = (an, acid, d)
+                pair[k] = pair.get(k, 0) + 1
+    return pair
+
+
+def _file_vote(chans, occ, skip=None):
+    votes = {}
+    for ev in chans.values():
+        pair = _channel_offsets(ev, occ, skip)
+        if pair:
+            (_an, _acid, d), hits = max(pair.items(), key=lambda kv: kv[1])
+            if hits >= 4:
+                votes[d] = votes.get(d, 0) + 1
+    tot = sum(votes.values())
+    if tot >= 3:
+        d, v = max(votes.items(), key=lambda kv: kv[1])
+        if v >= 3 and v >= 0.7 * tot:
+            return d, v, tot
+    return None, 0, tot
+
+
+def _name_sim(a, b):
+    import gold as _gold
+    m = _gold.matcher
+
+    def sk(x):
+        x = re.sub(r'^(ar|en|EN|AR)\s*:\s*\.?', '', x)
+        x = re.sub(r'\.(ae|sa|eg|qa|bh|kw|om)$', '', x).replace('.', ' ')
+        return m.skeleton(m.latin(x)) + m.digits(m.latin(x))
+    from difflib import SequenceMatcher
+    best = 0
+    for x in a:
+        for y in b:
+            p, q = sk(x), sk(y)
+            if p and q:
+                best = max(best, SequenceMatcher(None, p, q).ratio())
+    return best
+
+
+def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, core=TIME_CORE, log=print):
     """Some sites publish local time but the grabber reads it as another zone (elCinema: Cairo time read as
-    UTC; rotana.net: UTC read as Riyadh...). Every Arabic file is compared with the anchor files (they agree
-    with each other and with real kick-off times): the same programme title on two channels at a constant
-    distance of whole hours. A channel with clear evidence of its own gets its own shift (Egyptian and Saudi
-    channels of one site differ when only one country changes its clock); the others take the shift most
-    channels of their file agree on."""
+    another zone; rotana.net...). Every Arabic file is compared with the anchors: the same programme title
+    on two channels at a constant distance of whole hours.
+      1. the anchors themselves are checked against the official sites first; one that moved is fixed like
+         any other file instead of moving everybody else
+      2. a file takes the shift most of its channels agree on
+      3. a channel takes its own shift when two different anchors show the same channel (similar name) at
+         another distance: one site often mixes Egyptian and Saudi channels, and only Egypt changes its clock."""
     files = dict((n, f) for n, f in (index.get('files') or {}).items() if f.get('region') == 'ar')
     data = {}
     for n in files:
@@ -358,59 +424,71 @@ def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
             data[n] = _read_titles(os.path.join(gdir, n + '.xml.gz'))
         except Exception as e:
             log('time check: %s unreadable (%s)' % (n, e))
-    anc = [n for n in anchors if n in data]
-    occ = {}
-    for n in anc:
-        for cid, ev in data[n].items():
-            for st, t in ev.items():
-                occ.setdefault(t, []).append((n, cid, st))
-    import gold as _gold
+    cor = [n for n in core if n in data]
+    occ_core = _occurrences(data, cor)
+    anc = list(cor)
+    for n in anchors:
+        if n in data:
+            d, v, tot = _file_vote(data[n], occ_core)
+            if d == 0:
+                anc.append(n)
+            else:
+                log('time anchor %s not used today: %s' % (n, 'off by %+.1f h (%d/%d channels)' % (
+                    d / 3600.0, v, tot) if d is not None else 'no clear agreement with the official sites'))
+    occ = _occurrences(data, anc)
+    names_of = {}
 
     def chnames(fn):
-        out = {}
-        for cid, nm in files[fn].get('channels') or []:
-            out.setdefault(cid, []).extend(nm if isinstance(nm, list) else [nm])
-        return out
+        if fn not in names_of:
+            out = {}
+            for cid, nm in files[fn].get('channels') or []:
+                out.setdefault(cid, []).extend(nm if isinstance(nm, list) else [nm])
+            names_of[fn] = out
+        return names_of[fn]
+    sim_cache = {}
 
-    def _keys(nms, cid):
-        k = set()
-        for x in (nms or []) + [cid.rsplit('.', 1)[0].replace('.', ' ')]:
-            k |= _gold.name_keys(x)
-        return k
-    anames = dict((a, chnames(a)) for a in anc)
+    def same(fn, cid, an, acid):
+        k = (fn, cid, an, acid)
+        if k not in sim_cache:
+            sim_cache[k] = _name_sim(chnames(fn).get(cid) or [cid], chnames(an).get(acid) or [acid]) >= 0.6
+        return sim_cache[k]
     out = {}
     for n, chans in data.items():
         if n in anc or n == 'gold':
             continue
         names = chnames(n)
-        votes, own = {}, {}
+        own, weak = {}, {}
         for cid, ev in chans.items():
-            pair = {}
-            for st, t in ev.items():
-                o = occ.get(t)
-                if not o or len(o) > 40:          # news, "Live" ... say nothing
-                    continue
-                for an, acid, ast in o:
-                    d = st - ast
-                    if d % 1800 == 0 and abs(d) <= 6 * 3600:
-                        k = (an, acid, d)
-                        pair[k] = pair.get(k, 0) + 1
+            pair = _channel_offsets(ev, occ)
             if not pair:
                 continue
-            (an, acid, d), hits = max(pair.items(), key=lambda kv: kv[1])
-            if hits >= 4:
-                votes[d] = votes.get(d, 0) + 1
-            # its own shift only against the same channel (same name) in the anchor, never a "+2" copy
-            if hits >= 6 and _keys(names.get(cid), cid) & _keys(anames[an].get(acid), acid) \
-                    and not _TIMESHIFT.search(' '.join(names.get(cid) or [cid])):
-                own[cid] = d
+            # the same channel in an anchor (similar name) is the real evidence; a film or a series on
+            # another channel only counts for the file's majority
+            mine = [(h, dd) for (an, acid, dd), h in pair.items() if h >= 4 and same(n, cid, an, acid)]
+            if mine and not _TIMESHIFT.search(' '.join(names.get(cid) or [cid])):
+                tally = {}
+                for h, dd in mine:
+                    tally[dd] = tally.get(dd, 0) + h
+                (dd, h), rest = max(tally.items(), key=lambda kv: kv[1]), sum(tally.values())
+                if h >= 6 and h >= 0.75 * rest:
+                    own[cid] = dd
+                    continue
+            (_an, _acid, dd), h = max(pair.items(), key=lambda kv: kv[1])
+            if h >= 4:
+                weak[cid] = dd
+        votes = {}
+        for dd in own.values():
+            votes[dd] = votes.get(dd, 0) + 1
+        if len(own) < 3:
+            for dd in weak.values():
+                votes[dd] = votes.get(dd, 0) + 1
         tot = sum(votes.values())
         file_sh = 0
         if tot >= 3:
-            d, v = max(votes.items(), key=lambda kv: kv[1])
-            if d and v >= 3 and v >= 0.7 * tot:
-                file_sh = -d
-        per = dict((cid, -d) for cid, d in own.items() if -d != file_sh)
+            dd, v = max(votes.items(), key=lambda kv: kv[1])
+            if dd and v >= 3 and v >= (0.5 if len(own) >= 3 else 0.7) * tot:
+                file_sh = -dd
+        per = dict((cid, -dd) for cid, dd in own.items() if -dd != file_sh)
         if not file_sh and not per:
             continue
         path = os.path.join(gdir, n + '.xml.gz')
@@ -428,6 +506,8 @@ def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
             f.write(s)
         index['files'][n]['size'] = os.path.getsize(path)
         index['files'][n]['time_fix'] = file_sh
+        if per:
+            index['files'][n]['time_fix_ch'] = dict((c, v // 60) for c, v in per.items())
         out[n] = file_sh // 60
         log('time fixed: %-16s %+.1f h for the file%s' % (n, file_sh / 3600.0, (
             ', own shift for %d channels: %s' % (len(per), ', '.join('%s %+.1fh' % (c, v / 3600.0)
