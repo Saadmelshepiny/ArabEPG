@@ -341,11 +341,16 @@ def _read_titles(path):
     return ch
 
 
+_TIMESHIFT = re.compile(r'(\+\s*\d|plus\s*\d|\b\d\s*h\b|time\s*shift)', re.I)
+
+
 def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
     """Some sites publish local time but the grabber reads it as another zone (elCinema: Cairo time read as
     UTC; rotana.net: UTC read as Riyadh...). Every Arabic file is compared with the anchor files (they agree
     with each other and with real kick-off times): the same programme title on two channels at a constant
-    distance of whole hours. A file whose channels agree on one shift is moved back to real time."""
+    distance of whole hours. A channel with clear evidence of its own gets its own shift (Egyptian and Saudi
+    channels of one site differ when only one country changes its clock); the others take the shift most
+    channels of their file agree on."""
     files = dict((n, f) for n, f in (index.get('files') or {}).items() if f.get('region') == 'ar')
     data = {}
     for n in files:
@@ -359,11 +364,26 @@ def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
         for cid, ev in data[n].items():
             for st, t in ev.items():
                 occ.setdefault(t, []).append((n, cid, st))
-    fixes = {}
+    import gold as _gold
+
+    def chnames(fn):
+        out = {}
+        for cid, nm in files[fn].get('channels') or []:
+            out.setdefault(cid, []).extend(nm if isinstance(nm, list) else [nm])
+        return out
+
+    def _keys(nms, cid):
+        k = set()
+        for x in (nms or []) + [cid.rsplit('.', 1)[0].replace('.', ' ')]:
+            k |= _gold.name_keys(x)
+        return k
+    anames = dict((a, chnames(a)) for a in anc)
+    out = {}
     for n, chans in data.items():
-        if n in anc:
+        if n in anc or n == 'gold':
             continue
-        votes = {}
+        names = chnames(n)
+        votes, own = {}, {}
         for cid, ev in chans.items():
             pair = {}
             for st, t in ev.items():
@@ -377,29 +397,42 @@ def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, log=print):
                         pair[k] = pair.get(k, 0) + 1
             if not pair:
                 continue
-            (_an, _acid, d), hits = max(pair.items(), key=lambda kv: kv[1])
+            (an, acid, d), hits = max(pair.items(), key=lambda kv: kv[1])
             if hits >= 4:
                 votes[d] = votes.get(d, 0) + 1
+            # its own shift only against the same channel (same name) in the anchor, never a "+2" copy
+            if hits >= 6 and _keys(names.get(cid), cid) & _keys(anames[an].get(acid), acid) \
+                    and not _TIMESHIFT.search(' '.join(names.get(cid) or [cid])):
+                own[cid] = d
         tot = sum(votes.values())
-        if tot < 3:
+        file_sh = 0
+        if tot >= 3:
+            d, v = max(votes.items(), key=lambda kv: kv[1])
+            if d and v >= 3 and v >= 0.7 * tot:
+                file_sh = -d
+        per = dict((cid, -d) for cid, d in own.items() if -d != file_sh)
+        if not file_sh and not per:
             continue
-        d, v = max(votes.items(), key=lambda kv: kv[1])
-        if d and v >= 3 and v >= 0.7 * tot:
-            fixes[n] = (-d, v, tot)
-    for n, (sh, v, tot) in sorted(fixes.items()):
         path = os.path.join(gdir, n + '.xml.gz')
 
-        def mv(m):
-            return '<programme start="%s" stop="%s"' % (fmt(xtime(m.group(1)) + sh), fmt(xtime(m.group(2)) + sh))
+        def mv(m, per=per, file_sh=file_sh):
+            sh = per.get(html.unescape(m.group(3)), file_sh)
+            if not sh:
+                return m.group(0)
+            return '<programme start="%s" stop="%s" channel="%s"' % (
+                fmt(xtime(m.group(1)) + sh), fmt(xtime(m.group(2)) + sh), m.group(3))
         with gzip.open(path, 'rt', encoding='utf-8') as f:
             s = f.read()
-        s = re.sub(r'<programme start="([^"]+)" stop="([^"]+)"', mv, s)
+        s = re.sub(r'<programme start="([^"]+)" stop="([^"]+)" channel="([^"]+)"', mv, s)
         with gzip.open(path, 'wt', encoding='utf-8', compresslevel=9) as f:
             f.write(s)
         index['files'][n]['size'] = os.path.getsize(path)
-        index['files'][n]['time_fix'] = sh
-        log('time fixed: %-16s %+.1f h  (%d of %d channels agree)' % (n, sh / 3600.0, v, tot))
-    return dict((n, sh // 60) for n, (sh, _v, _t) in fixes.items())
+        index['files'][n]['time_fix'] = file_sh
+        out[n] = file_sh // 60
+        log('time fixed: %-16s %+.1f h for the file%s' % (n, file_sh / 3600.0, (
+            ', own shift for %d channels: %s' % (len(per), ', '.join('%s %+.1fh' % (c, v / 3600.0)
+                                                                    for c, v in sorted(per.items())[:8]))) if per else ''))
+    return out
 
 
 def remove_copied_schedules(gdir, index, hours=24, min_progs=4):
