@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.4'
+VERSION = '2.4.1'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -674,6 +674,19 @@ def receiver_time_text():
         return u'ساعة الريسيفر: %s' % e
 
 
+_BAD_NAME = re.compile(u'^(<n/a>|n/a|\\.+|)$|[\u00c0-\u00ff]{2}', re.I)
+
+
+def name_lines(names, per=3, most=24):
+    """a list of channel names as short lines under its heading: a long line that mixes Arabic and Latin
+    names is shown out of order by the receiver"""
+    names = [u(n).strip() for n in names if not _BAD_NAME.search(u(n).strip())]
+    out = [u'      ' + u'  ،  '.join(names[i:i + per]) for i in range(0, min(len(names), most), per)]
+    if len(names) > most:
+        out.append(u'      ... و %d أخرى' % (len(names) - most))
+    return out
+
+
 def health_text():
     st = engine.load_state()
     h = st.get('health') or {}
@@ -691,7 +704,8 @@ def health_text():
     out.append(u'المصادر (قنوات بها بيانات / المطلوبة):')
     for label, v in sorted((h.get('sources') or {}).items()):
         ok, total, empty = v[0], v[1], v[2]
-        out.append(u'  %s: %d/%d%s' % (label, ok, total, (u'  - بدون بيانات: ' + u'، '.join(empty)) if empty else u''))
+        out.append(u'  %s: %d/%d%s' % (label, ok, total, u'  - بدون بيانات:' if empty else u''))
+        out.extend(name_lines(empty))
     out.append(u'')
     if C.lock_epg.value:
         ok = engine.LOCK.get('ok')
@@ -711,13 +725,13 @@ def health_text():
         len(groups['accent']), len(groups['amber']), len(groups['red'])))
     if groups['red']:
         names_all = dict(engine.get_services())
-        out.append(u'  راجع هذه القنوات (المصادر لا تتفق): ' + u'، '.join(
-            names_all.get(r, r) for r, _l in groups['red'][:25]))
+        out.append(u'  راجع هذه القنوات (المصادر لا تتفق):')
+        out.extend(name_lines([names_all.get(r, r) for r, _l in groups['red']]))
     ls = dict((r, x) for r, x in engine.live_shifts().items() if x.get('on'))
     if ls:
         names_all = names_all or dict(engine.get_services())
-        out.append(u'تصحيح توقيت تعلّمه البلوجين من البث نفسه: ' + u'، '.join(
-            u'%s %+d س' % (names_all.get(r, r), x.get('sh', 0)) for r, x in list(ls.items())[:20]))
+        out.append(u'تصحيح توقيت تعلّمه البلوجين من البث نفسه: %d قناة' % len(ls))
+        out.extend(name_lines([u'%s %+d س' % (names_all.get(r, r), x.get('sh', 0)) for r, x in ls.items()], 2))
     try:
         tf = []
         for fn, f in (idx_now.get('files') or {}).items():
@@ -726,20 +740,22 @@ def health_text():
             if f.get('time_fix_ch'):
                 tf.append(u'%s: %d قناة بتصحيح خاص' % (u(f.get('title') or fn), len(f['time_fix_ch'])))
         if tf:
-            out.append(u'تصحيح توقيت المصادر في السحابة اليوم: ' + u'، '.join(tf[:12]))
+            out.append(u'تصحيح توقيت المصادر في السحابة اليوم:')
+            out.extend(name_lines(tf, 2, 16))
     except Exception:
         pass
     est = [r for r, f in (st.get('filled') or {}).items() if u(f.get('key', '')).startswith(u'xml:est/')]
     est_part = [r for r, f in (st.get('filled') or {}).items() if f.get('est') and r not in est]
     if est or est_part:
         names_all = names_all or dict(engine.get_services())
-        out.append(u'جدول تقديري (المصدر متوقف، من تكرار البث): %d قناة%s%s' % (
-            len(est), (u' - ' + u'، '.join(names_all.get(r, r) for r in est[:15])) if est else u'',
-            (u'  |  مُكمل تقديريا بعد نهاية المصدر: %d' % len(est_part)) if est_part else u''))
+        out.append(u'جدول تقديري (المصدر متوقف، من تكرار البث): %d قناة  |  مُكمل تقديريا بعد نهاية المصدر: %d' % (
+            len(est), len(est_part)))
+        out.extend(name_lines([names_all.get(r, r) for r in est], most=12))
     g = st.get('gained') or {}
     if g.get('t') and g['t'] > time.time() - 3 * 86400:
-        out.append(u'قنوات صار لها دليل لأول مرة (%s): %d - %s' % (
-            time.strftime('%d/%m', time.localtime(g['t'])), g.get('n', 0), u'، '.join(g.get('names') or [])[:400]))
+        out.append(u'قنوات صار لها دليل لأول مرة (%s): %d' % (
+            time.strftime('%d/%m', time.localtime(g['t'])), g.get('n', 0)))
+        out.extend(name_lines(g.get('names') or []))
     nt = st.get('night') or {}
     if nt.get('t'):
         out.append(u'آخر مسح ليلي لدليل القمر: %s - %d قناة صار لها دليل (من %d)' % (
@@ -755,8 +771,7 @@ def health_text():
     out.append(u'قنوات أجنبية تُرجم دليل قمرها للإنجليزية: %d' % len(st.get('tr_native') or {}))
     conf = h.get('conflicts') or []
     out.append(u'قنوات رقم خدمتها مشترك مع قناة أخرى (لا يضاف لها دليل): %d' % len(conf))
-    if conf:
-        out.append(u'  ' + u'، '.join(conf[:40]))
+    out.extend(name_lines(conf, most=30))
     try:
         ep = config.misc.epgcache_filename.value
         out.append(u'ملف الدليل على الريسيفر: %s (%.1f ميجابايت)' % (ep, os.path.getsize(ep) / 1048576.0))
