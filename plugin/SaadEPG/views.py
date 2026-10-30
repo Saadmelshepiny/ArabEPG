@@ -124,20 +124,47 @@ def timer_message(session, res, what):
 # --------------------------------------------------------------------- event details
 class EventScreen(Base):
     def __init__(self, session, title, when, channel, text):
+        # a film with a TMDB key: its poster on the left of the description
+        film = bool(features.tmdb_key()) and features.genre(title, u'', text or u'') == 'film'
+        tw = 740 if film else 940
         self.skin = ui.frame(1000, 600, (
             ui.box(16, 70, 968, 74, ui.PANEL) +
             ui.label('when', 30, 76, 940, 30, 20, ui.hexc('amber'), ui.PANEL) +
             ui.label('channel', 30, 108, 940, 30, 18, ui.DIM, ui.PANEL) +
             ui.box(16, 152, 968, 434, ui.PANEL) +
+            '<widget name="poster" position="%d,%d" size="%d,%d" alphatest="blend" zPosition="2" />' % (
+                S(30), S(166), S(185), S(278)) +
             '<widget name="text" position="%d,%d" size="%d,%d" font="Regular;%d" foregroundColor="%s" '
             'backgroundColor="%s" transparent="1" zPosition="1" />' % (
-                S(30), S(162), S(940), S(414), S(21), ui.TXT, ui.PANEL)), title)
+                S(30 + 940 - tw), S(162), S(tw), S(414), S(21), ui.TXT, ui.PANEL)), title)
         Base.__init__(self, session, title)
         self['when'] = Label(T(when))
         self['channel'] = Label(T(channel))
         self['text'] = ScrollLabel(T(text or u'لا يوجد وصف'))
+        self['poster'] = Pixmap()
         self['actions'] = ActionMap(['OkCancelActions', 'DirectionActions'], {
             'ok': self.close, 'cancel': self.close, 'up': self['text'].pageUp, 'down': self['text'].pageDown}, -1)
+        self.pjob = None
+        if film:
+            self.onLayoutFinish.append(lambda: self._poster(title))
+        self.onClose.append(lambda: self.pjob and self.pjob.cancel())
+
+    def _poster(self, title):
+        self['poster'].hide()
+        self.pjob = Job(lambda: CinemaScreen.tmdb(title), self.show_poster)
+
+    def show_poster(self, path):
+        if isinstance(path, Exception) or not path:
+            return
+        try:
+            from Tools.LoadPixmap import LoadPixmap
+            pm = LoadPixmap(path)
+            if pm and self['poster'].instance:
+                self['poster'].instance.setScale(1)
+                self['poster'].instance.setPixmap(pm)
+                self['poster'].show()
+        except Exception:
+            pass
 
 
 # --------------------------------------------------------------------- the full guide (grid)
@@ -728,6 +755,16 @@ class CinemaScreen(Base):
                 self.show_poster(path)
             else:
                 self.pjob = Job(lambda: self.download(url, path), lambda p: self.show_poster(p, x))
+        elif features.tmdb_key():       # no picture from the guide: TMDB (your own key)
+            self.pjob = Job(lambda: self.tmdb(x['title'], x.get('en')), lambda p: self.show_poster(p, x))
+
+    @classmethod
+    def tmdb(cls, title, en=None):
+        url = features.tmdb_poster(title, en)
+        if not url:
+            raise IOError('no poster')
+        path = os.path.join(POSTER_DIR, hashlib.md5(url.encode('utf-8')).hexdigest() + '.jpg')
+        return path if os.path.exists(path) else cls.download(url, path)
 
     @staticmethod
     def download(url, path):

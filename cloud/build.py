@@ -454,7 +454,7 @@ def fix_time_offsets(gdir, index, anchors=TIME_ANCHORS, core=TIME_CORE, log=prin
         return sim_cache[k]
     out = {}
     for n, chans in data.items():
-        if n in anc or n == 'gold':
+        if n in anc or n in ('gold', 'crowd_ar'):        # crowd_ar: the satellite's own guide
             continue
         names = chnames(n)
         own, weak = {}, {}
@@ -563,6 +563,36 @@ def remove_copied_schedules(gdir, index, hours=24, min_progs=4):
     return dict((f, sorted(c)[:50]) for f, c in drop.items())
 
 
+def wanted_report(names, index, path):
+    """channels the receiver has without any guide, with the closest names in every guide of this run"""
+    import gold
+    from difflib import SequenceMatcher
+    pool = []
+    for fname, f in (index.get('files') or {}).items():
+        if f.get('kind') == 'est':
+            continue
+        for cid, nm in f.get('channels') or []:
+            for x in (nm or [cid]):
+                pool.append((gold.matcher.skeleton(gold.matcher.latin(x)), x, fname, cid))
+    from difflib import get_close_matches
+    by_sk = {}
+    for p in pool:
+        if p[0]:
+            by_sk.setdefault(p[0], []).append(p)
+    out = []
+    for name in names:
+        sk = gold.matcher.skeleton(gold.matcher.latin(name))
+        if len(sk) < 2:
+            continue
+        best = [(SequenceMatcher(None, sk, k).ratio(), by_sk[k][0]) for k in get_close_matches(sk, list(by_sk), 3, 0.6)]
+        out.append('%s\t%s' % (name, '  |  '.join('%.2f %s (%s/%s)' % (r, p[1], p[2], p[3]) for r, p in best)
+                                   or '-'))
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(out) + '\n')
+    print('wanted: %d channels without a guide on the receiver, %d with a possible match' % (
+        len(out), len([1 for x in out if not x.endswith('\t-')])))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--work', default='work')
@@ -570,6 +600,7 @@ def main():
     ap.add_argument('--catalog', default='plugin/SaadEPG/channels.json')
     ap.add_argument('--skip-download', action='store_true')
     ap.add_argument('--tr', default='', help='folder with en_<lang>.json.gz (foreign titles -> English)')
+    ap.add_argument('--history', default='', help='history.json.gz of the previous run (estimated guide)')
     a = ap.parse_args()
     cfg = json.load(open(os.path.join(HERE, 'sources.json'), encoding='utf8'))
     days = cfg.get('days', 3)
@@ -702,6 +733,26 @@ def main():
         traceback.print_exc()
         status['files']['gold'] = {'ok': False, 'error': str(e)[:300]}
         print('gold failed: %s' % e)
+
+    # estimated guide for channels whose real data stops early (their programmes repeat every week / day)
+    try:
+        import history
+        history.build(gdir, a.out, index, a.history or os.path.join(a.work, 'history_prev.json.gz'), days)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print('estimated guide failed: %s' % e)
+
+    # the receiver's satellite guide (crowd.py): where receivers post, and what is still missing
+    try:
+        ci = os.path.join(a.work, 'crowd_issue.json')
+        if os.path.exists(ci):
+            index['crowd'] = json.load(open(ci))
+        wf = os.path.join(a.tr, 'wanted.json') if a.tr else ''
+        if wf and os.path.exists(wf):
+            wanted_report(json.load(open(wf, encoding='utf8')), index, os.path.join(a.tr, 'wanted.txt'))
+    except Exception as e:
+        print('crowd / wanted failed: %s' % e)
 
     # one small file per channel: a receiver downloads only its own channels
     try:

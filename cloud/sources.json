@@ -893,6 +893,15 @@
    "title": "sat.tv Hot Bird",
    "region": "en",
    "disabled": true
+  },
+  "crowd_ar": {
+   "url": "local:work/crowd_ar.xml",
+   "sat": [
+    "*"
+   ],
+   "title": "دليل القمر (من ريسيفرك)",
+   "region": "ar",
+   "lang": "ar"
   }
  },
  "extract": {

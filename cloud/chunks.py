@@ -50,11 +50,15 @@ def build(gdir, out_dir, index, days=3, log=print):
         if not os.path.exists(path):
             continue
         keep = set(c for c, _n in f.get('channels') or [])
+        # a window fixed for the whole day: a channel whose programmes did not change keeps the same file
+        # (and the same md5), so the receivers skip it
+        day0 = int(now // 86400) * 86400
+        win = (day0 - 6 * 3600, day0 + (days + 1) * 86400)    # covers now-6h .. now+days at any hour of the day
         try:
             sources.XML_PREFER_EN = False
-            orig, _names = sources.parse_xmltv_file(path, keep, days + 1)
+            orig, _names = sources.parse_xmltv_file(path, keep, days + 1, window=win)
             sources.XML_PREFER_EN = True
-            en, _names = sources.parse_xmltv_file(path, keep, days + 1)
+            en, _names = sources.parse_xmltv_file(path, keep, days + 1, window=win)
         except Exception as e:
             log('chunks: %s unreadable (%s)' % (fname, e))
             continue
@@ -63,11 +67,12 @@ def build(gdir, out_dir, index, days=3, log=print):
         d = os.path.join(out_dir, 'ch', fname)
         os.makedirs(d, exist_ok=True)
         done = 0
+        manifest = {}      # hash of the channel -> md5 of its content: a receiver downloads only what changed
         for cid, evs in orig.items():
             if not evs:
                 continue
             marks = [[int(e[0] // 60), title_hash(e[2])] for e in evs if now - 3600 <= e[0] < now + FP_HOURS * 3600]
-            if len(marks) >= 4:
+            if len(marks) >= 4 and fname != 'est':     # estimates never identify a channel
                 fp[plugin_key(fname, f.get('kind'), cid)] = marks
             obj = {'c': cid, 'e': [list(e) for e in evs]}
             alt = dict((e[0], e) for e in en.get(cid) or [])
@@ -78,16 +83,22 @@ def build(gdir, out_dir, index, days=3, log=print):
                     tr[str(i)] = [x[2], x[4]]
             if tr:
                 obj['en'] = tr
-            p = os.path.join(d, chan_hash(cid) + '.json.gz')
+            h = chan_hash(cid)
+            p = os.path.join(d, h + '.json.gz')
+            body = json.dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
+            manifest[h] = hashlib.md5(body).hexdigest()[:12]
             with gzip.open(p, 'wb', compresslevel=9) as fh:
-                fh.write(json.dumps(obj, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+                fh.write(body)
             size += os.path.getsize(p)
             done += 1
         if done:
+            with gzip.open(os.path.join(d, '_m.json.gz'), 'wb', compresslevel=9) as fh:
+                fh.write(json.dumps(manifest, separators=(',', ':')).encode('utf-8'))
             f['ch'] = 1
+            f['chm'] = 1
             n_files += 1
             n_ch += done
-    index['chunks'] = {'v': 1, 'path': 'ch/%s/%s.json.gz', 'hash': 'sha1:16'}
+    index['chunks'] = {'v': 2, 'path': 'ch/%s/%s.json.gz', 'hash': 'sha1:16', 'manifest': 'ch/%s/_m.json.gz'}
     with gzip.open(os.path.join(out_dir, 'fp.json.gz'), 'wb', compresslevel=9) as fh:
         fh.write(json.dumps({'generated': int(now), 'fp': fp}, separators=(',', ':')).encode('utf-8'))
     index['fp'] = 'fp.json.gz'

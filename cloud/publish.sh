@@ -34,7 +34,12 @@ json.dump(new, open('work/catalog_auto.json', 'w', encoding='utf8'), ensure_asci
 print('catalog: %d channels (%+d new from iptv-org)' % (len(new), added))
 PY
 fi
-python3 cloud/build.py --work work --out public --catalog "$CAT" --tr public/tr 2>&1 | tee public/tr/build.txt
+# the satellite guide posted by the owner's receiver (optional on the receiver) + channels still without a guide
+(timeout 5m python3 cloud/crowd.py work public/tr || echo "crowd skipped") 2>&1 | tee -a public/tr/official.txt
+# the programmes of the last weeks (for the estimated guide of channels whose source stops)
+curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/epg/history.json.gz" -o work/history_prev.json.gz \
+  || rm -f work/history_prev.json.gz
+python3 cloud/build.py --work work --out public --catalog "$CAT" --tr public/tr --history work/history_prev.json.gz 2>&1 | tee public/tr/build.txt
 [ "${PIPESTATUS[0]}" = "0" ] || exit 1
 cp version.json public/ 2>/dev/null || true
 timeout 10m python3 cloud/probe.py --out public || echo "probe skipped"   # raw official pages for new readers

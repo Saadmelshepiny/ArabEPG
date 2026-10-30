@@ -119,6 +119,82 @@ def set_shift(ref, hours):
     else:
         d.pop(ref, None)
     _save(SHIFT_FILE, d)
+    ls = _load(os.path.join(DATA_DIR, 'live_shifts.json'), {})
+    if ls.pop(ref, None) is not None:          # your own correction replaces the learned one
+        _save(os.path.join(DATA_DIR, 'live_shifts.json'), ls)
+
+
+LIVE_SHIFT_FILE = os.path.join(DATA_DIR, 'live_shifts.json')   # learned from the broadcast itself
+LIVE_SHIFT_DAYS = 4
+
+
+def live_shifts():
+    return _load(LIVE_SHIFT_FILE, {})
+
+
+def _tkey(t):
+    from .matcher import norm
+    return norm(t or u'')
+
+
+def live_shift_seen(ref, hours, our_start, title, now=None):
+    """follow_live: the channel's own "now" is the same programme as ours, whole hours away.
+    Learned for good after two different programmes say the same; -> (confirmed, total hours)"""
+    now = int(now or time.time())
+    d = live_shifts()
+    e = d.get(ref) or {}
+    applied = int(e.get('sh', 0)) if e.get('on') else 0
+    total = applied + int(hours)
+    src = int(our_start) - applied * 3600            # the start as the source writes it
+    probe = [_tkey(title), src]
+    c = e.get('cand')
+    confirmed = False
+    if total == 0:
+        d.pop(ref, None)
+    elif c and int(c.get('sh', 0)) == total and c.get('probe') and c['probe'][1] != src:
+        e = {'sh': total, 'on': 1, 't': now, 'probes': [c['probe'], probe]}
+        d[ref] = e
+        confirmed = True
+    else:
+        e['cand'] = {'sh': total, 'probe': probe, 't': now}
+        d[ref] = e
+    _save(LIVE_SHIFT_FILE, d)
+    return confirmed, total
+
+
+def live_shift_ok(ref, our_start, title, now=None):
+    """the guide (with its learned shift) matches the broadcast: the shift is still right"""
+    d = live_shifts()
+    e = d.get(ref)
+    if not e:
+        return
+    if not e.get('on'):
+        d.pop(ref, None)                  # a single odd observation: forgotten
+    else:
+        e['t'] = int(now or time.time())
+        e['probes'] = (e.get('probes') or [])[-3:] + [[_tkey(title), int(our_start) - int(e['sh']) * 3600]]
+    _save(LIVE_SHIFT_FILE, d)
+
+
+def live_shift_check(entry, events, now=None):
+    """-> 'keep' | 'fixed' (the source itself moved its times: the shift is not needed any more) | 'old'"""
+    now = now or time.time()
+    sh = int(entry.get('sh', 0)) * 3600
+    at = {}
+    for e in events or ():
+        at.setdefault(_tkey(e[2]), set()).add(int(e[0]))
+    keep = fixed = 0
+    for t, src in entry.get('probes') or []:
+        got = at.get(t) or ()
+        if any(abs(x - src) <= 120 for x in got):
+            keep += 1
+        elif any(abs(x - src - sh) <= 120 for x in got):
+            fixed += 1
+    if fixed > keep:
+        return 'fixed'
+    if keep or now - entry.get('t', 0) < LIVE_SHIFT_DAYS * 86400:
+        return 'keep'
+    return 'old'
 
 
 def load_mapping():
@@ -148,6 +224,14 @@ def state_ro():
 
 def save_state(st):
     _save(STATE_FILE, st)
+
+
+def chunk_cache_dir():
+    """copies of the cloud's per-channel files: on the hard disk, otherwise in RAM (never the flash)"""
+    for d in ('/media/hdd', '/media/usb', '/media/mmc'):
+        if os.path.ismount(d) and os.access(d, os.W_OK):
+            return os.path.join(d, 'SaadEPG', 'ch')
+    return '/tmp/SaadEPG_ch'
 
 
 def cache_dir():
@@ -434,6 +518,12 @@ def confidence(ref, state=None, idx=None):
     if f.get('v'):
         return 100, u'مؤكد بدليل القمر', 'accent'
     key = u(f.get('key', ''))
+    if key.startswith(u'xml:est/'):
+        return 40, u'جدول تقديري (المصدر متوقف - من تكرار البث)', 'amber'
+    if key.startswith(u'xml:crowd_ar/'):
+        return 90, u'دليل القمر نفسه (من السحابة)', 'accent'
+    if f.get('est'):
+        return 55, u'جزء منه تقديري (المصدر ينتهي مبكرا)', 'amber'
     if key.startswith(u'xml:gold/'):
         c = (((idx or load_index()).get('gold') or {}).get('conf') or {}).get(key[9:])
         if c is not None:
@@ -473,11 +563,11 @@ def _sat_ok(f, sats):
     return '*' in fs or sats is None or bool(fs & set(sats))
 
 
-def cloud_xml_entries(user_sats):
-    """extra XMLTV channels (cloud / direct / imported) limited to the user's satellites."""
+def cloud_xml_entries(user_sats, every=False):
+    """extra XMLTV channels (cloud / direct / imported) limited to the user's satellites (every: all of them)"""
     out = []
     for fname, f in (load_index().get('files') or {}).items():
-        if f.get('kind') != 'xmltv' or not _sat_ok(f, user_sats):
+        if f.get('kind') != 'xmltv' or not (every or _sat_ok(f, user_sats)):
             continue
         for cid, names in f.get('channels') or []:
             names = [re.sub(u'\\.[a-z]{2}$', u'', u(n)).strip() for n in (names or [cid])]
@@ -918,7 +1008,23 @@ def resolve(ref, mapping, auto):
         fp = _fp_links().get(ref)
         if fp:
             out = [(fp[0], 0.93)]
+    if not out:      # the satellite's own guide of this very service, kept by the cloud (sent by your receiver)
+        k = ref_key(ref)
+        if k and (u'crowd.' + k) in crowd_ids():
+            out = [(u'xml:crowd_ar/crowd.' + k, 0.99)]
     return out, False
+
+
+_CROWD = {'sig': None, 'ids': set()}
+
+
+def crowd_ids():
+    idx = load_index()
+    sig = idx.get('generated')
+    if _CROWD['sig'] != sig:
+        f = (idx.get('files') or {}).get('crowd_ar') or {}
+        _CROWD['sig'], _CROWD['ids'] = sig, set(c for c, _n in f.get('channels') or [])
+    return _CROWD['ids']
 
 
 _FPL = {'sig': None, 'data': {}}
@@ -1229,16 +1335,57 @@ class Fetcher(object):
         todo = list(pairs)
         res, errors, lock = {}, {}, threading.Lock()
         step = self.step
+        # only what changed: the cloud lists an md5 per channel, the copies of the last update are kept
+        mpat = (self.index.get('chunks') or {}).get('manifest')
+        cdir = chunk_cache_dir()
+        remote, local = {}, {}
+        for fname in sorted(set(f for f, _c in todo)):
+            if not mpat or not (self.index.get('files') or {}).get(fname, {}).get('chm'):
+                continue
+            try:
+                remote[fname] = json.loads(sources.http_get(
+                    base + mpat % quote(fname.encode('utf-8') if not PY3 else fname), timeout=30).decode('utf-8'))
+                local[fname] = _load(os.path.join(cdir, fname, '_m.json'), {})
+            except Exception as e:
+                log(u'السحابة: قائمة التغييرات %s: %s' % (fname, e))
+        stats = self.stats_chunks = {'same': 0, 'new': 0}
 
         def one(fname, cid):
             h = hashlib.sha1(cid.encode('utf-8') if not isinstance(cid, bytes) else cid).hexdigest()[:16]
-            url = base + pat % (quote(fname.encode('utf-8') if not PY3 else fname), h)
-            try:
-                obj = json.loads(sources.http_get(url, timeout=40).decode('utf-8'))
-            except Exception as e:
-                if '404' in str(e):
-                    return []         # no programmes for this channel in the cloud
-                raise
+            want = (remote.get(fname) or {}).get(h)
+            obj = None
+            if want and (local.get(fname) or {}).get(h) == want:
+                try:
+                    with open(os.path.join(cdir, fname, h + '.json'), 'rb') as fh:
+                        obj = json.loads(fh.read().decode('utf-8'))
+                    with lock:
+                        stats['same'] += 1
+                except Exception:
+                    obj = None
+            if obj is None:
+                if fname in remote and not want:
+                    return []         # not in the list: no programmes for this channel in the cloud
+                url = base + pat % (quote(fname.encode('utf-8') if not PY3 else fname), h)
+                try:
+                    body = sources.http_get(url, timeout=40)
+                except Exception as e:
+                    if '404' in str(e):
+                        return []         # no programmes for this channel in the cloud
+                    raise
+                obj = json.loads(body.decode('utf-8'))
+                with lock:
+                    stats['new'] += 1
+                if want:
+                    try:
+                        d = os.path.join(cdir, fname)
+                        if not os.path.isdir(d):
+                            os.makedirs(d)
+                        with open(os.path.join(d, h + '.json'), 'wb') as fh:
+                            fh.write(body)
+                        with lock:
+                            local.setdefault(fname, {})[h] = hashlib.md5(body).hexdigest()[:12]
+                    except Exception:
+                        pass
             en = obj.get('en') or {}
             out = []
             for i, e in enumerate(obj.get('e') or []):
@@ -1272,6 +1419,17 @@ class Fetcher(object):
             t.start()
         for t in threads:
             t.join()
+        for fname, m in local.items():
+            if fname in remote:
+                _save(os.path.join(cdir, fname, '_m.json'), dict((h, v) for h, v in m.items() if h in remote[fname]))
+                try:
+                    for x in os.listdir(os.path.join(cdir, fname)):
+                        if x.endswith('.json') and x != '_m.json' and x[:-5] not in remote[fname]:
+                            os.remove(os.path.join(cdir, fname, x))
+                except Exception:
+                    pass
+        if stats['same']:
+            log(u'السحابة: %d قناة لم يتغير دليلها (من النسخة المحفوظة)، %d تم تنزيلها' % (stats['same'], stats['new']))
         per_file = {}
         for fname, _c in pairs:
             per_file[fname] = per_file.get(fname, 0) + 1
@@ -2479,7 +2637,8 @@ class Updater(object):
                     if hit:
                         cands = [(hit, 0.93)]
                 fk = u(state['filled'].get(ref, {}).get('key', ''))
-                if fk and not fk.startswith('copy:') and fk not in [c[0] for c in cands]:
+                if fk and not fk.startswith('copy:') and not fk.startswith('xml:est/') and \
+                        fk not in [c[0] for c in cands]:
                     stale.append(ref)
                 if cands and (cands[0][0] == '-' or cands[0][0].startswith('chan:')):
                     continue
@@ -2737,6 +2896,31 @@ class Updater(object):
                 unlearn_ref(ref, key)
             self.stats['rejected'] = len(rejected)
 
+            # 4a. time corrections learned from the broadcast while you watched (the channel's own "now")
+            ls = live_shifts()
+            if ls:
+                n_ls, gone = 0, []
+                for j in jobs:
+                    x = ls.get(j['ref'])
+                    if not x or not x.get('on') or not j['key'] or j.get('manual_shift') or j.get('shift'):
+                        continue
+                    v = live_shift_check(x, results.get(j['key']))
+                    if v == 'keep':
+                        j['shift'] = int(x['sh']) * 3600
+                        j['live_shift'] = int(x['sh'])
+                        n_ls += 1
+                    else:
+                        gone.append(j['ref'])
+                        log(u'تصحيح التوقيت من البث لم يعد لازماً (%s): %s' % (
+                            u'المصدر صحّح مواعيده' if v == 'fixed' else u'قديم', j['name']))
+                if gone:
+                    for r in gone:
+                        ls.pop(r, None)
+                    _save(LIVE_SHIFT_FILE, ls)
+                if n_ls:
+                    log(u'تصحيح توقيت تعلّمه البلوجين من البث نفسه: %d قناة' % n_ls)
+                self.stats['live_shift'] = n_ls
+
             # 4b. confidence: a link that could not be checked must be strong enough on its own
             mode = cfg.get('link_mode', 'normal')
             held = []
@@ -2776,6 +2960,47 @@ class Updater(object):
                 s.state = 'ok'
                 if self.stats['backup']:
                     log(u'تم استخدام النسخة الاحتياطية لـ %d قناة' % self.stats['backup'])
+
+            # 5b. estimated guide: the source stopped (or ends early) and the channel repeats its weekly/daily grid
+            ef = (load_index().get('files') or {}).get('est') if cfg.get('estimate', True) else None
+            if ef and ef.get('channels') and not self.cancel:
+                have = set(c for c, _n in ef['channels'])
+                want, limit = {}, now + (cfg['days'] - 0.5) * 86400
+                for j in jobs:
+                    if j.get('rejected') or j.get('held') or j.get('fake'):
+                        continue
+                    if j['key']:
+                        evs = results.get(j['key']) or []
+                        end = max(e[0] + e[1] for e in evs) if evs else 0
+                        if end < limit and j['key'] in have:
+                            want[j['ref']] = (j['key'], end)
+                    else:
+                        for k in j['cands']:
+                            if k in have:
+                                want[j['ref']] = (k, 0)
+                                break
+                if want:
+                    got = fetcher.fetch('xml', sorted(set('est/' + k for k, _e in want.values())))
+                    n_est, merged = 0, set()
+                    for j in jobs:
+                        if j['ref'] not in want:
+                            continue
+                        k, end = want[j['ref']]
+                        evs = [e for e in got.get('est/' + k) or [] if e[0] >= end - 60]
+                        if not evs:
+                            continue
+                        if j['key']:
+                            if j['key'] not in merged:            # once per source: every channel of it gets it
+                                results[j['key']] = list(results.get(j['key']) or []) + evs
+                                merged.add(j['key'])
+                        else:
+                            j['key'] = u'xml:est/' + k
+                            results[j['key']] = evs
+                        j['est'] = len(evs)
+                        n_est += 1
+                    if n_est:
+                        log(u'جدول تقديري (من تكرار البث الأسبوعي/اليومي) لـ %d قناة توقف مصدرها أو ينتهي مبكرا' % n_est)
+                    self.stats['estimated'] = n_est
             return {'jobs': jobs, 'results': dict((j['key'], results.get(j['key'])) for j in jobs if j['key']),
                     'rejected': rejected, 'held': [j['ref'] for j in held], 'verified_pairs': verified_pairs,
                     'fixed_pairs': fixed_pairs, 'review': state.get('review') or {}, 'stale': self.stale}
@@ -2798,6 +3023,7 @@ class Updater(object):
         self.stale = ctx.get('stale') or []
         state = load_state()
         state['review'] = ctx.get('review') or {}
+        filled_before = set(state['filled'])
         # 6. import (clean-up first, then a leak check afterwards)
         now = int(time.time())
         blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts]
@@ -2818,6 +3044,13 @@ class Updater(object):
                 groups.setdefault((j['key'], j.get('shift', 0)), []).append(j['ref'])
             elif not j.get('rejected') and not j.get('held') and not j.get('conflict'):
                 self.stats['failed'] += 1
+        why = state.setdefault('why', {})      # why a channel got nothing (for "channels without a guide")
+        for j in jobs:
+            why.pop(j['ref'], None)
+            if not j['key']:
+                code = ('conflict' if j.get('conflict') else 'rejected' if j.get('rejected') else
+                        'held' if j.get('held') else 'fake' if j.get('fake') else 'empty')
+                why[j['ref']] = [code, (j.get('cands') or [u''])[0], now]
         got_guide = set(r for refs in groups.values() for r in refs)
         copies = [(t, c) for t, c in self.copies.items() if t not in got_guide and t not in self.conflicts]
         if to_clean and self._flush(to_clean, u'دليل خطأ أو قديم'):
@@ -2844,6 +3077,8 @@ class Updater(object):
                             state['filled'][r] = {'key': key, 't': now, 'n': n, 'until': until}
                             if jref.get(r, {}).get('verified'):
                                 state['filled'][r]['v'] = 1     # the satellite's own guide agrees
+                            if jref.get(r, {}).get('est'):
+                                state['filled'][r]['est'] = jref[r]['est']   # partly / only estimated
                             if shift:
                                 state['filled'][r]['shift'] = shift
                     except Exception as e:
@@ -2952,6 +3187,18 @@ class Updater(object):
         n_learn = learn_refs(verified_pairs + [(r, k) for r, k in fixed_pairs])
         if n_learn:
             log(u'تم حفظ %d ربط مؤكد برقم الخدمة' % n_learn)
+        if not getattr(self, 'only_refs', None):
+            # channels that had no guide at the last update and have one now (a new source in the cloud...)
+            known = set(state.get('known_refs') or [])
+            if known:
+                names = dict(self.services)
+                gained = [r for r in state['filled'] if r in known and r not in filled_before and
+                          r not in set(self.stale or ())]
+                if gained:
+                    state['gained'] = {'t': now, 'names': [names.get(r, r) for r in gained][:60], 'n': len(gained)}
+                    log(u'قنوات صار لها دليل لأول مرة: %d - %s' % (
+                        len(gained), u'، '.join(state['gained']['names'][:20])))
+            state['known_refs'] = [r for r, _n in self.services]
         save_state(state)
         failed_names = [j['name'] for j in jobs if not j['key'] and not j.get('copied') and not j.get('rejected')
                         and not j.get('held') and not j.get('conflict')]

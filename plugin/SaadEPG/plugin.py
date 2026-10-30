@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.3'
+VERSION = '2.4'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -96,6 +96,8 @@ C.translate = ConfigYesNo(default=False)
 C.gold = ConfigYesNo(default=True)
 C.follow_live = ConfigYesNo(default=True)
 C.night_scan = ConfigYesNo(default=True)
+C.estimate = ConfigYesNo(default=True)
+C.share_eit = ConfigYesNo(default=False)
 C.smart_bq_t = ConfigText(default='0', fixed_size=False)
 C.web = ConfigYesNo(default=True)
 C.web_port = ConfigSelection(default='8899', choices=[('8899', '8899'), ('8898', '8898'), ('8090', '8090'), ('9090', '9090')])
@@ -165,6 +167,7 @@ def current_cfg(**over):
         'tr_key': C.tr_key.value.strip(), 'tr_limit': int(C.tr_limit.value), 'copy_epg': C.copy_epg.value, 'link_mode': C.link_mode.value,
         'bouquets': [x for x in C.bouquets.value.split('|') if x], 'foreign_lang': C.foreign_lang.value,
         'ar_tr_mode': C.ar_tr_mode.value, 'lock': C.lock_epg.value, 'gold': C.gold.value,
+        'estimate': C.estimate.value,
     }
     if not C.translate.value:      # no translation at all: every title and description as the channel wrote it
         cfg['ar_tr_mode'] = 'none'
@@ -301,12 +304,14 @@ MAIN_ITEMS = [
     (u'خريطة المسلسلات', 'smap', u'المسلسلات اليومية ومواعيد الإعادة'),
     (u'تحديث دليل البرامج الآن', 'update', u'جلب الدليل من كل المصادر وحفظه'),
     (u'القنوات والربط', 'channels', u'مصدر دليل كل قناة حسب الباقات'),
+    (u'قنوات بدون دليل', 'missing', u'السبب لكل قناة والربط اليدوي بالبحث'),
     (u'صحة الدليل', 'health', u'المصادر والقنوات المرفوضة والتنبيهات'),
     (u'الإعدادات', 'settings', u'المصادر واللغات ومواعيد التحديث'),
     (u'أدوات متقدمة', 'advanced', u'الباقات، الإحصائيات، النسخ الاحتياطي...'),
 ]
 ADVANCED_ITEMS = [
     (u'الباقات الذكية', 'smartbq', u'أفلام، مسلسلات، رياضة، أخبار... تلقائيا'),
+    (u'مشاركة دليل القمر مع السحابة', 'share', u'اختياري: الشرح والرفع الآن'),
     (u'اختيار الباقات التي يحدّثها البلوجين', 'bouquets', u'الباقات المفضلة أولا'),
     (u'إحصائيات الباقات وعدد البرامج', 'stats', u'لكل باقة: قنوات ومربوطة وبرامج'),
     (u'حفظ الدليل على الهارد (epg.dat)', 'epgfile', u'يبقى الدليل بعد إعادة التشغيل'),
@@ -436,6 +441,14 @@ class SaadEPGMain(BaseScreen):
             self.session.open(NowNextScreen)
         elif a in ('channels', 'relink'):
             self.session.openWithCallback(self.refresh, ChannelsScreen, a == 'relink')
+        elif a == 'share':
+            from . import share as sh
+            info = share_text()
+            self.session.openWithCallback(self._share_go, MessageBox, T(info + u'\n\nرفع دليل القمر الآن؟'),
+                                          MessageBox.TYPE_YESNO, default=False) if sh.token() else \
+                self.session.open(TextScreen, u'مشاركة دليل القمر', share_text)
+        elif a == 'missing':
+            self.session.openWithCallback(self.refresh, ChannelsScreen, False, 'missing')
         elif a == 'test':
             self.session.open(TextScreen, u'اختبار الاتصال', lambda: u'\n'.join(engine.test_sources(current_cfg())))
         elif a == 'settings':
@@ -473,6 +486,14 @@ class SaadEPGMain(BaseScreen):
         elif a == 'reset':
             self.session.openWithCallback(self._reset, MessageBox,
                                           T(u'حذف كل الربط اليدوي والعودة للربط التلقائي الذكي؟'), MessageBox.TYPE_YESNO)
+
+    def _share_go(self, yes):
+        if not yes or AutoUpdate.instance is None:
+            return
+        self.session.open(MessageBox, T(u'جاري الرفع في الخلفية... النتيجة تظهر في سجل العمليات.'),
+                          MessageBox.TYPE_INFO, timeout=4)
+        AutoUpdate.instance.share(manual=True, done=lambda m: self.session.open(
+            MessageBox, T(m), MessageBox.TYPE_INFO, timeout=10))
 
     def _smart(self, c):
         if not c:
@@ -600,6 +621,36 @@ def non_arabic_text():
             u'"عربي + ترجمة الإنجليزي إلى العربية" أو "عربي أولا ثم إنجليزي".\n\n' % len(names)) + u'\n'.join(names)
 
 
+def share_text():
+    from . import share as sh
+    st = engine.load_state().get('shared') or {}
+    lines = [
+        u'مشاركة دليل القمر مع السحابة (اختيارية ومقفولة افتراضيا)',
+        u'',
+        u'ماذا يُرسل: للقنوات التي لا يملؤها البلوجين ولها دليل من القمر: برامج يومين، رقم الخدمة، واسم القناة.',
+        u'وأسماء قنواتك التي ليس لها أي دليل. لا شيء غير ذلك (لا IP، لا إعدادات، لا ملفات).',
+        u'',
+        u'الفائدة: السحابة تحفظ دليل القمر لهذه القنوات، فيبقى عندك حتى لو توقف القمر عن إرساله،',
+        u'ويتعلم منه الجدول التقديري، وتبحث السحابة كل يوم عن مصادر لأسماء القنوات الناقصة.',
+        u'',
+        u'إلى أين: تعليقات على Issue في مستودع البلوجين على GitHub (المستودع عام: البيانات يراها أي أحد،',
+        u'وهي برامج قنوات فقط). السحابة تقرأ تعليقات صاحب المستودع فقط وتحذف ما مر عليه 4 أيام.',
+        u'',
+        u'التوكن: تنشئه أنت من GitHub: Settings > Developer settings > Fine-grained tokens >',
+        u'Repository access: Only select repositories (ArabEPG) > Permissions: Issues = Read and write فقط، ومدة سنة.',
+        u'هذا التوكن لا يستطيع تعديل كود البلوجين أو أي شيء آخر. ألصقه في صفحة الموبايل (تبويب المفاتيح).',
+        u'يُحفظ في /etc/enigma2/SaadEPG/gh_token (للمستخدم root فقط) ويرسل لـ api.github.com فقط عبر اتصال موثق.',
+        u'',
+        u'ثم فعّل "مشاركة دليل القمر مع السحابة" من الإعدادات: الرفع يتم مرة يوميا في الاستاندباي.',
+        u'',
+        u'الحالة الآن: التوكن %s، المشاركة %s%s' % (
+            u'مُدخل' if sh.token() else u'غير مُدخل', u'مفعلة' if C.share_eit.value else u'مقفولة',
+            (u'، آخر رفع %s (%d قناة)' % (time.strftime('%d/%m %H:%M', time.localtime(st['t'])), st.get('ch', 0)))
+            if st.get('t') else u''),
+    ]
+    return u'\n'.join(lines)
+
+
 def receiver_time_text():
     """the receiver's clock and time zone: every guide is shown in this time"""
     try:
@@ -662,10 +713,41 @@ def health_text():
         names_all = dict(engine.get_services())
         out.append(u'  راجع هذه القنوات (المصادر لا تتفق): ' + u'، '.join(
             names_all.get(r, r) for r, _l in groups['red'][:25]))
+    ls = dict((r, x) for r, x in engine.live_shifts().items() if x.get('on'))
+    if ls:
+        names_all = names_all or dict(engine.get_services())
+        out.append(u'تصحيح توقيت تعلّمه البلوجين من البث نفسه: ' + u'، '.join(
+            u'%s %+d س' % (names_all.get(r, r), x.get('sh', 0)) for r, x in list(ls.items())[:20]))
+    try:
+        tf = []
+        for fn, f in (idx_now.get('files') or {}).items():
+            if f.get('time_fix'):
+                tf.append(u'%s %+g س' % (u(f.get('title') or fn), f['time_fix'] / 3600.0))
+            if f.get('time_fix_ch'):
+                tf.append(u'%s: %d قناة بتصحيح خاص' % (u(f.get('title') or fn), len(f['time_fix_ch'])))
+        if tf:
+            out.append(u'تصحيح توقيت المصادر في السحابة اليوم: ' + u'، '.join(tf[:12]))
+    except Exception:
+        pass
+    est = [r for r, f in (st.get('filled') or {}).items() if u(f.get('key', '')).startswith(u'xml:est/')]
+    est_part = [r for r, f in (st.get('filled') or {}).items() if f.get('est') and r not in est]
+    if est or est_part:
+        names_all = names_all or dict(engine.get_services())
+        out.append(u'جدول تقديري (المصدر متوقف، من تكرار البث): %d قناة%s%s' % (
+            len(est), (u' - ' + u'، '.join(names_all.get(r, r) for r in est[:15])) if est else u'',
+            (u'  |  مُكمل تقديريا بعد نهاية المصدر: %d' % len(est_part)) if est_part else u''))
+    g = st.get('gained') or {}
+    if g.get('t') and g['t'] > time.time() - 3 * 86400:
+        out.append(u'قنوات صار لها دليل لأول مرة (%s): %d - %s' % (
+            time.strftime('%d/%m', time.localtime(g['t'])), g.get('n', 0), u'، '.join(g.get('names') or [])[:400]))
     nt = st.get('night') or {}
     if nt.get('t'):
         out.append(u'آخر مسح ليلي لدليل القمر: %s - %d قناة صار لها دليل (من %d)' % (
             time.strftime('%d/%m %H:%M', time.localtime(nt['t'])), nt.get('gained', 0), nt.get('cands', 0)))
+    sh = st.get('shared') or {}
+    if sh.get('t'):
+        out.append(u'آخر مشاركة لدليل القمر مع السحابة: %s - %d قناة' % (
+            time.strftime('%d/%m %H:%M', time.localtime(sh['t'])), sh.get('ch', 0)))
     out.append(u'رُفض لعدم مطابقة دليل القمر: %d' % h.get('rejected', 0))
     out.append(u'ربط غير مؤكد ينتظر مراجعتك [?]: %d' % h.get('held', 0))
     out.append(u'نُسخ الدليل من نسخة أخرى للقناة: %d' % h.get('copied', 0))
@@ -989,6 +1071,27 @@ def channels_table():
                        Col(u'الثقة', 72, 'center', 1), Col(u'النوع', 76, 'center')], row_h=38, font=18, small=15)
 
 
+def missing_reason(ref, key, conflict=False):
+    """why a channel has no guide, in words, with what you can do about it"""
+    if conflict:
+        return u'رقم خدمتها مشترك مع قناة أخرى مختلفة (الريسيفر لا يفرق بينهما).'
+    w = (engine.state_ro().get('why') or {}).get(ref)
+    if w:
+        code, k = w[0], w[1] if len(w) > 1 else u''
+        return {
+            'empty': u'المصدر (%s) لم يرسل برامج لها في آخر تحديث. قد يعود قريبا، أو اختر مصدرا آخر بالبحث.'
+                     % engine.display_key(k),
+            'rejected': u'المصدر المقترح لا يطابق دليل القمر لهذه القناة فتم رفضه. اختر مصدرا بالبحث.',
+            'held': u'الربط غير مؤكد (التشابه في الاسم فقط). اضغط OK ثم "تأكيد الربط الحالي" إن كان صحيحا.',
+            'fake': u'ملف المصدر ينسخ جدول قناة أخرى لهذه القناة، فلم يُستخدم.',
+            'conflict': u'رقم خدمتها مشترك مع قناة أخرى مختلفة.',
+        }.get(code, code)
+    if not key:
+        return (u'لا يوجد لها مصدر معروف حتى الآن. اضغط OK ثم "بحث بالاسم في كل قنوات السحابة"، أو "استخدام '
+                u'دليل قناة أخرى" إن كانت نسخة من قناة لها دليل. السحابة تبحث عن مصادر جديدة كل يوم.')
+    return u'مربوطة ولم تُحدَّث بعد - اضغط الأخضر للتحديث.'
+
+
 def channel_cells(epg, name, key, cands, manual, mapped):
     chip = STATUS_CHIP.get(epg)
     cells = [{'t': chip[0], 'chip': chip[1]} if chip else {'t': u'—', 'fg': 'dim'}, name]
@@ -1007,10 +1110,10 @@ def channel_cells(epg, name, key, cands, manual, mapped):
 
 
 class ChannelsScreen(BaseScreen):
-    FILTERS = (('linked', u'المربوطة'), ('review', u'تحتاج مراجعة'), ('unlinked', u'غير المربوطة'),
-               ('all', u'كل القنوات'))
+    FILTERS = (('linked', u'المربوطة'), ('review', u'تحتاج مراجعة'), ('missing', u'بدون دليل'),
+               ('unlinked', u'غير المربوطة'), ('all', u'كل القنوات'))
 
-    def __init__(self, session, relink=False):
+    def __init__(self, session, relink=False, start='linked'):
         self.table = channels_table()
         self.skin = skin(1240, 700, (
             self.table.header(10, 66) + ui.list_widget('list', 10, 102, 800, 494) +
@@ -1039,7 +1142,7 @@ class ChannelsScreen(BaseScreen):
             'menu': self.choose_bouquet, 'nextBouquet': self.pgup, 'prevBouquet': self.pgdown}, -2)
         self.bouquets, self.bq = [], -1
         self.relink = relink
-        self.filter = 0
+        self.filter = [f[0] for f in self.FILTERS].index(start) if start in [f[0] for f in self.FILTERS] else 0
         self.services, self.auto, self.epg, self.held, self.conflicts = [], {}, {}, {}, set()
         self.job = None
         self.onLayoutFinish.append(self.load)
@@ -1126,6 +1229,8 @@ class ChannelsScreen(BaseScreen):
                 continue
             if mode == 'review' and not (linked and not manual and (cands[0][1] < 0.97 or ref in self.held)):
                 continue
+            if mode == 'missing' and (self.epg.get(ref, ' ') in ('A', '+') or key == '-'):
+                continue
             rows.append(self.table.row((ref, name, key, cands, manual),
                                        channel_cells(self.epg.get(ref, ' '), name, key, cands, manual,
                                                      mapping.get(ref)), len(rows)))
@@ -1164,6 +1269,9 @@ class ChannelsScreen(BaseScreen):
                 lines.append(u'  %s  %d%%' % (engine.display_key(k), int(sc * 100)))
         else:
             lines.append(u'غير مربوطة - اضغط OK للاختيار')
+        if self.epg.get(ref, ' ') not in ('A', '+') and key != '-':
+            lines.append(u'')
+            lines.append(u'لماذا بدون دليل: ' + missing_reason(ref, key, ref in self.conflicts))
         if st and u(st.get('key', '')).startswith('copy:'):
             lines.append(u'')
             lines.append(u'الدليل منسوخ من: %s (نفس الباقة)' % st.get('from_name', ''))
@@ -1211,7 +1319,7 @@ class ChannelsScreen(BaseScreen):
             items.append((T(u'>> تأكيد الربط الحالي: %s' % engine.display_key(c[2])), c[2]))
         sh = engine.load_shifts().get(ref, 0)
         items += [(T(u'>> تصحيح توقيت دليل هذه القناة%s...' % ((u' (الآن %+d ساعة)' % sh) if sh else u'')), 'shift')]
-        items += [(T(u'>> بحث بالاسم...'), 'search'),
+        items += [(T(u'>> بحث بالاسم في كل قنوات السحابة...'), 'search'),
                   (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
                   (T(u'>> ربط تلقائي ذكي'), 'auto'),
                  (T(u'>> تعطيل البلوجين لهذه القناة'), '-'),
@@ -1222,7 +1330,8 @@ class ChannelsScreen(BaseScreen):
             items.append((T(u'مقترح %d%%: %s' % (sc * 100, engine.display_key(k))), k))
         if query:
             q = engine.norm(query)
-            pool = list(engine.catalog()) + engine.cloud_xml_entries(sats)
+            # every channel of the cloud (~13 000), not only the files of your satellites
+            pool = list(engine.catalog()) + engine.cloud_xml_entries(sats, every=True)
             hits = 0
             for x in pool:
                 if x['src'] not in enabled or not any(q in engine.norm(n) for n in x['names']):
@@ -1621,6 +1730,8 @@ class SettingsScreen(ConfigListScreen, BaseScreen):
             getConfigListEntry(T(u'الدليل الذهبي (كل مصادر القناة في جدول واحد)'), C.gold),
             getConfigListEntry(T(u'الدليل يتبع البث (تأخير الماتشات والبرامج)'), C.follow_live),
             getConfigListEntry(T(u'جمع دليل القمر ليلا في الاستاندباي (للقنوات بدون دليل)'), C.night_scan),
+            getConfigListEntry(T(u'جدول تقديري للقنوات التي توقف مصدرها (من تكرار البث)'), C.estimate),
+            getConfigListEntry(T(u'مشاركة دليل القمر مع السحابة (اختياري - يحتاج توكن، اقرأ الشرح)'), C.share_eit),
             getConfigListEntry(T(u'صفحة الموبايل (%s)' % web.address(int(C.web_port.value))), C.web),
             getConfigListEntry(T(u'منفذ صفحة الموبايل'), C.web_port),
             getConfigListEntry(T(u'تحديث تلقائي يومي'), C.autoupdate),
@@ -1744,6 +1855,7 @@ class AutoUpdate(object):
         self.live_timer.start(60000, False)
         # standby: collect the satellite's own guide of the channels that have none
         self.night = features.NightScan(session, make_timer)
+        self.night.after = self.share
         try:
             config.misc.standbyCounter.addNotifier(self.standby, initial_call=False)
         except Exception as e:
@@ -1762,6 +1874,12 @@ class AutoUpdate(object):
 
     def series(self):
         self.series_timer.startLongTimer(3 * 3600)
+        try:
+            import Screens.Standby
+            if Screens.Standby.inStandby and not self.night.active:
+                self.share()
+        except Exception:
+            pass
         try:
             if features.has_smart() and time.time() - int(C.smart_bq_t.value or 0) > 20 * 3600:
                 epg = eEPGCache.getInstance()
@@ -1786,6 +1904,31 @@ class AutoUpdate(object):
     def standby(self, *args):
         if C.night_scan.value:
             self.night.entered_standby()
+
+    def share(self, manual=False, done=None):
+        """the satellite's own guide -> the cloud (only with your token and the setting on)"""
+        from . import share as sh
+        if not manual and (not C.share_eit.value or not sh.token() or not sh.due()):
+            return False
+        if not sh.token():
+            if done:
+                done(u'لم يتم إدخال توكن GitHub بعد. أدخله من صفحة الموبايل (المفاتيح).')
+            return False
+        try:
+            payload = sh.collect(eEPGCache.getInstance(), engine.get_services())   # main thread: epgcache
+        except Exception as e:
+            log(u'مشاركة دليل القمر: %s' % e)
+            return False
+        issue = sh.issue()
+
+        def finished(res):
+            msg = (u'مشاركة دليل القمر: %s' % res) if isinstance(res, Exception) else res[1]
+            if isinstance(res, Exception):
+                log(msg)
+            if done:
+                done(msg)
+        self.share_job = BackgroundJob(lambda: sh.upload(payload, issue), finished)
+        return True
 
     def follow_live(self):
         if not C.follow_live.value:

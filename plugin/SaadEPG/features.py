@@ -391,13 +391,41 @@ def follow_live(session, epgcache):
         if not s_title or not s_begin or s_dur <= 0:
             return None
         ours = []
-        for x in epgcache.lookupEvent(['IBDTSE', (engine._enc(ref), 0, now - 4 * 3600, 10 * 60)]) or []:
+        for x in epgcache.lookupEvent(['IBDTSE', (engine._enc(ref), 0, now - 7 * 3600, 14 * 60)]) or []:
             if x and x[1] and x[2]:
                 ours.append((int(x[1]), int(x[2]), u(x[3] or u''), u(x[4] or u''), u(x[5] or u''), int(x[0] or 0)))
         ours.sort()
+        from .matcher import norm
+        st = norm(s_title)
+        on_air = s_begin - 300 <= now <= s_begin + s_dur + 300     # the channel's clock is right
+        # the same programme a whole number of hours away: the source's time zone is wrong for this channel
+        hourly = [e for e in ours if on_air and len(st) >= 4 and norm(e[2]) == st and
+                  abs(s_begin - e[0]) >= 3000 and abs(s_begin - e[0]) <= 6 * 3600 + 300 and
+                  abs((s_begin - e[0]) - round((s_begin - e[0]) / 3600.0) * 3600) <= 300]
         near = [e for e in ours if abs(e[0] - s_begin) < 3 * 3600 and _same_title(e[2], s_title)]
-        if not near:
+        if not near and not hourly:
             return None
+        manual = engine.load_shifts().get(ref)
+        exact = [e for e in near if abs(e[0] - s_begin) < 180 and norm(e[2]) == st]
+        if exact and not manual:
+            engine.live_shift_ok(ref, exact[0][0], exact[0][2], now)
+        if hourly and not exact and not manual:
+            e = min(hourly, key=lambda x: abs(x[0] - s_begin))
+            hours = int(round((s_begin - e[0]) / 3600.0))
+            confirmed, total = engine.live_shift_seen(ref, hours, e[0], e[2], now)
+            if not confirmed:
+                # the channel's "next" programme is a second witness: the same distance -> sure right away
+                nx = info.getEvent(1)
+                nt = norm(u(nx.getEventName() or u'')) if nx else u''
+                nb = int(nx.getBeginTime() or 0) if nx else 0
+                for x in ours:
+                    if nt and len(nt) >= 4 and norm(x[2]) == nt and x[0] != e[0] and \
+                            abs((nb - x[0]) - hours * 3600) <= 300:
+                        confirmed, total = engine.live_shift_seen(ref, hours, x[0], x[2], now)
+                        break
+            if confirmed:
+                return _shift_all(session, epgcache, ref, ours, hours, total, s_title)
+            return None          # one witness only: wait for the next programme (nothing is moved twice)
         e = min(near, key=lambda x: abs(x[0] - s_begin))
         delta = s_begin - e[0]                                   # started earlier / later than the guide says
         overrun = (s_begin + s_dur) - (e[0] + e[1])               # ends later than the guide says
@@ -444,6 +472,33 @@ def follow_live(session, epgcache):
     except Exception as e:
         log(u'متابعة البث: %s' % e)
         return None
+
+
+def _shift_all(session, epgcache, ref, ours, hours, total, title):
+    """a time-zone error learned for good: the whole guide of the channel moves now (the next updates
+    apply it by themselves until the source is corrected)"""
+    now = int(time.time())
+    allev = []
+    for x in epgcache.lookupEvent(['IBDTSE', (engine._enc(ref), 0, now - 7 * 3600, 8 * 24 * 60)]) or []:
+        if x and x[1] and x[2]:
+            allev.append((int(x[1]) + hours * 3600, int(x[2]), u(x[3] or u''), u(x[4] or u''), u(x[5] or u''), 0))
+    if not allev:
+        return None
+    engine.import_events(epgcache, [ref], allev)
+    moved = 0
+    for t in plugin_timers(session):
+        try:
+            if engine.clean_ref(str(t.service_ref)) == ref and t.begin > now:
+                t.begin += hours * 3600
+                t.end += hours * 3600
+                session.nav.RecordTimer.timeChanged(t)
+                moved += 1
+        except Exception:
+            pass
+    _LIVE['last'][ref] = (ref, 'tz', total)
+    log(u'تصحيح توقيت من البث: %s - مصدر الدليل مختلف بـ %+d ساعة، تم تعديل %d برنامج%s وسيُطبق في كل تحديث' % (
+        title, total, len(allev), (u' و %d تذكير/تسجيل' % moved) if moved else u''))
+    return u'Saad EPG: تم تصحيح توقيت دليل هذه القناة %+d ساعة حسب البث نفسه' % hours
 
 
 # --------------------------------------------------------------------- smart bouquets
@@ -681,3 +736,92 @@ class NightScan(object):
         engine.save_state(st)
         log(u'مسح دليل القمر الليلي: %d قناة صار لها دليل من القمر (من %d بدون دليل)%s' % (
             gained, len(self.cands), (u' - توقف: %s' % why) if why else u''))
+        cb = getattr(self, 'after', None)
+        if cb:
+            try:
+                cb()
+            except Exception as e:
+                log(u'بعد المسح الليلي: %s' % e)
+
+
+# --------------------------------------------------------------------- film posters from TMDB (optional key)
+TMDB_FILE = os.path.join(engine.DATA_DIR, 'tmdb_key')
+TMDB_CACHE = '/tmp/saadepg_posters/tmdb.json'
+_TMDB = {}
+
+
+def tmdb_key():
+    try:
+        with open(TMDB_FILE) as f:
+            return f.read().strip()
+    except Exception:
+        return ''
+
+
+def set_tmdb_key(k):
+    k = (k or '').strip()
+    if not k:
+        try:
+            os.remove(TMDB_FILE)
+        except Exception:
+            pass
+        return
+    if not re.match(r'^[0-9a-fA-F]{32}$', k):
+        raise ValueError(u'مفتاح TMDB يتكون من 32 حرفا (API Key وليس Read Access Token)')
+    fd = os.open(TMDB_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, 'w') as f:
+        f.write(k)
+
+
+def _clean_film_title(t):
+    t = re.sub(u'^\\s*(فيلم|film|movie)\\s*[:\\-]?\\s*', u'', u(t or u''), flags=re.I)
+    t = re.sub(u'\\(.*?\\)|\\[.*?\\]', u'', t)
+    return re.sub(u'\\s+', u' ', t).strip()
+
+
+def tmdb_poster(title, en=None):
+    """any thread: -> poster URL of the film, or None (cached per title)"""
+    import json
+    key = tmdb_key()
+    if not key:
+        return None
+    q = _clean_film_title(en or title)
+    if len(q) < 2:
+        return None
+    if not _TMDB:
+        try:
+            with open(TMDB_CACHE) as f:
+                _TMDB.update(json.load(f))
+        except Exception:
+            _TMDB['_'] = 1
+    if q in _TMDB:
+        return _TMDB[q] or None
+    try:
+        from urllib import quote
+    except ImportError:
+        from urllib.parse import quote
+    url = None
+    try:
+        for lang in ('ar', 'en-US'):
+            res = json.loads(engine.sources.http_get(
+                'https://api.themoviedb.org/3/search/movie?api_key=%s&language=%s&query=%s' % (
+                    key, lang, quote(q.encode('utf-8'))), timeout=12).decode('utf-8'))
+            for r in res.get('results') or []:
+                if r.get('poster_path'):
+                    url = 'https://image.tmdb.org/t/p/w185' + r['poster_path']
+                    break
+            if url:
+                break
+    except Exception as e:
+        log(u'TMDB: %s' % e)
+        return None
+    _TMDB[q] = url or u''
+    try:
+        d = os.path.dirname(TMDB_CACHE)
+        if not os.path.isdir(d):
+            os.makedirs(d)
+        with open(TMDB_CACHE, 'w') as f:
+            json.dump(_TMDB, f)
+    except Exception:
+        pass
+    return url

@@ -547,13 +547,15 @@ def _pick(el, tag):
     return items[0].text or u''
 
 
-def parse_xmltv_file(path, wanted, days, stop=None, names_only=False):
-    """stream-parse an XMLTV file (plain or gz) from disk.
+def parse_xmltv_file(path, wanted, days, stop=None, names_only=False, window=None):
+    """stream-parse an XMLTV file (plain or gz) from disk. window: (lower, limit) instead of now-6h..days
     -> ({channel_id: events}, {channel_id: [display names]})"""
     import xml.etree.ElementTree as ET
     names, res = {}, {}
     limit = time.time() + days * 86400
     lower = time.time() - 6 * 3600
+    if window:
+        lower, limit = window
     f = open_maybe_gz(path)
     try:
         for _evt, el in ET.iterparse(f, events=('end',)):

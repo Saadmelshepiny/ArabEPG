@@ -52,6 +52,12 @@ def api(request, path):
                         'now': {'t': nw[0], 'b': nw[1], 'd': nw[2]},
                         'next': {'t': nx[0], 'b': nx[1], 'd': nx[2]} if nx else None})
         return out
+    if path == 'keys':          # only whether a key is there: a key is never sent back
+        from . import share
+        sh = engine.load_state().get('shared') or {}
+        return {'gh': bool(share.token()), 'tmdb': bool(features.tmdb_key()),
+                'shared': time.strftime('%d/%m %H:%M', time.localtime(sh['t'])) + u' (%d قناة)' % sh.get('ch', 0)
+                if sh.get('t') else u''}
     if path == 'series':
         d = features.load_series()
         services = _services()
@@ -138,7 +144,7 @@ border-radius:20px;display:none}
 </style></head><body>
 <header><h1>Saad EPG <span id="clock"></span></h1><nav id="tabs">
 <button data-t="now" class="on">الآن وبعده</button><button data-t="matches">المباريات</button>
-<button data-t="films">سينما الليلة</button><button data-t="series">مسلسلاتي</button><button data-t="timers">التذكيرات</button>
+<button data-t="films">سينما الليلة</button><button data-t="series">مسلسلاتي</button><button data-t="timers">التذكيرات</button><button data-t="keys">المفاتيح</button>
 </nav></header><main id="m"><div class="empty">...</div></main><div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s),m=$('#m');let tab='now',bq=+(localStorage.getItem('bq')||0);
@@ -179,7 +185,20 @@ function addS(mode){const q=$('#q').value.trim();if(q)get('series_add?q='+encode
 function delS(q){get('series_del?q='+encodeURIComponent(q)).then(showSeries)}
 async function showTimers(){const r=await get('timers');m.innerHTML=r.map(t=>`<div class="card"><div class="row"><span class="t">${esc(t.name)}</span>
 <span class="chip">${t.zap?'تذكير':'تسجيل'}</span></div><div class="d"><span class="time">${day(t.b)} ${hm(t.b)}</span> ${esc(t.ch)}</div></div>`).join('')||'<div class="empty">لا توجد تذكيرات من Saad EPG</div>'}
-const show={now:showNow,matches:showMatches,films:showFilms,series:showSeries,timers:showTimers};
+async function showKeys(){const k=await get('keys');m.innerHTML=`<div class="card"><div class="t">توكن GitHub (مشاركة دليل القمر)</div>
+<div class="d">الحالة: ${k.gh?'مُدخل ✓':'غير مُدخل'} ${k.shared?(' - آخر رفع: '+esc(k.shared)):''}</div>
+<div class="d">اختياري. أنشئه من GitHub: Settings ← Developer settings ← Fine-grained tokens، مستودع ArabEPG فقط، صلاحية Issues: Read and write فقط.</div>
+<input id="gh" placeholder="github_pat_..." style="width:100%;margin:6px 0;padding:8px" autocomplete="off">
+<button onclick="setKey('gh')">حفظ</button> <button onclick="setKey('gh',1)">حذف</button></div>
+<div class="card"><div class="t">مفتاح TMDB (بوسترات الأفلام)</div><div class="d">الحالة: ${k.tmdb?'مُدخل ✓':'غير مُدخل'}</div>
+<div class="d">اختياري ومجاني: themoviedb.org ← Settings ← API ← API Key.</div>
+<input id="tmdb" placeholder="API Key" style="width:100%;margin:6px 0;padding:8px" autocomplete="off">
+<button onclick="setKey('tmdb')">حفظ</button> <button onclick="setKey('tmdb',1)">حذف</button></div>
+<div class="card"><div class="d" id="kmsg"></div></div>`}
+async function setKey(n,del){const v=del?'':document.getElementById(n).value.trim();
+const r=await fetch('api/setkey',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,value:v})}).then(r=>r.json());
+await showKeys();document.getElementById('kmsg').textContent=r.error||'تم الحفظ'}
+const show={now:showNow,matches:showMatches,films:showFilms,series:showSeries,timers:showTimers,keys:showKeys};
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));
 b.classList.add('on');tab=b.dataset.t;m.innerHTML='<div class="empty">...</div>';show[tab]().catch(e=>m.innerHTML='<div class="empty">خطأ: '+e+'</div>')});
 setInterval(()=>$('#clock').textContent=new Date().toTimeString().slice(0,5),1000);showNow();
@@ -226,6 +245,27 @@ def start(session, port=8899):
                     request.setResponseCode(404)
                     return _json(request, {'error': 'not found'})
                 return _json(request, res)
+
+            def render_POST(self, request):
+                path = u(request.path.decode('utf-8') if isinstance(request.path, bytes) else request.path)
+                if path != u'/api/setkey':
+                    request.setResponseCode(404)
+                    return _json(request, {'error': 'not found'})
+                try:
+                    body = json.loads(request.content.read(4096).decode('utf-8'))
+                    name, value = body.get('name'), u(body.get('value') or u'')
+                    if name == 'gh':
+                        from . import share
+                        share.set_token(value)
+                    elif name == 'tmdb':
+                        features.set_tmdb_key(value)
+                    else:
+                        raise ValueError('unknown key')
+                    log(u'صفحة الموبايل: تم %s مفتاح %s' % (u'حفظ' if value else u'حذف', name))
+                    return _json(request, {'ok': True})
+                except Exception as e:
+                    request.setResponseCode(400)
+                    return _json(request, {'error': u(str(e))})
 
         STATE['port'] = reactor.listenTCP(port, server.Site(Root()))
         log(u'صفحة الموبايل: http://<IP الريسيفر>:%d' % port)
