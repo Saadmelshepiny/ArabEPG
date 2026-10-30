@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.4.5'
+VERSION = '2.4.6'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -2293,6 +2293,54 @@ def _live_events(session, ref):
     return sorted(set(out))[:12]
 
 
+class LinkScreen(BaseScreen):
+    """the guides that look like a channel, full width: source, what it shows now, why it is suggested"""
+
+    def __init__(self, session, name, onair, rows, current=None):
+        self.table = Table(1240, [Col(u'الدليل (القناة · المصدر)', 470), Col(u'يعرض الآن على هذا الدليل', 460),
+                                  Col(u'لماذا مقترح', 294, 'center', 2, 'accent')], row_h=54, font=20, small=16)
+        self.skin = skin(1260, 720, (
+            ui.box(10, 64, 1240, 66, PANEL) +
+            ui.label('onair', 24, 66, 1212, 62, 20, ui.hexc('amber'), PANEL, 'right', 'center') +
+            self.table.header(10, 138) + ui.list_widget('list', 10, 174, 1250, 8 * 54 + 4) +
+            ui.label('info', 10, 616, 1240, 40, 17, DIM, BG, 'right', 'center')) + buttons(666, 1260))
+        BaseScreen.__init__(self, session, u'ربط قناة: %s' % name)
+        self['list'] = self.table.widget()
+        self['onair'] = Label(T(onair))
+        self['info'] = Label(T(u'OK: اختيار الدليل الذي يعرض نفس ما تراه على الشاشة' + (
+            u'   |   الربط الحالي: %s' % current if current else u'')))
+        set_buttons(self, u'تعطيل البلوجين لها', u'بحث بكلمة', u'دليل قناة أخرى', u'الربط التلقائي')
+        self['actions'] = ActionMap(['OkCancelActions', 'ColorActions', 'DirectionActions'], {
+            'ok': self.ok, 'cancel': lambda: self.close(None), 'red': lambda: self.close('-'),
+            'green': lambda: self.close('search'), 'yellow': lambda: self.close('chanpick'),
+            'blue': lambda: self.close('auto'),
+            'up': lambda: self['list'].up(), 'down': lambda: self['list'].down(),
+            'left': lambda: self['list'].pageUp(), 'right': lambda: self['list'].pageDown()}, -1)
+        hm = lambda t: time.strftime('%H:%M', time.localtime(t))
+        lst = []
+        for r in rows:
+            lab = engine.display_key(r['key'])
+            if u': ' in lab:
+                src, ch = lab.split(u': ', 1)
+                lab = u'%s  ·  %s' % (ch, src.replace(u'Cloud ', u''))
+            if r.get('now'):
+                now = u'%s  %s' % (hm(r['now'][1]), r['now'][0])
+            elif r.get('next'):
+                now = {'t': u'التالي %s  %s' % (hm(r['next'][1]), r['next'][0]), 'fg': 'dim'}
+            else:
+                now = {'t': u'لا برامج الآن في هذا الدليل', 'fg': 'dim'}
+            lst.append(self.table.row(r['key'], [lab, now, r.get('why') or u'-'], len(lst)))
+        if not lst:
+            lst.append(self.table.row(None, [{'t': u'لم يوجد دليل يشبهها - اضغط الأخضر للبحث بكلمة', 'fg': 'dim'},
+                                             u'', u''], 0))
+        self['list'].setList(lst)
+
+    def ok(self):
+        k = self['list'].payload()
+        if k:
+            self.close(k)
+
+
 class LinkHelper(object):
     """link a channel by hand: the guides that look like it (same programme now, same times, similar name),
     each with what it shows now, and you choose"""
@@ -2301,6 +2349,10 @@ class LinkHelper(object):
         self.session, self.ref, self.name = session, ref, name
         self.live = _live_events(session, ref)
         self.job = None
+        try:
+            engine.triple_conflicts(engine.get_services())     # who else shows a guide given to this channel
+        except Exception:
+            pass
         self.search()
 
     def search(self, query=None):
@@ -2328,29 +2380,19 @@ class LinkHelper(object):
             self.session.open(MessageBox, T(u'تعذر البحث: %s' % res), MessageBox.TYPE_ERROR, timeout=8)
             return
         hm = lambda t: time.strftime('%H:%M', time.localtime(t))
-        items = []
         cur = (engine.state_ro().get('filled') or {}).get(self.ref)
-        if cur:
-            items.append((T(u'>> الربط الحالي: %s (اتركه كما هو)' % engine.display_key(cur.get('key', ''))), None))
-        for r in res:
-            now = (u'  |  الآن %s %s' % (hm(r['now'][1]), r['now'][0])) if r.get('now') else (
-                u'  |  التالي %s %s' % (hm(r['next'][1]), r['next'][0]) if r.get('next') else u'  |  لا برامج الآن')
-            items.append((T(u'%s%s%s' % (engine.display_key(r['key']), now, (u'   [%s]' % r['why']) if r['why'] else u'')),
-                          r['key']))
-        items += [(T(u'>> بحث بكلمة من اسم القناة...'), 'search'),
-                  (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
-                  (T(u'>> الربط التلقائي (إلغاء الربط اليدوي)'), 'auto'),
-                  (T(u'>> تعطيل البلوجين لهذه القناة'), '-')]
-        live = u'، '.join(u'%s %s' % (hm(b), t) for b, _d, t in self.live[:2]) or u'القناة لا ترسل اسم البرنامج'
-        title = u'اختر الدليل المطابق لقناة: %s\nعلى الشاشة الآن: %s' % (self.name, live)
-        if not res:
-            title += u'\nلم يوجد دليل يشبهها - جرّب البحث بكلمة'
-        self.session.openWithCallback(self.chosen, ChoiceBox, title=T(title), list=items)
+        live = u'   ‹   '.join(u'%s  %s' % (hm(b), t) for b, _d, t in self.live[:2]) or u'القناة لا ترسل اسم البرنامج'
+        onair = u'على الشاشة الآن: %s%s' % (live, (u'\nبحث بالكلمة: %s' % query) if query else u'')
+        if self.ref in engine.CONFLICT_WITH:
+            onair += u'\nتنبيه: رقم خدمتها مشترك مع: %s - دليلها سيظهر هناك أيضا' % u'، '.join(
+                engine.CONFLICT_WITH[self.ref][:3])
+        self.session.openWithCallback(self.chosen, LinkScreen, self.name, onair, res,
+                                      engine.display_key(cur.get('key', '')) if cur else None)
 
     def chosen(self, res):
-        if not res or res[1] is None:
+        if not res:
             return
-        v = res[1]
+        v = res[1] if isinstance(res, tuple) else res
         if v == 'search':
             from Screens.VirtualKeyBoard import VirtualKeyBoard
             self.session.openWithCallback(lambda t: t and self.search(u(t)), VirtualKeyBoard,

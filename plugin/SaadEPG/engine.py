@@ -1200,20 +1200,29 @@ def triple_conflicts(services):
         t = epg_triple(ref)
         if t:
             slots.setdefault(t, []).append(name)
-    shared = set()
+    shared = {}
     for t, names in slots.items():
         uniq = []
         for n in names:
+            if PLACEHOLDER.match(u(n or u'')):
+                continue          # "<n/a>", "Service-1", "Test": not a channel anyone watches
             if not any(name_like(n, x) for x in uniq):    # "beIN SPORTS" and "beIN Sports HD" are one channel
                 uniq.append(n)
         if len(uniq) > 1:
-            shared.add(t)
+            shared[t] = uniq
     bad = set()
-    for ref, _n in services:
+    CONFLICT_WITH.clear()
+    for ref, n in services:
         t = epg_triple(ref)
         if not t or t[0] == 0 or t in shared:
             bad.add(ref)
+            if t in shared:
+                CONFLICT_WITH[ref] = [x for x in shared[t] if not name_like(x, n)]
     return bad
+
+
+PLACEHOLDER = re.compile(u'(?i)^\\s*(<?n/a>?|service[\\s_-]*\\d*|test([\\s_-]*\\w{0,3})?|\\(\\.\\.\\.\\)|\\.+|-+|)\\s*$')
+CONFLICT_WITH = {}       # ref -> names of the other channels in its guide slot
 
 
 def import_events(epgcache, refs, events):
@@ -3080,13 +3089,20 @@ class Updater(object):
         filled_before = set(state['filled'])
         # 6. import (clean-up first, then a leak check afterwards)
         now = int(time.time())
-        blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts]
+        mine = [j for j in jobs if j['key'] and j['ref'] in self.conflicts and j.get('manual')]
+        for j in mine:      # your own link: imported anyway, you were told what else shows it
+            log(u'ربط يدوي لقناة رقم خدمتها مشترك (%s) - سيظهر دليلها أيضا على: %s' % (
+                j['name'], u'، '.join(CONFLICT_WITH.get(j['ref']) or [u'قناة أخرى'])))
+        blocked = [j for j in jobs if j['key'] and j['ref'] in self.conflicts and not j.get('manual')]
         for j in blocked:
             j['key'], j['conflict'] = None, True
         if blocked:
             log(u'لم يُستورد دليل %d قناة لأن رقم خدمتها مشترك مع قناة أخرى مختلفة (كان الدليل سيظهر على '
-                u'القناتين معًا): %s' % (len(blocked), u'، '.join(j['name'] for j in blocked[:10])))
-        to_clean = set(r for r in state['filled'] if r in self.conflicts)
+                u'القناتين معًا - يمكنك ربطها يدويا إن أردت): %s' % (len(blocked), u'، '.join(
+                    u'%s (مع %s)' % (j['name'], u'، '.join((CONFLICT_WITH.get(j['ref']) or [u'?'])[:2]))
+                    for j in blocked[:12])))
+        manual_refs = set(j['ref'] for j in mine)
+        to_clean = set(r for r in state['filled'] if r in self.conflicts and r not in manual_refs)
         to_clean |= set(r for r, _n, _k in rejected if r in state['filled'])
         to_clean |= set(getattr(self, 'stale', ()))
         to_clean |= set(j['ref'] for j in jobs if j.get('fake') and j['ref'] in state['filled'])
@@ -3163,7 +3179,7 @@ class Updater(object):
         # 6b. leak check: a guide must not show up on another channel (receivers that keep the guide
         # per service number show it on every channel with the same number)
         if not self.cancel:
-            leaks = self._find_leaks(imported)
+            leaks = self._find_leaks(dict((r, v) for r, v in imported.items() if r not in manual_refs))
             if leaks:
                 for src, victims in leaks.items():
                     state['filled'].pop(src, None)
