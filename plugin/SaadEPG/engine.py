@@ -3365,3 +3365,132 @@ def install_plugin_update(info):
 
 
 __all__ = ['norm']
+
+
+# --------------------------------------------------------------------- linking the channel you watch by hand
+_FPIDX = {'sig': None, 'by_min': None}
+_ALL_SOURCES = {'sig': None, 'm': None}
+
+
+def _fp_index(cfg):
+    """{minute: [(key, title hash)]} of every cloud channel for the next day (kept while the cloud is the same)"""
+    sig = load_index().get('generated')
+    if _FPIDX['sig'] != sig or _FPIDX['by_min'] is None:
+        fpl = FPLinker(cfg, [])
+        _FPIDX['by_min'], _FPIDX['sig'] = fpl._index(), sig
+    return _FPIDX['by_min'] or {}
+
+
+def _matcher_all_sources():
+    xml = cloud_xml_entries(None, every=True)
+    sig = (len(catalog()), len(xml), load_index().get('generated'))
+    if _ALL_SOURCES['sig'] != sig:
+        _ALL_SOURCES['m'] = Matcher(list(catalog()) + xml, SOURCE_ORDER)
+        _ALL_SOURCES['sig'] = sig
+    return _ALL_SOURCES['m']
+
+
+def _chunk_of(key, idx):
+    """plugin key -> (cloud file, channel id) of its per-channel file, or None"""
+    files = idx.get('files') or {}
+    if key.startswith('xml:'):
+        fn, _, cid = key[4:].partition('/')
+    else:
+        src, _, i = key.partition(':')
+        fn, cid = SITE_FILE.get(src), u'%s.%s' % (src, i)
+    f = files.get(fn) or {}
+    return (fn, cid) if f.get('ch') else None
+
+
+def link_candidates(name, live, cfg, query=None, limit=24):
+    """guides that look like the channel you are watching. live: [(begin, duration, title)] of what the channel
+    itself says is on now / next (and its satellite guide, when it has one). Any thread.
+    -> [{'key', 'label', 'why', 'now', 'score'}] best first"""
+    refresh_cloud(cfg['cloud_url'], use_cloud=cfg.get('cloud'))
+    idx = load_index()
+    allowed = set(list(cfg.get('sources') or []) + ['xml'])
+
+    def usable(k):
+        return not k.startswith('xml:est/') and (k.startswith('xml:') or k.split(':')[0] in allowed)
+    found = {}
+    m = _matcher_all_sources()
+    for k, sc in m.match_all(query or name, usable, min_score=0.5 if not query else 0.45, limit=16):
+        found[k] = {'name': sc, 'hit': 0, 'tit': 0, 'odd': 0}
+    if query:     # a word typed by you: every channel that contains it
+        q = norm(query)
+        for e in list(catalog()) + cloud_xml_entries(None, every=True):
+            key = u'%s:%s' % (e['src'], e['id'])
+            if q and usable(key) and any(q in norm(n) for n in e['names']):
+                found.setdefault(key, {'name': 0.8, 'hit': 0, 'tit': 0, 'odd': 0, 'q': 1})
+            if len(found) > 120:
+                break
+    now = time.time()
+    marks = [(int(b // 60), title_hash(t), int(b // 60) % 30) for b, _d, t in live or () if b + _d > now - 3600]
+    if marks:
+        by_min = _fp_index(cfg)
+        for mn, h, rest in marks:
+            seen = set()
+            for dm in (-2, -1, 0, 1, 2):
+                for key, kh in by_min.get(mn + dm, ()):
+                    if key in seen or not usable(key):
+                        continue
+                    seen.add(key)
+                    x = found.setdefault(key, {'name': 0, 'hit': 0, 'tit': 0, 'odd': 0})
+                    x['hit'] += 1
+                    if h and h == kh:
+                        x['tit'] += 1
+                    if 3 <= rest <= 27:        # 18:47 says more than 19:00
+                        x['odd'] += 1
+    out = []
+    for key, x in found.items():
+        sched = x['tit'] * 3 + x['odd'] * 2 + (x['hit'] if x['hit'] >= 2 else 0)
+        if not x['name'] and not x['tit'] and x['odd'] < 2:
+            continue          # only round start times in common: almost every channel
+        score = x['name'] * 10 + sched
+        why = []
+        if x['tit']:
+            why.append(u'نفس البرنامج الآن')
+        elif x['odd'] >= 2 or x['hit'] >= 2:
+            why.append(u'نفس مواعيد البرامج')
+        if x.get('q'):
+            why.append(u'الاسم فيه "%s"' % query)
+        elif x['name'] >= 0.5:
+            why.append(u'اسم مشابه %d%%' % int(x['name'] * 100))
+        out.append({'key': key, 'score': score, 'why': u' + '.join(why)})
+    out.sort(key=lambda r: -r['score'])
+    out = out[:limit]
+    # what each candidate shows now: you recognise your channel by its programme
+    pairs = [p for p in (_chunk_of(r['key'], idx) for r in out) if p]
+    got = {}
+    if pairs:
+        f = Fetcher(cfg)
+        try:
+            got, _bad = f.chunks(pairs, progress=False)
+        except Exception as e:
+            log(u'ربط يدوي: %s' % e)
+    for r in out:
+        r['label'] = display_key(r['key'])
+        p = _chunk_of(r['key'], idx)
+        evs = got.get(p) or [] if p else []
+        cur = [e for e in evs if e[0] <= now < e[0] + e[1]]
+        nxt = [e for e in evs if e[0] > now]
+        r['now'] = (cur[0][2], cur[0][0]) if cur else None
+        r['next'] = (nxt[0][2], nxt[0][0]) if nxt else None
+        r['n'] = len(evs)
+    return out
+
+
+def link_by_hand(ref, name, key):
+    """your choice for this channel: kept for good, the old automatic link is not suggested again"""
+    m = load_mapping()
+    old = None
+    auto = load_auto().get(ref) or []
+    if auto:
+        old = auto[0][0]
+    m[ref] = key
+    save_mapping(m)
+    if key not in ('-', '!') and not key.startswith('chan:'):
+        learn(name, key, ref)
+        if old and old != key:
+            reject(name, old)
+    log(u'ربط يدوي: %s ← %s' % (name, display_key(key)))

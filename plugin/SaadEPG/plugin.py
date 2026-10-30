@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.4.3'
+VERSION = '2.4.4'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -365,6 +365,15 @@ class SaadEPGMain(BaseScreen):
         BaseScreen.__init__(self, session, u'Saad EPG  %s' % VERSION)
         self.menu_items = [(u'خريطة مسلسلات رمضان', k, d) if k == 'smap' and features.ramadan_now() else (t, k, d)
                            for t, k, d in MAIN_ITEMS]
+        try:
+            cref, cname = _current(session)
+            if cref:
+                filled = cref in (engine.state_ro().get('filled') or {})
+                self.menu_items.insert(0, (u'ربط القناة الحالية: %s' % cname, 'linknow',
+                                           u'دليلها من البلوجين - تغيير المصدر' if filled else
+                                           u'اختر لها دليلا يشبهها (نفس البرنامج الآن)'))
+        except Exception:
+            pass
         self.advanced_items = ADVANCED_ITEMS
         self.table = menu_table(860)
         self['list'] = self.table.widget()
@@ -447,6 +456,8 @@ class SaadEPGMain(BaseScreen):
             self.session.openWithCallback(self._share_go, MessageBox, T(info + u'\n\nرفع دليل القمر الآن؟'),
                                           MessageBox.TYPE_YESNO, default=False) if sh.token() else \
                 self.session.open(TextScreen, u'مشاركة دليل القمر', share_text)
+        elif a == 'linknow':
+            link_now(self.session)
         elif a == 'missing':
             self.session.openWithCallback(self.refresh, ChannelsScreen, False, 'missing')
         elif a == 'test':
@@ -1338,7 +1349,8 @@ class ChannelsScreen(BaseScreen):
             items.append((T(u'>> تأكيد الربط الحالي: %s' % engine.display_key(c[2])), c[2]))
         sh = engine.load_shifts().get(ref, 0)
         items += [(T(u'>> تصحيح توقيت دليل هذه القناة%s...' % ((u' (الآن %+d ساعة)' % sh) if sh else u'')), 'shift')]
-        items += [(T(u'>> بحث بالاسم في كل قنوات السحابة...'), 'search'),
+        items += [(T(u'>> أدلة تشبه هذه القناة (نفس البرنامج الآن ونفس المواعيد)...'), 'alike'),
+                  (T(u'>> بحث بالاسم في كل قنوات السحابة...'), 'search'),
                   (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
                   (T(u'>> ربط تلقائي ذكي'), 'auto'),
                  (T(u'>> تعطيل البلوجين لهذه القناة'), '-'),
@@ -1381,6 +1393,10 @@ class ChannelsScreen(BaseScreen):
             self.session.openWithCallback(lambda r: r is not None and self._set_shift(ref, r[1]), ChoiceBox,
                                           title=T(u'البرامج تظهر قبل موعدها: اختر سالب. تظهر بعد موعدها: اختر موجب.'),
                                           list=choices)
+            return
+        if v == 'alike':
+            name = dict(self.services).get(ref, u'')
+            LinkHelper(self.session, ref, name)
             return
         if v == 'chanpick':
             from Screens.VirtualKeyBoard import VirtualKeyBoard
@@ -2243,6 +2259,143 @@ def nownext(session, **kwargs):
     session.open(NowNextScreen)
 
 
+def _current(session):
+    """(ref, name) of the channel on screen"""
+    sref = session.nav.getCurrentlyPlayingServiceReference()
+    ref = engine.clean_ref(sref.toString()) if sref else None
+    from enigma import eServiceCenter
+    info = eServiceCenter.getInstance().info(sref) if sref else None
+    name = u(info and info.getName(sref) or '').replace(u'\x86', u'').replace(u'\x87', u'')
+    return ref, name
+
+
+def _live_events(session, ref):
+    """what the channel itself says: now / next from the picture, and its satellite guide when the plugin
+    does not fill it"""
+    out = []
+    try:
+        playing = engine.clean_ref(session.nav.getCurrentlyPlayingServiceReference().toString())
+        if playing == ref:
+            info = session.nav.getCurrentService().info()
+            for i in (0, 1):
+                ev = info.getEvent(i)
+                if ev and ev.getEventName():
+                    out.append((int(ev.getBeginTime()), int(ev.getDuration()), u(ev.getEventName())))
+    except Exception:
+        pass
+    if ref not in (engine.state_ro().get('filled') or {}):
+        try:
+            for x in eEPGCache.getInstance().lookupEvent(['BDT', (engine._enc(ref), 0, int(time.time()) - 3600, 8 * 60)]) or []:
+                if x and x[0] and x[2]:
+                    out.append((int(x[0]), int(x[1]), u(x[2])))
+        except Exception:
+            pass
+    return sorted(set(out))[:12]
+
+
+class LinkHelper(object):
+    """link a channel by hand: the guides that look like it (same programme now, same times, similar name),
+    each with what it shows now, and you choose"""
+
+    def __init__(self, session, ref, name):
+        self.session, self.ref, self.name = session, ref, name
+        self.live = _live_events(session, ref)
+        self.job = None
+        self.search()
+
+    def search(self, query=None):
+        cfg = current_cfg()
+        live, name = self.live, self.name
+        self.wait = self.session.open(MessageBox, T(u'جاري البحث عن دليل يشبه "%s"...' % (query or name)),
+                                      MessageBox.TYPE_INFO, enable_input=False)
+        self.job = BackgroundJob(lambda: engine.link_candidates(name, live, cfg, query), lambda r: self.show(r, query))
+
+    def show(self, res, query):
+        try:
+            self.wait.close()
+        except Exception:
+            pass
+        if isinstance(res, Exception):
+            self.session.open(MessageBox, T(u'تعذر البحث: %s' % res), MessageBox.TYPE_ERROR, timeout=8)
+            return
+        hm = lambda t: time.strftime('%H:%M', time.localtime(t))
+        items = []
+        cur = (engine.state_ro().get('filled') or {}).get(self.ref)
+        if cur:
+            items.append((T(u'>> الربط الحالي: %s (اتركه كما هو)' % engine.display_key(cur.get('key', ''))), None))
+        for r in res:
+            now = (u'  |  الآن %s %s' % (hm(r['now'][1]), r['now'][0])) if r.get('now') else (
+                u'  |  التالي %s %s' % (hm(r['next'][1]), r['next'][0]) if r.get('next') else u'  |  لا برامج الآن')
+            items.append((T(u'%s%s%s' % (engine.display_key(r['key']), now, (u'   [%s]' % r['why']) if r['why'] else u'')),
+                          r['key']))
+        items += [(T(u'>> بحث بكلمة من اسم القناة...'), 'search'),
+                  (T(u'>> استخدام دليل قناة أخرى من باقاتك...'), 'chanpick'),
+                  (T(u'>> الربط التلقائي (إلغاء الربط اليدوي)'), 'auto'),
+                  (T(u'>> تعطيل البلوجين لهذه القناة'), '-')]
+        live = u'، '.join(u'%s %s' % (hm(b), t) for b, _d, t in self.live[:2]) or u'القناة لا ترسل اسم البرنامج'
+        title = u'اختر الدليل المطابق لقناة: %s\nعلى الشاشة الآن: %s' % (self.name, live)
+        if not res:
+            title += u'\nلم يوجد دليل يشبهها - جرّب البحث بكلمة'
+        self.session.openWithCallback(self.chosen, ChoiceBox, title=T(title), list=items)
+
+    def chosen(self, res):
+        if not res or res[1] is None:
+            return
+        v = res[1]
+        if v == 'search':
+            from Screens.VirtualKeyBoard import VirtualKeyBoard
+            self.session.openWithCallback(lambda t: t and self.search(u(t)), VirtualKeyBoard,
+                                          title=T(u'اكتب كلمة من اسم القناة (عربي أو إنجليزي)'), text='')
+            return
+        if v == 'chanpick':
+            self.session.openWithCallback(lambda r: r and self.chosen(r), ChoiceBox,
+                                          title=T(u'اختر القناة التي سيُنسخ دليلها'), list=self._channels())
+            return
+        if v == 'auto':
+            m = engine.load_mapping()
+            m.pop(self.ref, None)
+            engine.save_mapping(m)
+        else:
+            engine.link_by_hand(self.ref, self.name, v)
+        if v != '-':
+            start_update(set([self.ref]), target='all', manual=True)
+        self.session.open(MessageBox, T(u'تم. %s' % (u'البلوجين متوقف لهذه القناة.' if v == '-' else
+                                                    u'يتم الآن تحديث دليل هذه القناة (أقل من دقيقة).')),
+                          MessageBox.TYPE_INFO, timeout=6)
+
+    def _channels(self):
+        epg = eEPGCache.getInstance()
+        items = []
+        for r, n in engine.get_services():
+            if r != self.ref and engine.epg_count(epg, r, 12) >= 3:
+                items.append((T(n), u'chan:%s|%s' % (r, n)))
+            if len(items) >= 400:
+                break
+        return items
+
+
+def link_now(session, **kwargs):
+    try:
+        ref, name = _current(session)
+    except Exception:
+        ref = None
+    if ref:
+        LinkHelper(session, ref, name)
+
+
+def link_service(session, service=None, **kwargs):
+    """from the channel list (MENU on a channel)"""
+    try:
+        ref = engine.clean_ref(service.toString())
+        from enigma import eServiceCenter
+        info = eServiceCenter.getInstance().info(service)
+        name = u(info and info.getName(service) or '').replace(u'\x86', u'').replace(u'\x87', u'')
+    except Exception:
+        ref = None
+    if ref:
+        LinkHelper(session, ref, name)
+
+
 def wrong_epg(session, **kwargs):
     try:
         sref = session.nav.getCurrentlyPlayingServiceReference()
@@ -2311,5 +2464,11 @@ def Plugins(**kwargs):
                          where=PluginDescriptor.WHERE_EVENTINFO, fnc=nownext),
         PluginDescriptor(name=T(u'Saad EPG - الدليل خطأ لهذه القناة'), description=desc,
                          where=PluginDescriptor.WHERE_EVENTINFO, fnc=wrong_epg),
+        PluginDescriptor(name=T(u'Saad EPG - ربط هذه القناة بدليل'), description=desc,
+                         where=PluginDescriptor.WHERE_EVENTINFO, fnc=link_now),
+        PluginDescriptor(name=T(u'Saad EPG - ربط القناة الحالية بدليل'), description=desc,
+                         where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=link_now),
         PluginDescriptor(where=PluginDescriptor.WHERE_SESSIONSTART, fnc=sessionstart),
-    ]
+    ] + ([PluginDescriptor(name=T(u'Saad EPG - ربط هذه القناة بدليل'), description=desc,
+                           where=PluginDescriptor.WHERE_CHANNEL_CONTEXT_MENU, fnc=link_service)]
+         if hasattr(PluginDescriptor, 'WHERE_CHANNEL_CONTEXT_MENU') else [])
