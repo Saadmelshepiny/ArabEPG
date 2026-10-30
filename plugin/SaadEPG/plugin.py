@@ -27,7 +27,7 @@ from Screens.MessageBox import MessageBox
 from . import engine, features, sources, ui, views, web
 from .sources import log, u, PY3
 
-VERSION = '2.4.4'
+VERSION = '2.4.5'
 
 # --------------------------------------------------------------------- config
 config.plugins.saadepg = ConfigSubsection()
@@ -2306,15 +2306,24 @@ class LinkHelper(object):
     def search(self, query=None):
         cfg = current_cfg()
         live, name = self.live, self.name
-        self.wait = self.session.open(MessageBox, T(u'جاري البحث عن دليل يشبه "%s"...' % (query or name)),
-                                      MessageBox.TYPE_INFO, enable_input=False)
-        self.job = BackgroundJob(lambda: engine.link_candidates(name, live, cfg, query), lambda r: self.show(r, query))
+        self.result = None
+        # the list opens from the "searching" box's own callback: enigma2 opens a new screen only from the
+        # screen on top (opening it while that box was still closing crashed the receiver)
+        self.wait = self.session.openWithCallback(lambda *a: self.show(self.result, query), MessageBox,
+                                                  T(u'جاري البحث عن دليل يشبه "%s"...' % (query or name)),
+                                                  MessageBox.TYPE_INFO, enable_input=False)
+        self.job = BackgroundJob(lambda: engine.link_candidates(name, live, cfg, query), self._found)
+
+    def _found(self, res):
+        self.result = res
+        try:
+            self.wait.close(True)
+        except Exception as e:
+            log(u'ربط يدوي: %s' % e)
 
     def show(self, res, query):
-        try:
-            self.wait.close()
-        except Exception:
-            pass
+        if res is None:
+            return
         if isinstance(res, Exception):
             self.session.open(MessageBox, T(u'تعذر البحث: %s' % res), MessageBox.TYPE_ERROR, timeout=8)
             return

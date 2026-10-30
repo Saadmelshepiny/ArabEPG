@@ -1,6 +1,6 @@
 {
- "version": "2.4.4",
- "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.4_all.ipk",
+ "version": "2.4.5",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.5_all.ipk",
  "date": "2026-10-30",
- "notes": "ربط يدوي للقناة التي تشاهدها: البلوجين يعرض الأدلة التي تشبهها (نفس البرنامج الآن، نفس المواعيد، اسم مشابه) مع ما تعرضه الآن، وأنت تختار"
+ "notes": "إصلاح الكراش بعد البحث في الربط اليدوي"
 }
