@@ -1,0 +1,7 @@
+ar_lbci      115 programmes
+ar_tunisia   165 programmes
+[SaadEPG] TRT Arabi: HTTP Error 403: Forbidden
+ar_trt       0 programmes
+sat.tv merged: 7/8 West 0 channels (0 Arabic named in English too), 0 programmes | Hot Bird 0 channels, 0 programmes
+crowd: 0 comments, 0 complete uploads, 0 old comments deleted
+crowd: 0 Arabic channels from the receiver's satellite guide

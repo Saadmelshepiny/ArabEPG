@@ -1,0 +1,35 @@
+== ayn.om part 1/1: days=5 delay=0 connections=5
+[info] starting...
+[info] loading channels...
+[info] found 4 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/20] ayn.om (ar) - ayn.158/قناة-عمان-العامة - Nov 1, 2026 (51 programs)
+[info]   [2/20] ayn.om (ar) - ayn.158/قناة-عمان-العامة - Oct 31, 2026 (47 programs)
+[info]   [3/20] ayn.om (ar) - ayn.159/قناة-عمان-الرياضية - Oct 31, 2026 (19 programs)
+[info]   [4/20] ayn.om (ar) - ayn.158/قناة-عمان-العامة - Nov 2, 2026 (49 programs)
+[info]   [5/20] ayn.om (ar) - ayn.158/قناة-عمان-العامة - Nov 3, 2026 (49 programs)
+[info]   [6/20] ayn.om (ar) - ayn.159/قناة-عمان-الرياضية - Nov 1, 2026 (17 programs)
+[info]   [7/20] ayn.om (ar) - ayn.158/قناة-عمان-العامة - Nov 4, 2026 (3 programs)
+[info]   [8/20] ayn.om (ar) - ayn.159/قناة-عمان-الرياضية - Nov 2, 2026 (17 programs)
+[info]   [9/20] ayn.om (ar) - ayn.159/قناة-عمان-الرياضية - Nov 3, 2026 (17 programs)
+[info]   [10/20] ayn.om (ar) - ayn.159/قناة-عمان-الرياضية - Nov 4, 2026 (0 programs)
+[info]   [11/20] ayn.om (ar) - ayn.160/قناة-عمان-الثقافية - Oct 31, 2026 (53 programs)
+[info]   [12/20] ayn.om (ar) - ayn.160/قناة-عمان-الثقافية - Nov 1, 2026 (55 programs)
+[info]   [13/20] ayn.om (ar) - ayn.160/قناة-عمان-الثقافية - Nov 2, 2026 (53 programs)
+[info]   [14/20] ayn.om (ar) - ayn.160/قناة-عمان-الثقافية - Nov 3, 2026 (54 programs)
+[info]   [15/20] ayn.om (ar) - ayn.160/قناة-عمان-الثقافية - Nov 4, 2026 (5 programs)
+[info]   [16/20] ayn.om (ar) - ayn.161/قناة-عمان-مباشر - Oct 31, 2026 (47 programs)
+[info]   [17/20] ayn.om (ar) - ayn.161/قناة-عمان-مباشر - Nov 1, 2026 (51 programs)
+[info]   [18/20] ayn.om (ar) - ayn.161/قناة-عمان-مباشر - Nov 2, 2026 (49 programs)
+[info]   [19/20] ayn.om (ar) - ayn.161/قناة-عمان-مباشر - Nov 3, 2026 (49 programs)
+[info]   [20/20] ayn.om (ar) - ayn.161/قناة-عمان-مباشر - Nov 4, 2026 (3 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_ayn.om.1.xml"...
+[success]   done in 00h 00m 11s
+0/4 channels without programmes
+total 152
+drwxr-xr-x  2 runner runner   4096 Oct 31 07:00 .
+drwxr-xr-x 10 runner runner   4096 Oct 31 07:00 ..
+-rw-r--r--  1 runner runner 142200 Oct 31 07:00 out_ayn.om.1.xml
+-rw-r--r--  1 runner runner   2310 Oct 31 07:00 out_grablog_ayn.om.1.xml

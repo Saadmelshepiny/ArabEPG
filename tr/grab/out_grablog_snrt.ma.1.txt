@@ -1,0 +1,245 @@
+== snrt.ma part 1/1: days=5 delay=0 connections=5
+[info] starting...
+[info] loading channels...
+[info] found 11 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/55] snrt.ma (ar) - snrt.1208 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [2/55] snrt.ma (ar) - snrt.1208 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [3/55] snrt.ma (ar) - snrt.1208 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [4/55] snrt.ma (ar) - snrt.1208 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [5/55] snrt.ma (ar) - snrt.1208 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [6/55] snrt.ma (ar) - snrt.4069 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [7/55] snrt.ma (ar) - snrt.4069 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [8/55] snrt.ma (ar) - snrt.4069 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [9/55] snrt.ma (ar) - snrt.4069 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [10/55] snrt.ma (ar) - snrt.4069 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [11/55] snrt.ma (ar) - snrt.4070 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [12/55] snrt.ma (ar) - snrt.4070 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [13/55] snrt.ma (ar) - snrt.4070 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [14/55] snrt.ma (ar) - snrt.4070 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [15/55] snrt.ma (ar) - snrt.4070 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [16/55] snrt.ma (ar) - snrt.4071 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [17/55] snrt.ma (ar) - snrt.4071 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [18/55] snrt.ma (ar) - snrt.4071 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [19/55] snrt.ma (ar) - snrt.4071 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [20/55] snrt.ma (ar) - snrt.4071 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [21/55] snrt.ma (ar) - snrt.4072 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [22/55] snrt.ma (ar) - snrt.4072 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [23/55] snrt.ma (ar) - snrt.4072 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [24/55] snrt.ma (ar) - snrt.4072 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [25/55] snrt.ma (ar) - snrt.4072 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [26/55] snrt.ma (ar) - snrt.4073 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [27/55] snrt.ma (ar) - snrt.4073 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [28/55] snrt.ma (ar) - snrt.4073 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [29/55] snrt.ma (ar) - snrt.4073 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [30/55] snrt.ma (ar) - snrt.4073 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [31/55] snrt.ma (ar) - snrt.4075 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [32/55] snrt.ma (ar) - snrt.4075 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [33/55] snrt.ma (ar) - snrt.4075 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [34/55] snrt.ma (ar) - snrt.4075 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [35/55] snrt.ma (ar) - snrt.4075 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [36/55] snrt.ma (ar) - snrt.4076 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [37/55] snrt.ma (ar) - snrt.4076 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [38/55] snrt.ma (ar) - snrt.4076 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [39/55] snrt.ma (ar) - snrt.4076 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [40/55] snrt.ma (ar) - snrt.4076 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [41/55] snrt.ma (ar) - snrt.4077 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [42/55] snrt.ma (ar) - snrt.4077 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [43/55] snrt.ma (ar) - snrt.4077 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [44/55] snrt.ma (ar) - snrt.4077 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [45/55] snrt.ma (ar) - snrt.4077 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [46/55] snrt.ma (ar) - snrt.4078 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [47/55] snrt.ma (ar) - snrt.4078 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [48/55] snrt.ma (ar) - snrt.4078 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [49/55] snrt.ma (ar) - snrt.4078 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [50/55] snrt.ma (ar) - snrt.4078 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [51/55] snrt.ma (ar) - snrt.4079 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [52/55] snrt.ma (ar) - snrt.4079 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [53/55] snrt.ma (ar) - snrt.4079 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [54/55] snrt.ma (ar) - snrt.4079 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [55/55] snrt.ma (ar) - snrt.4079 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_snrt.ma.1.xml"...
+[success]   done in 00h 00m 00s
+11/11 channels without programmes
+== retry
+[info] starting...
+[info] loading channels...
+[info] found 11 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/55] snrt.ma (ar) - snrt.1208 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [2/55] snrt.ma (ar) - snrt.1208 - Nov 1, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [3/55] snrt.ma (ar) - snrt.1208 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [4/55] snrt.ma (ar) - snrt.1208 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [5/55] snrt.ma (ar) - snrt.1208 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [6/55] snrt.ma (ar) - snrt.4069 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [7/55] snrt.ma (ar) - snrt.4069 - Nov 1, 2026 (0 programs)
+[info]   [7/55] snrt.ma (ar) - snrt.4069 - Nov 1, 2026 (0 programs)
+[info]   [8/55] snrt.ma (ar) - snrt.4069 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [9/55] snrt.ma (ar) - snrt.4069 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [10/55] snrt.ma (ar) - snrt.4069 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [11/55] snrt.ma (ar) - snrt.4070 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [12/55] snrt.ma (ar) - snrt.4070 - Nov 1, 2026 (0 programs)
+[info]   [12/55] snrt.ma (ar) - snrt.4070 - Nov 1, 2026 (0 programs)
+[info]   [13/55] snrt.ma (ar) - snrt.4070 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [14/55] snrt.ma (ar) - snrt.4070 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [15/55] snrt.ma (ar) - snrt.4070 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [16/55] snrt.ma (ar) - snrt.4071 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [17/55] snrt.ma (ar) - snrt.4071 - Nov 1, 2026 (0 programs)
+[info]   [17/55] snrt.ma (ar) - snrt.4071 - Nov 1, 2026 (0 programs)
+[info]   [18/55] snrt.ma (ar) - snrt.4071 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [19/55] snrt.ma (ar) - snrt.4071 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [20/55] snrt.ma (ar) - snrt.4071 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [21/55] snrt.ma (ar) - snrt.4072 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [22/55] snrt.ma (ar) - snrt.4072 - Nov 1, 2026 (0 programs)
+[info]   [22/55] snrt.ma (ar) - snrt.4072 - Nov 1, 2026 (0 programs)
+[info]   [23/55] snrt.ma (ar) - snrt.4072 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [24/55] snrt.ma (ar) - snrt.4072 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [25/55] snrt.ma (ar) - snrt.4072 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [26/55] snrt.ma (ar) - snrt.4073 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [27/55] snrt.ma (ar) - snrt.4073 - Nov 1, 2026 (0 programs)
+[info]   [27/55] snrt.ma (ar) - snrt.4073 - Nov 1, 2026 (0 programs)
+[info]   [28/55] snrt.ma (ar) - snrt.4073 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [29/55] snrt.ma (ar) - snrt.4073 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [30/55] snrt.ma (ar) - snrt.4073 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [31/55] snrt.ma (ar) - snrt.4075 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [32/55] snrt.ma (ar) - snrt.4075 - Nov 1, 2026 (0 programs)
+[info]   [32/55] snrt.ma (ar) - snrt.4075 - Nov 1, 2026 (0 programs)
+[info]   [33/55] snrt.ma (ar) - snrt.4075 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [34/55] snrt.ma (ar) - snrt.4075 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [35/55] snrt.ma (ar) - snrt.4075 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [36/55] snrt.ma (ar) - snrt.4076 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [37/55] snrt.ma (ar) - snrt.4076 - Nov 1, 2026 (0 programs)
+[info]   [37/55] snrt.ma (ar) - snrt.4076 - Nov 1, 2026 (0 programs)
+[info]   [38/55] snrt.ma (ar) - snrt.4076 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [39/55] snrt.ma (ar) - snrt.4076 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [40/55] snrt.ma (ar) - snrt.4076 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [41/55] snrt.ma (ar) - snrt.4077 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [42/55] snrt.ma (ar) - snrt.4077 - Nov 1, 2026 (0 programs)
+[info]   [42/55] snrt.ma (ar) - snrt.4077 - Nov 1, 2026 (0 programs)
+[info]   [43/55] snrt.ma (ar) - snrt.4077 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [44/55] snrt.ma (ar) - snrt.4077 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [45/55] snrt.ma (ar) - snrt.4077 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [46/55] snrt.ma (ar) - snrt.4078 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [47/55] snrt.ma (ar) - snrt.4078 - Nov 1, 2026 (0 programs)
+[info]   [47/55] snrt.ma (ar) - snrt.4078 - Nov 1, 2026 (0 programs)
+[info]   [48/55] snrt.ma (ar) - snrt.4078 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [49/55] snrt.ma (ar) - snrt.4078 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [50/55] snrt.ma (ar) - snrt.4078 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [51/55] snrt.ma (ar) - snrt.4079 - Oct 31, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [52/55] snrt.ma (ar) - snrt.4079 - Nov 1, 2026 (0 programs)
+[info]   [52/55] snrt.ma (ar) - snrt.4079 - Nov 1, 2026 (0 programs)
+[info]   [53/55] snrt.ma (ar) - snrt.4079 - Nov 2, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [54/55] snrt.ma (ar) - snrt.4079 - Nov 3, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   [55/55] snrt.ma (ar) - snrt.4079 - Nov 4, 2026 (0 programs)
+[info]     ERR: Request failed with status code 403
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_snrt.ma.1.retry.xml"...
+[success]   done in 00h 01m 52s
+total 32
+drwxr-xr-x  2 runner runner  4096 Oct 31 07:03 .
+drwxr-xr-x 10 runner runner  4096 Oct 31 07:00 ..
+-rw-r--r--  1 runner runner 14082 Oct 31 07:03 out_grablog_snrt.ma.1.xml
+-rw-r--r--  1 runner runner   915 Oct 31 07:03 out_snrt.ma.1.retry.xml
+-rw-r--r--  1 runner runner   915 Oct 31 07:00 out_snrt.ma.1.xml

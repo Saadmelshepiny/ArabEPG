@@ -1,0 +1,6 @@
+{
+ "version": "2.4.6",
+ "ipk": "https://raw.githubusercontent.com/Saadmelshepiny/ArabEPG/main/release/enigma2-plugin-extensions-saadepg_2.4.6_all.ipk",
+ "date": "2026-10-30",
+ "notes": "شاشة الربط اليدوي كبيرة وواضحة، والربط اليدوي يعمل حتى للقنوات ذات رقم الخدمة المشترك (مع تنبيه)، والقنوات بدون اسم لا تعتبر قناة مختلفة"
+}

@@ -1,0 +1,90 @@
+== roya-tv.com part 1/1: days=5 delay=0 connections=5
+[info] starting...
+[info] loading channels...
+[info] found 10 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/50] roya-tv.com (ar) - roya.38 - Oct 31, 2026 (161 programs)
+[info]   [2/50] roya-tv.com (ar) - roya.38 - Nov 4, 2026 (0 programs)
+[info]   [3/50] roya-tv.com (ar) - roya.48 - Oct 31, 2026 (24 programs)
+[info]   [4/50] roya-tv.com (ar) - roya.38 - Nov 3, 2026 (0 programs)
+[info]   [5/50] roya-tv.com (ar) - roya.48 - Nov 3, 2026 (0 programs)
+[info]   [6/50] roya-tv.com (ar) - roya.48 - Nov 4, 2026 (0 programs)
+[info]   [7/50] roya-tv.com (ar) - roya.3 - Oct 31, 2026 (52 programs)
+[info]   [8/50] roya-tv.com (ar) - roya.38 - Nov 2, 2026 (161 programs)
+[info]   [9/50] roya-tv.com (ar) - roya.3 - Nov 2, 2026 (53 programs)
+[info]   [10/50] roya-tv.com (ar) - roya.48 - Nov 2, 2026 (24 programs)
+[info]   [11/50] roya-tv.com (ar) - roya.38 - Nov 1, 2026 (161 programs)
+[info]   [12/50] roya-tv.com (ar) - roya.3 - Nov 4, 2026 (0 programs)
+[info]   [13/50] roya-tv.com (ar) - roya.3 - Nov 3, 2026 (59 programs)
+[info]   [14/50] roya-tv.com (ar) - roya.2 - Nov 1, 2026 (0 programs)
+[info]   [15/50] roya-tv.com (ar) - roya.48 - Nov 1, 2026 (24 programs)
+[info]   [16/50] roya-tv.com (ar) - roya.3 - Nov 1, 2026 (53 programs)
+[info]   [17/50] roya-tv.com (ar) - roya.2 - Oct 31, 2026 (0 programs)
+[info]   [18/50] roya-tv.com (ar) - roya.2 - Nov 3, 2026 (0 programs)
+[info]   [19/50] roya-tv.com (ar) - roya.2 - Nov 2, 2026 (0 programs)
+[info]   [20/50] roya-tv.com (ar) - roya.14 - Nov 2, 2026 (40 programs)
+[info]   [21/50] roya-tv.com (ar) - roya.2 - Nov 4, 2026 (0 programs)
+[info]   [22/50] roya-tv.com (ar) - roya.14 - Nov 4, 2026 (0 programs)
+[info]   [23/50] roya-tv.com (ar) - roya.14 - Nov 1, 2026 (33 programs)
+[info]   [24/50] roya-tv.com (ar) - roya.14 - Oct 31, 2026 (42 programs)
+[info]   [25/50] roya-tv.com (ar) - roya.14 - Nov 3, 2026 (0 programs)
+[info]   [26/50] roya-tv.com (ar) - roya.42 - Nov 1, 2026 (0 programs)
+[info]   [27/50] roya-tv.com (ar) - roya.42 - Oct 31, 2026 (0 programs)
+[info]   [28/50] roya-tv.com (ar) - roya.42 - Nov 2, 2026 (0 programs)
+[info]   [29/50] roya-tv.com (ar) - roya.27 - Oct 31, 2026 (0 programs)
+[info]   [30/50] roya-tv.com (ar) - roya.42 - Nov 4, 2026 (0 programs)
+[info]   [31/50] roya-tv.com (ar) - roya.42 - Nov 3, 2026 (0 programs)
+[info]   [32/50] roya-tv.com (ar) - roya.27 - Nov 1, 2026 (0 programs)
+[info]   [33/50] roya-tv.com (ar) - roya.4 - Oct 31, 2026 (73 programs)
+[info]   [34/50] roya-tv.com (ar) - roya.4 - Nov 1, 2026 (79 programs)
+[info]   [35/50] roya-tv.com (ar) - roya.27 - Nov 2, 2026 (0 programs)
+[info]   [36/50] roya-tv.com (ar) - roya.27 - Nov 4, 2026 (0 programs)
+[info]   [37/50] roya-tv.com (ar) - roya.4 - Nov 4, 2026 (0 programs)
+[info]   [38/50] roya-tv.com (ar) - roya.4 - Nov 2, 2026 (73 programs)
+[info]   [39/50] roya-tv.com (ar) - roya.21 - Nov 1, 2026 (37 programs)
+[info]   [40/50] roya-tv.com (ar) - roya.4 - Nov 3, 2026 (79 programs)
+[info]   [41/50] roya-tv.com (ar) - roya.21 - Oct 31, 2026 (37 programs)
+[info]   [42/50] roya-tv.com (ar) - roya.27 - Nov 3, 2026 (0 programs)
+[info]   [43/50] roya-tv.com (ar) - roya.21 - Nov 4, 2026 (37 programs)
+[info]   [44/50] roya-tv.com (ar) - roya.21 - Nov 2, 2026 (37 programs)
+[info]   [45/50] roya-tv.com (ar) - roya.1 - Nov 2, 2026 (20 programs)
+[info]   [46/50] roya-tv.com (ar) - roya.21 - Nov 3, 2026 (37 programs)
+[info]   [47/50] roya-tv.com (ar) - roya.1 - Nov 3, 2026 (20 programs)
+[info]   [48/50] roya-tv.com (ar) - roya.1 - Oct 31, 2026 (21 programs)
+[info]   [49/50] roya-tv.com (ar) - roya.1 - Nov 1, 2026 (20 programs)
+[info]   [50/50] roya-tv.com (ar) - roya.1 - Nov 4, 2026 (20 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_roya-tv.com.1.xml"...
+[success]   done in 00h 00m 07s
+3/10 channels without programmes
+== retry
+[info] starting...
+[info] loading channels...
+[info] found 3 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/15] roya-tv.com (ar) - roya.2 - Oct 31, 2026 (0 programs)
+[info]   [2/15] roya-tv.com (ar) - roya.2 - Nov 1, 2026 (0 programs)
+[info]   [3/15] roya-tv.com (ar) - roya.2 - Nov 2, 2026 (0 programs)
+[info]   [4/15] roya-tv.com (ar) - roya.2 - Nov 3, 2026 (0 programs)
+[info]   [5/15] roya-tv.com (ar) - roya.2 - Nov 4, 2026 (0 programs)
+[info]   [6/15] roya-tv.com (ar) - roya.42 - Oct 31, 2026 (0 programs)
+[info]   [7/15] roya-tv.com (ar) - roya.42 - Nov 1, 2026 (0 programs)
+[info]   [8/15] roya-tv.com (ar) - roya.42 - Nov 2, 2026 (0 programs)
+[info]   [9/15] roya-tv.com (ar) - roya.42 - Nov 3, 2026 (0 programs)
+[info]   [10/15] roya-tv.com (ar) - roya.42 - Nov 4, 2026 (0 programs)
+[info]   [11/15] roya-tv.com (ar) - roya.27 - Oct 31, 2026 (0 programs)
+[info]   [12/15] roya-tv.com (ar) - roya.27 - Nov 1, 2026 (0 programs)
+[info]   [13/15] roya-tv.com (ar) - roya.27 - Nov 2, 2026 (0 programs)
+[info]   [14/15] roya-tv.com (ar) - roya.27 - Nov 3, 2026 (0 programs)
+[info]   [15/15] roya-tv.com (ar) - roya.27 - Nov 4, 2026 (0 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_roya-tv.com.1.retry.xml"...
+[success]   done in 00h 00m 42s
+total 832
+drwxr-xr-x  2 runner runner   4096 Oct 31 07:02 .
+drwxr-xr-x 10 runner runner   4096 Oct 31 07:01 ..
+-rw-r--r--  1 runner runner   5224 Oct 31 07:02 out_grablog_roya-tv.com.1.xml
+-rw-r--r--  1 runner runner    298 Oct 31 07:02 out_roya-tv.com.1.retry.xml
+-rw-r--r--  1 runner runner 828871 Oct 31 07:01 out_roya-tv.com.1.xml

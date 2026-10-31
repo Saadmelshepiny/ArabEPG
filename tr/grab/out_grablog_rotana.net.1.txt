@@ -1,0 +1,113 @@
+== rotana.net part 1/1: days=4 delay=0 connections=5
+[info] starting...
+[info] loading channels...
+[info] found 18 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/72] rotana.net (ar) - rotana.446 - Oct 31, 2026 (0 programs)
+[info]   [2/72] rotana.net (ar) - rotana.446 - Nov 3, 2026 (0 programs)
+[info]   [3/72] rotana.net (ar) - rotana.446 - Nov 1, 2026 (0 programs)
+[info]   [4/72] rotana.net (ar) - rotana.446 - Nov 2, 2026 (0 programs)
+[info]   [5/72] rotana.net (en) - rotana.446.en - Oct 31, 2026 (0 programs)
+[info]   [6/72] rotana.net (en) - rotana.446.en - Nov 2, 2026 (0 programs)
+[info]   [7/72] rotana.net (en) - rotana.446.en - Nov 1, 2026 (0 programs)
+[info]   [8/72] rotana.net (en) - rotana.446.en - Nov 3, 2026 (0 programs)
+[info]   [9/72] rotana.net (ar) - rotana.434 - Oct 31, 2026 (16 programs)
+[info]   [10/72] rotana.net (ar) - rotana.434 - Nov 3, 2026 (22 programs)
+[info]   [11/72] rotana.net (ar) - rotana.434 - Nov 2, 2026 (22 programs)
+[info]   [12/72] rotana.net (ar) - rotana.434 - Nov 1, 2026 (18 programs)
+[info]   [13/72] rotana.net (en) - rotana.434.en - Oct 31, 2026 (16 programs)
+[info]   [14/72] rotana.net (en) - rotana.434.en - Nov 1, 2026 (18 programs)
+[info]   [15/72] rotana.net (en) - rotana.434.en - Nov 2, 2026 (22 programs)
+[info]   [16/72] rotana.net (en) - rotana.434.en - Nov 3, 2026 (22 programs)
+[info]   [17/72] rotana.net (ar) - rotana.439 - Nov 2, 2026 (14 programs)
+[info]   [18/72] rotana.net (ar) - rotana.439 - Nov 3, 2026 (14 programs)
+[info]   [19/72] rotana.net (ar) - rotana.439 - Oct 31, 2026 (13 programs)
+[info]   [20/72] rotana.net (ar) - rotana.439 - Nov 1, 2026 (13 programs)
+[info]   [21/72] rotana.net (en) - rotana.439.en - Oct 31, 2026 (13 programs)
+[info]   [22/72] rotana.net (en) - rotana.439.en - Nov 1, 2026 (13 programs)
+[info]   [23/72] rotana.net (en) - rotana.439.en - Nov 2, 2026 (14 programs)
+[info]   [24/72] rotana.net (en) - rotana.439.en - Nov 3, 2026 (14 programs)
+[info]   [25/72] rotana.net (ar) - rotana.431 - Nov 2, 2026 (14 programs)
+[info]   [26/72] rotana.net (ar) - rotana.431 - Oct 31, 2026 (13 programs)
+[info]   [27/72] rotana.net (ar) - rotana.431 - Nov 3, 2026 (14 programs)
+[info]   [28/72] rotana.net (ar) - rotana.431 - Nov 1, 2026 (13 programs)
+[info]   [29/72] rotana.net (en) - rotana.431.en - Oct 31, 2026 (13 programs)
+[info]   [30/72] rotana.net (en) - rotana.431.en - Nov 1, 2026 (13 programs)
+[info]   [31/72] rotana.net (en) - rotana.431.en - Nov 2, 2026 (14 programs)
+[info]   [32/72] rotana.net (en) - rotana.431.en - Nov 3, 2026 (14 programs)
+[info]   [33/72] rotana.net (ar) - rotana.438 - Nov 1, 2026 (18 programs)
+[info]   [34/72] rotana.net (ar) - rotana.438 - Nov 3, 2026 (18 programs)
+[info]   [35/72] rotana.net (ar) - rotana.438 - Nov 2, 2026 (18 programs)
+[info]   [36/72] rotana.net (ar) - rotana.438 - Oct 31, 2026 (17 programs)
+[info]   [37/72] rotana.net (en) - rotana.438.en - Oct 31, 2026 (17 programs)
+[info]   [38/72] rotana.net (en) - rotana.438.en - Nov 1, 2026 (18 programs)
+[info]   [39/72] rotana.net (en) - rotana.438.en - Nov 2, 2026 (18 programs)
+[info]   [40/72] rotana.net (en) - rotana.438.en - Nov 3, 2026 (18 programs)
+[info]   [41/72] rotana.net (ar) - rotana.443 - Nov 3, 2026 (0 programs)
+[info]   [42/72] rotana.net (ar) - rotana.443 - Oct 31, 2026 (0 programs)
+[info]   [43/72] rotana.net (ar) - rotana.443 - Nov 1, 2026 (0 programs)
+[info]   [44/72] rotana.net (ar) - rotana.443 - Nov 2, 2026 (0 programs)
+[info]   [45/72] rotana.net (en) - rotana.443.en - Oct 31, 2026 (0 programs)
+[info]   [46/72] rotana.net (en) - rotana.443.en - Nov 3, 2026 (0 programs)
+[info]   [47/72] rotana.net (en) - rotana.443.en - Nov 1, 2026 (0 programs)
+[info]   [48/72] rotana.net (en) - rotana.443.en - Nov 2, 2026 (0 programs)
+[info]   [49/72] rotana.net (ar) - rotana.437 - Oct 31, 2026 (11 programs)
+[info]   [50/72] rotana.net (ar) - rotana.437 - Nov 1, 2026 (12 programs)
+[info]   [51/72] rotana.net (ar) - rotana.437 - Nov 3, 2026 (13 programs)
+[info]   [52/72] rotana.net (ar) - rotana.437 - Nov 2, 2026 (13 programs)
+[info]   [53/72] rotana.net (en) - rotana.437.en - Oct 31, 2026 (11 programs)
+[info]   [54/72] rotana.net (en) - rotana.437.en - Nov 1, 2026 (12 programs)
+[info]   [55/72] rotana.net (en) - rotana.437.en - Nov 2, 2026 (13 programs)
+[info]   [56/72] rotana.net (en) - rotana.437.en - Nov 3, 2026 (13 programs)
+[info]   [57/72] rotana.net (ar) - rotana.436 - Nov 3, 2026 (25 programs)
+[info]   [58/72] rotana.net (ar) - rotana.436 - Nov 2, 2026 (25 programs)
+[info]   [59/72] rotana.net (ar) - rotana.436 - Oct 31, 2026 (25 programs)
+[info]   [60/72] rotana.net (ar) - rotana.436 - Nov 1, 2026 (25 programs)
+[info]   [61/72] rotana.net (en) - rotana.436.en - Oct 31, 2026 (25 programs)
+[info]   [62/72] rotana.net (en) - rotana.436.en - Nov 1, 2026 (25 programs)
+[info]   [63/72] rotana.net (en) - rotana.436.en - Nov 2, 2026 (25 programs)
+[info]   [64/72] rotana.net (en) - rotana.436.en - Nov 3, 2026 (25 programs)
+[info]   [65/72] rotana.net (ar) - rotana.435 - Nov 1, 2026 (22 programs)
+[info]   [66/72] rotana.net (ar) - rotana.435 - Nov 2, 2026 (24 programs)
+[info]   [67/72] rotana.net (ar) - rotana.435 - Oct 31, 2026 (24 programs)
+[info]   [68/72] rotana.net (en) - rotana.435.en - Oct 31, 2026 (24 programs)
+[info]   [69/72] rotana.net (ar) - rotana.435 - Nov 3, 2026 (29 programs)
+[info]   [70/72] rotana.net (en) - rotana.435.en - Nov 1, 2026 (22 programs)
+[info]   [71/72] rotana.net (en) - rotana.435.en - Nov 2, 2026 (24 programs)
+[info]   [72/72] rotana.net (en) - rotana.435.en - Nov 3, 2026 (29 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_rotana.net.1.xml"...
+[success]   done in 00h 00m 19s
+4/18 channels without programmes
+== retry
+[info] starting...
+[info] loading channels...
+[info] found 4 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/16] rotana.net (ar) - rotana.446 - Oct 31, 2026 (0 programs)
+[info]   [2/16] rotana.net (ar) - rotana.446 - Nov 1, 2026 (0 programs)
+[info]   [3/16] rotana.net (ar) - rotana.446 - Nov 2, 2026 (0 programs)
+[info]   [4/16] rotana.net (ar) - rotana.446 - Nov 3, 2026 (0 programs)
+[info]   [5/16] rotana.net (en) - rotana.446.en - Oct 31, 2026 (0 programs)
+[info]   [6/16] rotana.net (en) - rotana.446.en - Nov 1, 2026 (0 programs)
+[info]   [7/16] rotana.net (en) - rotana.446.en - Nov 2, 2026 (0 programs)
+[info]   [8/16] rotana.net (en) - rotana.446.en - Nov 3, 2026 (0 programs)
+[info]   [9/16] rotana.net (ar) - rotana.443 - Oct 31, 2026 (0 programs)
+[info]   [10/16] rotana.net (ar) - rotana.443 - Nov 1, 2026 (0 programs)
+[info]   [11/16] rotana.net (ar) - rotana.443 - Nov 2, 2026 (0 programs)
+[info]   [12/16] rotana.net (ar) - rotana.443 - Nov 3, 2026 (0 programs)
+[info]   [13/16] rotana.net (en) - rotana.443.en - Oct 31, 2026 (0 programs)
+[info]   [14/16] rotana.net (en) - rotana.443.en - Nov 1, 2026 (0 programs)
+[info]   [15/16] rotana.net (en) - rotana.443.en - Nov 2, 2026 (0 programs)
+[info]   [16/16] rotana.net (en) - rotana.443.en - Nov 3, 2026 (0 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_rotana.net.1.retry.xml"...
+[success]   done in 00h 00m 33s
+total 744
+drwxr-xr-x  2 runner runner   4096 Oct 31 07:02 .
+drwxr-xr-x 10 runner runner   4096 Oct 31 07:00 ..
+-rw-r--r--  1 runner runner   7222 Oct 31 07:02 out_grablog_rotana.net.1.xml
+-rw-r--r--  1 runner runner    406 Oct 31 07:02 out_rotana.net.1.retry.xml
+-rw-r--r--  1 runner runner 738811 Oct 31 07:01 out_rotana.net.1.xml

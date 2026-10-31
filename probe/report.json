@@ -1,0 +1,813 @@
+{
+ "generated_utc": "2026-10-31 07:13:29",
+ "pages": {
+  "lbci_today": {
+   "url": "https://www.lbcgroup.tv/schedule-channels-date/1/2026/10/31/ar",
+   "status": 200,
+   "final_url": "https://www.lbcgroup.tv/schedule-channels-date/1/2026/10/31/ar",
+   "bytes": 146111,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/lbci_today.html"
+  },
+  "lbci_tomorrow": {
+   "url": "https://www.lbcgroup.tv/schedule-channels-date/1/2026/11/01/ar",
+   "status": 200,
+   "final_url": "https://www.lbcgroup.tv/schedule-channels-date/1/2026/11/01/ar",
+   "bytes": 167577,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/lbci_tomorrow.html"
+  },
+  "lb2": {
+   "url": "https://www.lbcgroup.tv/schedule-channels/9/lb2-beirut-time/ar",
+   "status": 200,
+   "final_url": "https://www.lbcgroup.tv/",
+   "bytes": 695983,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/lb2.html"
+  },
+  "aljadeed_today": {
+   "url": "https://www.aljadeed.tv/schedule-channels-date/1/2026/10/31/ar",
+   "status": 200,
+   "final_url": "https://www.aljadeed.tv/schedule-channels-date/1/2026/10/31/ar",
+   "bytes": 165474,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/aljadeed_today.html"
+  },
+  "mtv_lebanon": {
+   "url": "https://www.mtv.com.lb/schedule",
+   "status": 200,
+   "final_url": "https://www.mtv.com.lb/schedule",
+   "bytes": 60839,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/mtv_lebanon.html"
+  },
+  "mtv_lebanon_link1": {
+   "url": "https://www.mtv.com.lb/en/schedule",
+   "status": 200,
+   "final_url": "https://www.mtv.com.lb/en/schedule",
+   "bytes": 58826,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/mtv_lebanon_link1.html"
+  },
+  "mtv_lebanon_link2": {
+   "url": "https://www.mtv.com.lb/`/vod/ar/program/${program.Program.Id}`",
+   "error": "HTTP Error 404: Not Found"
+  },
+  "mtv_lebanon_link3": {
+   "url": "https://www.mtv.com.lb/Schedule",
+   "status": 200,
+   "final_url": "https://www.mtv.com.lb/Schedule",
+   "bytes": 61191,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/mtv_lebanon_link3.html"
+  },
+  "tunisia_watania1": {
+   "url": "https://www.tunisiatv.tn/ar/programme",
+   "status": 200,
+   "final_url": "https://www.tunisiatv.tn/ar/programme/2/69c58aac8d6cac7a55cd2e09/%D8%A7%D9%84%D9%88%D8%B7%D9%86%D9%8A%D8%A9%201",
+   "bytes": 128918,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/tunisia_watania1.html"
+  },
+  "tunisia_watania1_link1": {
+   "url": "https://www.tunisiatv.tn/ar/programme",
+   "status": 200,
+   "final_url": "https://www.tunisiatv.tn/ar/programme/2/69c58aac8d6cac7a55cd2e09/%D8%A7%D9%84%D9%88%D8%B7%D9%86%D9%8A%D8%A9%201",
+   "bytes": 128918,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/tunisia_watania1_link1.html"
+  },
+  "tunisia_watania1_link2": {
+   "url": "https://www.tunisiatv.tn/ar/programme/6/69c58aac8d6cac7a55cd2e09/الوطنية 1",
+   "error": "URL can't contain control characters. '/ar/programme/6/69c58aac8d6cac7a55cd2e09/الوطنية 1' (found at least ' ')"
+  },
+  "tunisia_watania1_link3": {
+   "url": "https://www.tunisiatv.tn/ar/programme/6/69c593d18d6cac7a55cd575c/الوطنية 2",
+   "error": "URL can't contain control characters. '/ar/programme/6/69c593d18d6cac7a55cd575c/الوطنية 2' (found at least ' ')"
+  },
+  "saudi_sba": {
+   "url": "https://sba.sa/",
+   "error": "<urlopen error [Errno 101] Network is unreachable>"
+  },
+  "saudi_tv": {
+   "url": "https://www.saudiatv.sa/",
+   "error": "<urlopen error [Errno -2] Name or service not known>"
+  },
+  "alkass": {
+   "url": "https://www.alkass.net/tvguide",
+   "status": 200,
+   "final_url": "https://www.alkass.net/tvguide",
+   "bytes": 141614,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/alkass.html"
+  },
+  "qatar_tv": {
+   "url": "https://qtv.qa/TransmissionScheduled",
+   "status": 200,
+   "final_url": "https://qtv.qa/TransmissionScheduled",
+   "bytes": 52597,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/qatar_tv.html"
+  },
+  "dubai_tv": {
+   "url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/program-schedule.html",
+   "status": 200,
+   "final_url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/program-schedule.html",
+   "bytes": 22810,
+   "content_type": "text/html",
+   "file": "probe/dubai_tv.html"
+  },
+  "dubai_tv_link1": {
+   "url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/programs/1.html",
+   "status": 200,
+   "final_url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/programs/1.html",
+   "bytes": 141685,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/dubai_tv_link1.html"
+  },
+  "dubai_tv_link2": {
+   "url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/programs/4.html",
+   "status": 200,
+   "final_url": "https://www.dubaitv.ae/content/dubaitv/ar-ae/programs/4.html",
+   "bytes": 140505,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/dubai_tv_link2.html"
+  },
+  "awaan": {
+   "url": "https://www.awaan.ae/",
+   "status": 200,
+   "final_url": "https://www.dubaiplus.net/",
+   "bytes": 7193,
+   "content_type": "text/html",
+   "file": "probe/awaan.html"
+  },
+  "abudhabi": {
+   "url": "https://www.admn.ae/ar/",
+   "status": 200,
+   "final_url": "https://www.admn.ae/ar/",
+   "bytes": 92815,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/abudhabi.html"
+  },
+  "sharjah": {
+   "url": "https://sba.net.ae/",
+   "status": 200,
+   "final_url": "https://www.sba.net.ae/",
+   "bytes": 2214,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/sharjah.html"
+  },
+  "kuwait": {
+   "url": "https://www.media.gov.kw/",
+   "status": 200,
+   "final_url": "https://www.media.gov.kw/",
+   "bytes": 196891,
+   "content_type": "",
+   "file": "probe/kuwait.html"
+  },
+  "kuwait_link1": {
+   "url": "https://www.media.gov.kw/MinistryProjectsPrograms.aspx",
+   "status": 200,
+   "final_url": "https://www.media.gov.kw/MinistryProjectsPrograms.aspx",
+   "bytes": 101099,
+   "content_type": "",
+   "file": "probe/kuwait_link1.html"
+  },
+  "kuwait_link2": {
+   "url": "https://www.media.gov.kw/MediaContentGuide.aspx",
+   "status": 200,
+   "final_url": "https://www.media.gov.kw/MediaContentGuide.aspx",
+   "bytes": 100680,
+   "content_type": "",
+   "file": "probe/kuwait_link2.html"
+  },
+  "bahrain": {
+   "url": "https://www.bna.bh/",
+   "error": "HTTP Error 405: Not Allowed"
+  },
+  "maspero": {
+   "url": "https://www.maspero.eg/",
+   "error": "HTTP Error 504: Gateway Time-out"
+  },
+  "alarabiya": {
+   "url": "https://www.alarabiya.net/",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  "skynewsarabia": {
+   "url": "https://www.skynewsarabia.com/program",
+   "status": 200,
+   "final_url": "https://www.skynewsarabia.com/program",
+   "bytes": 338071,
+   "content_type": "text/html;charset=UTF-8",
+   "file": "probe/skynewsarabia.html"
+  },
+  "skynewsarabia_link1": {
+   "url": "https://www.skynewsarabia.com/rss/program.xml",
+   "error": "HTTP Error 404: Not Found"
+  },
+  "skynewsarabia_link2": {
+   "url": "https://www.skynewsarabia.com/asset/1643203815/72942C887621C4B565FBAE42904F92D1/styles/sna-program-list-head.css",
+   "status": 200,
+   "final_url": "https://www.skynewsarabia.com/asset/1643203815/72942C887621C4B565FBAE42904F92D1/styles/sna-program-list-head.css",
+   "bytes": 75243,
+   "content_type": "text/css;charset=UTF-8",
+   "file": "probe/skynewsarabia_link2.html"
+  },
+  "skynewsarabia_link3": {
+   "url": "https://www.skynewsarabia.com/asset/1643203815/075DA26D31541A7FBC141F5D6837B218/scripts/sna-programs-foot.js",
+   "status": 200,
+   "final_url": "https://www.skynewsarabia.com/asset/1643203815/075DA26D31541A7FBC141F5D6837B218/scripts/sna-programs-foot.js",
+   "bytes": 50260,
+   "content_type": "text/javascript;charset=UTF-8",
+   "file": "probe/skynewsarabia_link3.html"
+  },
+  "skynewsarabia_link4": {
+   "url": "https://www.skynewsarabia.com/program/journalist_diaries-%D9%8A%D9%88%D9%85%D9%8A%D8%A7%D8%AA-%D8%B5%D8%AD%D9%81%D9%8A",
+   "status": 200,
+   "final_url": "https://validate.perfdrive.com/?ssa=f533e52d-e13d-45e1-be43-c2fb72426464&ssb=88255227989&ssc=https%3A%2F%2Fwww.skynewsarabia.com%2Fprogram%2Fjournalist_diaries-%25D9%258A%25D9%2588%25D9%2585%25D9%258A%25D8%25A7%25D8%25AA-%25D8%25B5%25D8%25AD%25D9%2581%25D9%258A&ssi=eef8ada8-cf43-43c2-92e1-397d4f155b2f&ssk=botmanager_support@radware.com&ssm=62461403361549112105966520149214&ssn=a5c2bd0a7197654aa89d46a85a9d3227862128820b2f-6680-4147-a7c620&sso=bdd0044f-28b227c5d64c2deb82c5e7122fb5683b313acfd9dd98a2b3&ssp=38333397671793438885179341267414791&ssq=90432903090789478482130907653423073861500&ssr=MTcyLjIwMy4zMC4yMTA=&sst=Mozilla/5.0%20(Windows%20NT%2010.0;%20Win64;%20x64)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/130.0%20Safari/537.36&ssu=&ssv=&ssw=&ssx=eyJyZCI6InNreW5ld3NhcmFiaWEuY29tIiwiX191em1mIjoiN2Y5MDAwMjg4MjBiMmYtNjY4MC00MTQ3LWE0NGYtMjhiMjI3YzVkNjRjMS0xNzkzNDMwOTA3Mjc4MC0wMDU4ZGIzMjIwODY1YTQ1MjQ2MTAiLCJ1em14IjoiN2ZjMDAwOWVjODc3OTItNzkxNS00N2I3LTk5NjctMDMyMzE0MTc3YzU1MS0xNzkzNDMwOTA3Mjc4MC0wMGJlOTdjNzUyYTNkYzM4NDYzMTAifQ==",
+   "bytes": 15131,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/skynewsarabia_link4.html"
+  },
+  "skynewsarabia_link5": {
+   "url": "https://www.skynewsarabia.com/program/alqarar-القرار",
+   "error": "'ascii' codec can't encode characters in position 21-26: ordinal not in range(128)"
+  },
+  "asharq": {
+   "url": "https://asharq.com/",
+   "status": 200,
+   "final_url": "https://asharq.com/",
+   "bytes": 911942,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/asharq.html"
+  },
+  "trt_arabi": {
+   "url": "https://www.trtarabi.com/tv-schedule",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  "alghad": {
+   "url": "https://www.alghad.tv/",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  "almayadeen": {
+   "url": "https://www.almayadeen.net/",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  "jordan_tv": {
+   "url": "https://jrtv.gov.jo/",
+   "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1010)>"
+  },
+  "almamlaka": {
+   "url": "https://www.almamlakatv.com/",
+   "status": 200,
+   "final_url": "https://almamlakatv.com/ar",
+   "bytes": 317234,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almamlaka.html"
+  },
+  "almamlaka_link1": {
+   "url": "https://almamlakatv.com/ar/البرامج",
+   "error": "'ascii' codec can't encode characters in position 8-14: ordinal not in range(128)"
+  },
+  "almamlaka_link2": {
+   "url": "https://almamlakatv.com/css/front_component/design_templates/fixed_section/live_with_schedule.css?v=1793430633",
+   "status": 200,
+   "final_url": "https://almamlakatv.com/css/front_component/design_templates/fixed_section/live_with_schedule.css?v=1793430633",
+   "bytes": 1759,
+   "content_type": "text/css",
+   "file": "probe/almamlaka_link2.html"
+  },
+  "almamlaka_link3": {
+   "url": "https://almamlakatv.com/css/front_component/design_templates/fixed_section/live_with_schedule.css",
+   "status": 200,
+   "final_url": "https://almamlakatv.com/css/front_component/design_templates/fixed_section/live_with_schedule.css",
+   "bytes": 1759,
+   "content_type": "text/css",
+   "file": "probe/almamlaka_link3.html"
+  },
+  "alsumaria": {
+   "url": "https://www.alsumaria.tv/TV-grid",
+   "status": 200,
+   "final_url": "https://www.alsumaria.tv/TV-grid",
+   "bytes": 670642,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/alsumaria.html"
+  },
+  "iraqia": {
+   "url": "https://imn.iq/",
+   "status": 200,
+   "final_url": "https://imn.iq/ar",
+   "bytes": 154263,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/iraqia.html"
+  },
+  "yallakora": {
+   "url": "https://www.yallakora.com/match-center",
+   "status": 200,
+   "final_url": "https://www.yallakora.com/matches-center",
+   "bytes": 348106,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/yallakora.html"
+  },
+  "es_EG1": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_EG1.xml.gz",
+   "status": 200,
+   "final_url": "https://epgshare01.online/epgshare01/epg_ripper_EG1.xml.gz",
+   "bytes": 200342,
+   "content_type": "application/octet-stream",
+   "file": "probe/es_EG1.html"
+  },
+  "es_SA1": {
+   "url": "https://epgshare01.online/epgshare01/epg_ripper_SA1.xml.gz",
+   "status": 200,
+   "final_url": "https://epgshare01.online/epgshare01/epg_ripper_SA1.xml.gz",
+   "bytes": 1443,
+   "content_type": "application/octet-stream",
+   "file": "probe/es_SA1.html"
+  },
+  "presstv": {
+   "url": "https://www.presstv.co.uk/default/schedule",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/schedule",
+   "bytes": 24708,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/presstv.html"
+  },
+  "presstv_link1": {
+   "url": "https://www.presstv.co.uk/default/schedule?date= 2026-10-31",
+   "error": "URL can't contain control characters. '/default/schedule?date= 2026-10-31' (found at least ' ')"
+  },
+  "presstv_link2": {
+   "url": "https://www.presstv.co.uk/default/schedule?date= 2026-11-01",
+   "error": "URL can't contain control characters. '/default/schedule?date= 2026-11-01' (found at least ' ')"
+  },
+  "presstv_link3": {
+   "url": "https://www.presstv.co.uk/default/schedule?date= 2026-11-02",
+   "error": "URL can't contain control characters. '/default/schedule?date= 2026-11-02' (found at least ' ')"
+  },
+  "presstv_link4": {
+   "url": "https://www.presstv.co.uk/default/schedule?date= 2026-11-03",
+   "error": "URL can't contain control characters. '/default/schedule?date= 2026-11-03' (found at least ' ')"
+  },
+  "presstv_link5": {
+   "url": "https://www.presstv.co.uk/default/schedule?date= 2026-11-04",
+   "error": "URL can't contain control characters. '/default/schedule?date= 2026-11-04' (found at least ' ')"
+  },
+  "almanar": {
+   "url": "https://www.almanar.com.lb/programs",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/programs/",
+   "bytes": 192665,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar.html"
+  },
+  "almanar_link1": {
+   "url": "https://www.almanar.com.lb/program-category/658/",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/program-category/658/",
+   "bytes": 30480,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar_link1.html"
+  },
+  "almanar_link2": {
+   "url": "https://www.almanar.com.lb/program/10716/",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/program/10716/",
+   "bytes": 39859,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar_link2.html"
+  },
+  "almanar_link3": {
+   "url": "https://www.almanar.com.lb/program/691/",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/program/691/",
+   "bytes": 38145,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar_link3.html"
+  },
+  "almanar_link4": {
+   "url": "https://www.almanar.com.lb/program/702/",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/program/702/",
+   "bytes": 38156,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar_link4.html"
+  },
+  "almanar_link5": {
+   "url": "https://www.almanar.com.lb/program/735/",
+   "status": 200,
+   "final_url": "https://www.almanar.com.lb/program/735/",
+   "bytes": 38145,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/almanar_link5.html"
+  },
+  "alalam": {
+   "url": "https://www.alalam.ir/",
+   "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1010)>"
+  },
+  "rtarabic": {
+   "url": "https://arabic.rt.com/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/",
+   "bytes": 1418157,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic.html"
+  },
+  "rtarabic_link1": {
+   "url": "https://rtarabic.com/prg/program/595360-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC_%D9%82%D8%B5%D8%A7%D8%B1%D9%89_%D8%A7%D9%84%D9%82%D9%88%D9%84/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/prg/program/595360-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC_%D9%82%D8%B5%D8%A7%D8%B1%D9%89_%D8%A7%D9%84%D9%82%D9%88%D9%84/",
+   "bytes": 85553,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic_link1.html"
+  },
+  "rtarabic_link2": {
+   "url": "https://rtarabic.com/prg/program/987584-%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B5%D9%8A%D9%84/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/prg/program/987584-%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B5%D9%8A%D9%84/",
+   "bytes": 84970,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic_link2.html"
+  },
+  "rtarabic_link3": {
+   "url": "https://rtarabic.com/prg/program/792326-%D8%A7%D8%B3%D8%A3%D9%84-%D8%A3%D9%83%D8%AB%D8%B1/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/prg/program/792326-%D8%A7%D8%B3%D8%A3%D9%84-%D8%A3%D9%83%D8%AB%D8%B1/",
+   "bytes": 85201,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic_link3.html"
+  },
+  "rtarabic_link4": {
+   "url": "https://rtarabic.com/prg/program/10616-%D8%B1%D8%AD%D9%84%D8%A9_%D9%81%D9%8A_%D8%A7%D9%84%D8%B0%D8%A7%D9%83%D8%B1%D8%A9/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/prg/program/10616-%D8%B1%D8%AD%D9%84%D8%A9_%D9%81%D9%8A_%D8%A7%D9%84%D8%B0%D8%A7%D9%83%D8%B1%D8%A9/",
+   "bytes": 90899,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic_link4.html"
+  },
+  "rtarabic_link5": {
+   "url": "https://rtarabic.com/prg/program/1061112-%D8%A3%D8%A8%D8%B9%D8%A7%D8%AF-%D8%B1%D9%88%D8%B3%D9%8A%D8%A9/",
+   "status": 200,
+   "final_url": "https://rtarabic.com/prg/program/1061112-%D8%A3%D8%A8%D8%B9%D8%A7%D8%AF-%D8%B1%D9%88%D8%B3%D9%8A%D8%A9/",
+   "bytes": 85871,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rtarabic_link5.html"
+  },
+  "dw_ar": {
+   "url": "https://www.dw.com/ar/",
+   "status": 200,
+   "final_url": "https://www.dw.com/ar/%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A%D8%A9/s-9106",
+   "bytes": 319915,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/dw_ar.html"
+  },
+  "mubasher": {
+   "url": "https://mubasher.aljazeera.net/",
+   "status": 200,
+   "final_url": "https://www.aljazeera.net/video/live/%D8%A7%D9%84%D8%AC%D8%B2%D9%8A%D8%B1%D8%A9-%D9%85%D8%A8%D8%A7%D8%B4%D8%B1",
+   "bytes": 692542,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/mubasher.html"
+  },
+  "mubasher_link1": {
+   "url": "https://www.aljazeera.net/static/css/component~pages/account-settings~pages/author~pages/live-stream-page~pages/program~pages/section~pag~89be2121.72ee4976.r2.chunk.css",
+   "status": 200,
+   "final_url": "https://www.aljazeera.net/static/css/component~pages/account-settings~pages/author~pages/live-stream-page~pages/program~pages/section~pag~89be2121.72ee4976.r2.chunk.css",
+   "bytes": 226171,
+   "content_type": "text/css; charset=UTF-8",
+   "file": "probe/mubasher_link1.html"
+  },
+  "mubasher_link2": {
+   "url": "https://www.aljazeera.net/video/al-jazeeraspecialprograms/",
+   "status": 200,
+   "final_url": "https://www.aljazeera.net/video/al-jazeeraspecialprograms/",
+   "bytes": 586500,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/mubasher_link2.html"
+  },
+  "mubasher_link3": {
+   "url": "https://www.aljazeera.net/video/al-jazeeraspecialprograms/2026/9/19/قبل-فقد-السيطرة-المخبر-الاقتصادي",
+   "error": "'ascii' codec can't encode characters in position 47-49: ordinal not in range(128)"
+  },
+  "pbc": {
+   "url": "https://www.pbc.ps/",
+   "status": 200,
+   "final_url": "https://www.pbc.ps/",
+   "bytes": 192836,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/pbc.html"
+  },
+  "alahly": {
+   "url": "https://www.alahlytv.net/",
+   "error": "<urlopen error timed out>"
+  },
+  "zamalek": {
+   "url": "https://www.zamalek.tv/",
+   "error": "<urlopen error timed out>"
+  },
+  "ontime": {
+   "url": "https://www.ontimesports.com/",
+   "status": 200,
+   "final_url": "https://www.ontimesports.com/",
+   "bytes": 164052,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/ontime.html"
+  },
+  "melody": {
+   "url": "https://melody.tv/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/",
+   "bytes": 191541,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody.html"
+  },
+  "melody_link1": {
+   "url": "https://www.melody.tv/program/10700-clips/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/program/10700-clips/",
+   "bytes": 109416,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody_link1.html"
+  },
+  "melody_link2": {
+   "url": "https://www.melody.tv/program/14557-numero-un-les-grands-enfants-s-e/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/program/14557-numero-un-les-grands-enfants-s-e/",
+   "bytes": 124733,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody_link2.html"
+  },
+  "melody_link3": {
+   "url": "https://www.melody.tv/programs/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/programs/",
+   "bytes": 0,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody_link3.html"
+  },
+  "melody_link4": {
+   "url": "https://www.melody.tv/program/10730-face-au-public/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/program/10730-face-au-public/",
+   "bytes": 146006,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody_link4.html"
+  },
+  "melody_link5": {
+   "url": "https://www.melody.tv/program/10729-documentaires/",
+   "status": 200,
+   "final_url": "https://www.melody.tv/program/10729-documentaires/",
+   "bytes": 145162,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/melody_link5.html"
+  },
+  "toyor": {
+   "url": "https://toyoraljanah.com/",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/",
+   "bytes": 125769,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/toyor.html"
+  },
+  "toyor_link1": {
+   "url": "https://toyoraljanah.com/programs",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/programs/",
+   "bytes": 63210,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/toyor_link1.html"
+  },
+  "toyor_link2": {
+   "url": "https://toyoraljanah.com/programs/%d9%85%d9%86-%d8%a3%d9%86%d8%a7-%d8%9f/",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/programs/%d9%85%d9%86-%d8%a3%d9%86%d8%a7-%d8%9f/",
+   "bytes": 46178,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/toyor_link2.html"
+  },
+  "toyor_link3": {
+   "url": "https://toyoraljanah.com/programs/%d9%83%d9%88%d8%a7%d9%84%d9%8a%d8%b3/",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/programs/%d9%83%d9%88%d8%a7%d9%84%d9%8a%d8%b3/",
+   "bytes": 47633,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/toyor_link3.html"
+  },
+  "toyor_link4": {
+   "url": "https://toyoraljanah.com/programs/%d8%a8%d9%8a%d8%aa-%d8%a7%d9%84%d8%ad%d8%ac/",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/programs/%d8%a8%d9%8a%d8%aa-%d8%a7%d9%84%d8%ad%d8%ac/",
+   "bytes": 47251,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/toyor_link4.html"
+  },
+  "toyor_link5": {
+   "url": "https://toyoraljanah.com/programs/%d9%85%d9%86%d8%a7%d8%ac%d8%a7%d8%a9/",
+   "status": 200,
+   "final_url": "https://toyoraljanah.com/programs/%d9%85%d9%86%d8%a7%d8%ac%d8%a7%d8%a9/",
+   "bytes": 46429,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/toyor_link5.html"
+  },
+  "karameesh": {
+   "url": "https://karameesh.tv/",
+   "error": "<urlopen error [Errno -2] Name or service not known>"
+  },
+  "iqraa": {
+   "url": "https://iqraa.com/",
+   "status": 200,
+   "final_url": "https://iqraa.com/",
+   "bytes": 170302,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/iqraa.html"
+  },
+  "almajd": {
+   "url": "https://almajd.tv/",
+   "error": "HTTP Error 403: Forbidden"
+  },
+  "libya_wataniya": {
+   "url": "https://www.ltv.ly/",
+   "status": 200,
+   "final_url": "https://ltv.ly/",
+   "bytes": 166527,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_wataniya.html"
+  },
+  "yemen_tv": {
+   "url": "https://www.yemenitv.net/",
+   "error": "<urlopen error [Errno -2] Name or service not known>"
+  },
+  "suhail": {
+   "url": "https://suhail.net/programslist.php",
+   "status": 200,
+   "final_url": "https://suhail.net/programslist.php",
+   "bytes": 30090,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/suhail.html"
+  },
+  "suhail_link1": {
+   "url": "https://suhail.net/programs.php?display=true",
+   "status": 200,
+   "final_url": "https://suhail.net/programs.php?display=true",
+   "bytes": 32635,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/suhail_link1.html"
+  },
+  "sudan_tv": {
+   "url": "https://sudantv.sd/ar/?page_id=7",
+   "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  },
+  "ennahar": {
+   "url": "https://tv.ennaharonline.com/",
+   "error": "<urlopen error [Errno -2] Name or service not known>"
+  },
+  "entv": {
+   "url": "https://www.entv.dz/",
+   "status": 200,
+   "final_url": "https://www.entv.dz/ar",
+   "bytes": 235223,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/entv.html"
+  },
+  "azhari": {
+   "url": "https://www.azhari.tv/",
+   "error": "<urlopen error [Errno -2] Name or service not known>"
+  },
+  "libya_ahrar": {
+   "url": "https://shoof.libyaalahrar.tv/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/",
+   "bytes": 136280,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar.html"
+  },
+  "libya_ahrar_link1": {
+   "url": "https://shoof.libyaalahrar.tv/category/programs/family-kitchen4/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/category/programs/family-kitchen4/",
+   "bytes": 65221,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar_link1.html"
+  },
+  "libya_ahrar_link2": {
+   "url": "https://shoof.libyaalahrar.tv/category/programs/ati-hai-3/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/category/programs/ati-hai-3/",
+   "bytes": 64758,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar_link2.html"
+  },
+  "libya_ahrar_link3": {
+   "url": "https://shoof.libyaalahrar.tv/category/programs/fatawi/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/category/programs/fatawi/",
+   "bytes": 65209,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar_link3.html"
+  },
+  "libya_ahrar_link4": {
+   "url": "https://shoof.libyaalahrar.tv/category/programs/tadayon-rasheed/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/category/programs/tadayon-rasheed/",
+   "bytes": 65301,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar_link4.html"
+  },
+  "libya_ahrar_link5": {
+   "url": "https://shoof.libyaalahrar.tv/category/programs/qamar4/",
+   "status": 200,
+   "final_url": "https://shoof.libyaalahrar.tv/category/programs/qamar4/",
+   "bytes": 65752,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/libya_ahrar_link5.html"
+  },
+  "presstv_api": {
+   "url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31&time=00:00:00",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31&time=00:00:00",
+   "bytes": 2,
+   "content_type": "application/json; charset=utf-8",
+   "file": "probe/presstv_api.html"
+  },
+  "presstv_api2": {
+   "url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31&time=12:0:0",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31&time=12:0:0",
+   "bytes": 2,
+   "content_type": "application/json; charset=utf-8",
+   "file": "probe/presstv_api2.html"
+  },
+  "presstv_api3": {
+   "url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/GetSchedule?date=2026-10-31",
+   "bytes": 2,
+   "content_type": "application/json; charset=utf-8",
+   "file": "probe/presstv_api3.html"
+  },
+  "presstv_api4": {
+   "url": "https://www.presstv.ir/default/GetSchedule?date=2026-10-31&time=12:0:0",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/GetSchedule",
+   "bytes": 2,
+   "content_type": "application/json; charset=utf-8",
+   "file": "probe/presstv_api4.html"
+  },
+  "presstv_day": {
+   "url": "https://www.presstv.co.uk/default/schedule?date=2026-10-31",
+   "status": 200,
+   "final_url": "https://www.presstv.co.uk/default/schedule?date=2026-10-31",
+   "bytes": 24708,
+   "content_type": "text/html; charset=utf-8",
+   "file": "probe/presstv_day.html"
+  },
+  "es_index": {
+   "url": "https://epgshare01.online/epgshare01/",
+   "status": 200,
+   "final_url": "https://epgshare01.online/epgshare01/",
+   "bytes": 39893,
+   "content_type": "text/html",
+   "file": "probe/es_index.html"
+  },
+  "lematin_aloula": {
+   "url": "https://lematin.ma/television/aloula",
+   "status": 200,
+   "final_url": "https://lematin.ma/television/aloula",
+   "bytes": 388180,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/lematin_aloula.html"
+  },
+  "lematin_2m": {
+   "url": "https://lematin.ma/television/2m",
+   "status": 200,
+   "final_url": "https://lematin.ma/television/2m",
+   "bytes": 280273,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/lematin_2m.html"
+  },
+  "lematin_arryadia": {
+   "url": "https://lematin.ma/television/arryadia",
+   "status": 200,
+   "final_url": "https://lematin.ma/television/arryadia",
+   "bytes": 281858,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/lematin_arryadia.html"
+  },
+  "lematin_medi1": {
+   "url": "https://lematin.ma/television/medi1",
+   "status": 200,
+   "final_url": "https://lematin.ma/television/medi1",
+   "bytes": 299160,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/lematin_medi1.html"
+  },
+  "rotana_csvpage": {
+   "url": "https://rotana.net/%D8%AC%D8%AF%D9%88%D9%84-%D8%A7%D9%84%D8%A8%D8%B1%D8%A7%D9%85%D8%AC/",
+   "status": 200,
+   "final_url": "https://rotana.net/en/%d8%ac%d8%af%d9%88%d9%84-%d8%a7%d9%84%d8%a8%d8%b1%d8%a7%d9%85%d8%ac",
+   "bytes": 221024,
+   "content_type": "text/html; charset=UTF-8",
+   "file": "probe/rotana_csvpage.html"
+  }
+ }
+}

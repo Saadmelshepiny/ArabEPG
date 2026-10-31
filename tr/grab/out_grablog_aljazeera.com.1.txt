@@ -1,0 +1,24 @@
+== aljazeera.com part 1/1: days=3 delay=0 connections=5
+[info] starting...
+[info] loading channels...
+[info] found 3 channel(s)
+[info] loading api data...
+[info] creating queue...
+[info] run:
+[info]   [1/9] aljazeera.com (ar) - aljazeera.aja# - Oct 31, 2026 (19 programs)
+[info]   [2/9] aljazeera.com (ar) - aljazeera.aja# - Nov 2, 2026 (0 programs)
+[info]   [3/9] aljazeera.com (ar) - aljazeera.aja# - Nov 1, 2026 (0 programs)
+[info]   [4/9] aljazeera.com (ar) - aljazeera.aja#aj2 - Nov 1, 2026 (0 programs)
+[info]   [5/9] aljazeera.com (ar) - aljazeera.aja#aj2 - Nov 2, 2026 (0 programs)
+[info]   [6/9] aljazeera.com (ar) - aljazeera.aja#aj2 - Oct 31, 2026 (10 programs)
+[info]   [7/9] aljazeera.com (en) - aljazeera.aje# - Oct 31, 2026 (36 programs)
+[info]   [8/9] aljazeera.com (en) - aljazeera.aje# - Nov 1, 2026 (36 programs)
+[info]   [9/9] aljazeera.com (en) - aljazeera.aje# - Nov 2, 2026 (35 programs)
+[info]   saving to "/home/runner/work/ArabEPG/ArabEPG/work/out_aljazeera.com.1.xml"...
+[success]   done in 00h 00m 00s
+0/3 channels without programmes
+total 48
+drwxr-xr-x  2 runner runner  4096 Oct 31 07:00 .
+drwxr-xr-x 10 runner runner  4096 Oct 31 07:00 ..
+-rw-r--r--  1 runner runner 35147 Oct 31 07:00 out_aljazeera.com.1.xml
+-rw-r--r--  1 runner runner  1062 Oct 31 07:00 out_grablog_aljazeera.com.1.xml
